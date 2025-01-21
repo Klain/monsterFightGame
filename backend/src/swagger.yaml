@@ -1,0 +1,209 @@
+openapi: 3.0.0
+info:
+  title: TaskFlow API
+  version: 1.0.0
+  description: API para la gestión de tareas con autenticación JWT
+paths:
+  /api/auth/register:
+    post:
+      summary: Registra un nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: testuser
+                password:
+                  type: string
+                  example: password123
+      responses:
+        201:
+          description: Usuario creado exitosamente
+        400:
+          description: El nombre de usuario ya existe
+        500:
+          description: Error del servidor
+  /api/auth/login:
+    post:
+      summary: Inicia sesión y obtiene un token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: testuser
+                password:
+                  type: string
+                  example: password123
+      responses:
+        200:
+          description: Token JWT generado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        401:
+          description: Credenciales inválidas
+        500:
+          description: Error del servidor
+  /api/tasks:
+    get:
+      summary: Obtiene todas las tareas del usuario autenticado
+      parameters:
+        - name: page
+          in: query
+          description: Número de página para la paginación
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Número de tareas por página
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: Lista de tareas obtenida
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    completed:
+                      type: boolean
+                    user_id:
+                      type: integer
+        401:
+          description: Usuario no autenticado
+    post:
+      summary: Crea una nueva tarea para el usuario autenticado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Nueva tarea
+                description:
+                  type: string
+                  example: Descripción de la tarea
+      responses:
+        201:
+          description: Tarea creada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        401:
+          description: Usuario no autenticado
+        500:
+          description: Error del servidor
+  /api/tasks/{id}:
+    put:
+      summary: Actualiza una tarea existente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la tarea a actualizar
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Tarea actualizada
+                description:
+                  type: string
+                  example: Nueva descripción
+                completed:
+                  type: boolean
+                  example: true
+      responses:
+        200:
+          description: Tarea actualizada exitosamente
+        404:
+          description: Tarea no encontrada
+        500:
+          description: Error del servidor
+    delete:
+      summary: Elimina una tarea existente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la tarea a eliminar
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Tarea eliminada exitosamente
+        404:
+          description: Tarea no encontrada
+        500:
+          description: Error del servidor
+  /api/tasks/search:
+    get:
+      summary: Busca tareas por título
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Palabra clave para buscar en los títulos
+          schema:
+            type: string
+      responses:
+        200:
+          description: Lista de tareas encontradas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    completed:
+                      type: boolean
+                    user_id:
+                      type: integer
+        401:
+          description: Usuario no autenticado
+        500:
+          description: Error del servidor
