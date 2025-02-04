@@ -1,3 +1,4 @@
+//backend\src\models\item.ts
 export class ItemDefinition {
     private _id : string;
     private _name : string;

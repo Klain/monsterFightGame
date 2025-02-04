@@ -1,8 +1,13 @@
 openapi: 3.0.0
 info:
-  title: TaskFlow API
+  title: Monster Game API
   version: 1.0.0
-  description: API para la gestión de tareas con autenticación JWT
+  description: API para la gestión de personajes y combates en el juego MonsterGameFight.
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor local
+
 paths:
   /api/auth/register:
     post:
@@ -27,6 +32,7 @@ paths:
           description: El nombre de usuario ya existe
         500:
           description: Error del servidor
+
   /api/auth/login:
     post:
       summary: Inicia sesión y obtiene un token JWT
@@ -57,46 +63,12 @@ paths:
           description: Credenciales inválidas
         500:
           description: Error del servidor
-  /api/tasks:
-    get:
-      summary: Obtiene todas las tareas del usuario autenticado
-      parameters:
-        - name: page
-          in: query
-          description: Número de página para la paginación
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          description: Número de tareas por página
-          schema:
-            type: integer
-            default: 10
-      responses:
-        200:
-          description: Lista de tareas obtenida
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    title:
-                      type: string
-                    description:
-                      type: string
-                    completed:
-                      type: boolean
-                    user_id:
-                      type: integer
-        401:
-          description: Usuario no autenticado
+
+  /api/characters:
     post:
-      summary: Crea una nueva tarea para el usuario autenticado
+      summary: Crea un personaje para el usuario autenticado
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -104,36 +76,153 @@ paths:
             schema:
               type: object
               properties:
-                title:
+                name:
                   type: string
-                  example: Nueva tarea
-                description:
+                  example: "Drácula"
+                faction:
                   type: string
-                  example: Descripción de la tarea
+                  example: "Vampiros"
+                class:
+                  type: string
+                  example: "Guerrero"
       responses:
         201:
-          description: Tarea creada exitosamente
+          description: Personaje creado exitosamente
+        400:
+          description: Faltan datos obligatorios
+        500:
+          description: Error del servidor
+
+    get:
+      summary: Obtiene el personaje del usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Datos del personaje obtenidos correctamente
+        404:
+          description: No se encontró un personaje para este usuario
+        500:
+          description: Error del servidor
+
+  /api/characters/add-xp:
+    post:
+      summary: Añadir experiencia a un personaje
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                xp:
+                  type: integer
+                  example: 120
+      responses:
+        200:
+          description: Experiencia añadida y nivel actualizado si es necesario
+        400:
+          description: La cantidad de experiencia debe ser positiva
+        404:
+          description: No se encontró un personaje para el usuario
+        500:
+          description: Error del servidor
+
+  /api/combat/battle:
+    post:
+      summary: Iniciar un combate entre dos personajes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                defender_id:
+                  type: integer
+                  example: 2
+      responses:
+        200:
+          description: Resultado del combate con el nuevo nivel, oro y experiencia
+        400:
+          description: Datos de entrada inválidos
+        404:
+          description: Personaje no encontrado
+        500:
+          description: Error del servidor
+
+  /api/combat/find-opponent:
+    get:
+      summary: Busca un oponente aleatorio para combatir en la arena
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Oponente encontrado
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-        401:
-          description: Usuario no autenticado
+                  message:
+                    type: string
+                    example: "Oponente encontrado"
+                  opponent:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      level:
+                        type: integer
+                      attack:
+                        type: integer
+                      defense:
+                        type: integer
+                      health:
+                        type: integer
+        404:
+          description: No se encontró un oponente adecuado
         500:
           description: Error del servidor
-  /api/tasks/{id}:
-    put:
-      summary: Actualiza una tarea existente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID de la tarea a actualizar
-          schema:
-            type: integer
+
+  /api/characters/leaderboard:
+    get:
+      summary: Obtener el ranking de los mejores jugadores
+      responses:
+        200:
+          description: Lista de los mejores jugadores ordenados por experiencia total
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaderboard:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        level:
+                          type: integer
+                        totalXp:
+                          type: integer
+                        totalGold:
+                          type: integer
+        500:
+          description: Error del servidor
+
+  /api/characters/upgrade-attribute:
+    post:
+      summary: Usar experiencia para mejorar atributos
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -141,69 +230,34 @@ paths:
             schema:
               type: object
               properties:
-                title:
+                attribute:
                   type: string
-                  example: Tarea actualizada
-                description:
-                  type: string
-                  example: Nueva descripción
-                completed:
-                  type: boolean
-                  example: true
+                  enum: ["attack", "defense", "health"]
+                  example: "attack"
       responses:
         200:
-          description: Tarea actualizada exitosamente
-        404:
-          description: Tarea no encontrada
-        500:
-          description: Error del servidor
-    delete:
-      summary: Elimina una tarea existente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID de la tarea a eliminar
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Tarea eliminada exitosamente
-        404:
-          description: Tarea no encontrada
-        500:
-          description: Error del servidor
-  /api/tasks/search:
-    get:
-      summary: Busca tareas por título
-      parameters:
-        - name: query
-          in: query
-          required: true
-          description: Palabra clave para buscar en los títulos
-          schema:
-            type: string
-      responses:
-        200:
-          description: Lista de tareas encontradas
+          description: Atributo mejorado correctamente
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    title:
-                      type: string
-                    description:
-                      type: string
-                    completed:
-                      type: boolean
-                    user_id:
-                      type: integer
-        401:
-          description: Usuario no autenticado
+                type: object
+                properties:
+                  message:
+                    type: string
+                  new_value:
+                    type: integer
+                  remaining_xp:
+                    type: integer
+        400:
+          description: No hay suficiente XP o el atributo no es válido
+        404:
+          description: Personaje no encontrado
         500:
           description: Error del servidor
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

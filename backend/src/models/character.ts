@@ -1,3 +1,4 @@
+ //backend\src\models\character.ts
  export class Character {
     private _name :string;
     private _xpCurrent : number;
