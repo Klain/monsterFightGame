@@ -1,10 +1,10 @@
 //backend\src\app.js
 require("dotenv").config();
-console.log("🔍 NODE_ENV:", process.env.NODE_ENV); // <--- Agregar esta línea
+console.log("🔍 NODE_ENV:", process.env.NODE_ENV);
 
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const swaggerDocument = YAML.load('./src/swagger.yaml'); // Asegúrate de que la ruta sea correcta
+const swaggerDocument = YAML.load('./src/swagger.yaml'); 
 
 
 const express = require("express");

@@ -1,12 +1,12 @@
 {
-  "name": "monsterfight",
-  "version": "1.0.0",
-  "description": "homenaje a juegos clasicos como MonsterGame y Bitefight",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
-}
+    "name": "monsterfight",
+    "version": "1.0.0",
+    "description": "homenaje a juegos clasicos como MonsterGame y Bitefight",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+  }

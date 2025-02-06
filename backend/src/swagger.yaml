@@ -426,7 +426,6 @@ paths:
         500:
           description: Error interno al cambiar el estado del ítem
 
-
   /api/combat/battle:
     post:
       summary: Iniciar un combate entre dos personajes
@@ -681,6 +680,249 @@ paths:
           description: Personaje no encontrado
         500:
           description: Error interno al vender el ítem
+
+
+  /api/debug/update/name:
+    post:
+      summary: Actualiza el nombre del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                name:
+                  type: string
+      responses:
+        200:
+          description: Nombre actualizado correctamente.
+        400:
+          description: Error en la validación del nombre.
+
+  /api/debug/update/faction:
+    post:
+      summary: Actualiza la facción del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                faction:
+                  type: string
+      responses:
+        200:
+          description: Facción actualizada correctamente.
+        400:
+          description: Error en la validación de la facción.
+
+  /api/debug/update/class:
+    post:
+      summary: Actualiza la clase del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                characterClass:
+                  type: string
+      responses:
+        200:
+          description: Clase actualizada correctamente.
+        400:
+          description: Error en la validación de la clase.
+
+  /api/debug/update/level:
+    post:
+      summary: Actualiza el nivel del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                level:
+                  type: integer
+      responses:
+        200:
+          description: Nivel actualizado correctamente.
+        400:
+          description: Error en la validación del nivel.
+
+  /api/debug/update/currentXp:
+    post:
+      summary: Actualiza la experiencia actual del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                currentXp:
+                  type: integer
+      responses:
+        200:
+          description: Experiencia actualizada correctamente.
+        400:
+          description: Error en la validación de la experiencia.
+
+  /api/debug/update/totalXp:
+    post:
+      summary: Actualiza la experiencia total del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                totalXp:
+                  type: integer
+      responses:
+        200:
+          description: Experiencia total actualizada correctamente.
+        400:
+          description: Error en la validación de la experiencia total.
+
+  /api/debug/update/currentGold:
+    post:
+      summary: Actualiza el oro actual del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                currentGold:
+                  type: integer
+      responses:
+        200:
+          description: Oro actualizado correctamente.
+        400:
+          description: Error en la validación del oro.
+
+  /api/debug/update/totalGold:
+    post:
+      summary: Actualiza el oro total del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                totalGold:
+                  type: integer
+      responses:
+        200:
+          description: Oro total actualizado correctamente.
+        400:
+          description: Error en la validación del oro total.
+
+  /api/debug/update/health:
+    post:
+      summary: Actualiza la salud del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                health:
+                  type: integer
+      responses:
+        200:
+          description: Salud actualizada correctamente.
+        400:
+          description: Error en la validación de la salud.
+
+  /api/debug/update/attack:
+    post:
+      summary: Actualiza el ataque del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                attack:
+                  type: integer
+      responses:
+        200:
+          description: Ataque actualizado correctamente.
+        400:
+          description: Error en la validación del ataque.
+
+  /api/debug/update/defense:
+    post:
+      summary: Actualiza la defensa del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                defense:
+                  type: integer
+      responses:
+        200:
+          description: Defensa actualizada correctamente.
+        400:
+          description: Error en la validación de la defensa.
+
+  /api/debug/update/last_fight:
+    post:
+      summary: Actualiza la última pelea del personaje.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: integer
+                last_fight:
+                  type: string
+      responses:
+        200:
+          description: Última pelea actualizada correctamente.
+        400:
+          description: Error en la validación de la última pelea.
+
+
 
 components:
   securitySchemes:

@@ -1,47 +1,30 @@
-// backend/src/routes/debugRoutes.js
-const express = require("express");
-const { modifyCharacterField, getCharacterById } = require("../services/debugService");
-const router = express.Router();
-
+//backend\src\services\debugService.js
+const db = require("../database");
 /**
- * 📌 Obtener un personaje por ID.
+ * Actualiza un atributo específico de un personaje.
+ * @param {number} characterId - ID del personaje.
+ * @param {string} attribute - Atributo a modificar.
+ * @param {any} value - Nuevo valor del atributo.
+ * @param {object} res - Respuesta HTTP.
  */
-router.get("/character/:id", async (req, res) => {
-  try {
-    const character = await getCharacterById(req.params.id);
-    if (!character) {
-      return res.status(404).json({ error: "Personaje no encontrado" });
+async function updateCharacterAttribute(characterId, attribute, value, res) {
+    try {
+        const validAttributes = [
+            "name", "faction", "class", "level", "currentXp", "totalXp", 
+            "currentGold", "totalGold", "health", "attack", "defense", 
+            "upgrade_points", "last_fight"
+        ];
+
+        if (!validAttributes.includes(attribute)) {
+            return res.status(400).json({ error: "Atributo inválido." });
+        }
+
+        await db.run(`UPDATE characters SET ${attribute} = ? WHERE id = ?`, [value, characterId]);
+        res.json({ message: `Atributo ${attribute} actualizado a ${value}` });
+    } catch (error) {
+        console.error("Error al actualizar atributo:", error);
+        res.status(500).json({ error: "Error interno en la actualización del atributo." });
     }
-    res.json(character);
-  } catch (error) {
-    console.error("❌ Error en /character/:id:", error);
-    res.status(500).json({ error: "Error interno al obtener el personaje." });
-  }
-});
+}
 
-/**
- * 📌 Modificar un atributo específico de un personaje.
- */
-router.post("/character/modify", async (req, res) => {
-  try {
-    const { characterId, field, value } = req.body;
-    
-    // Validaciones básicas
-    if (!characterId || !field || value === undefined) {
-      return res.status(400).json({ error: "Todos los campos son obligatorios" });
-    }
-
-    const allowedFields = ["health", "attack", "defense", "currentGold", "totalGold", "currentXp", "totalXp", "upgrade_points"];
-    if (!allowedFields.includes(field)) {
-      return res.status(400).json({ error: `Campo inválido. Solo se permiten: ${allowedFields.join(", ")}` });
-    }
-
-    const result = await modifyCharacterField(characterId, field, value);
-    res.json(result);
-  } catch (error) {
-    console.error("❌ Error en /character/modify:", error);
-    res.status(500).json({ error: "Error interno al modificar el personaje." });
-  }
-});
-
-module.exports = router;
+module.exports = { updateCharacterAttribute };

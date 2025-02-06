@@ -1,0 +1,17 @@
+.dashboard-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  mat-card {
+    width: 300px;
+  }
+  
+  mat-card-title {
+    font-size: 20px;
+    font-weight: bold;
+  }
+  

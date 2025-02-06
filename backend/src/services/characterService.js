@@ -11,7 +11,7 @@ function getNextLevelXP(level) {
 /**
  * Añade experiencia a un personaje y maneja la subida de nivel.
  */
-async function addExperience(user_id, xpGained, res) {
+ async function addExperience(user_id, xpGained, res) {
   try {
     const character = await new Promise((resolve, reject) => {
       db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
@@ -58,48 +58,6 @@ async function addExperience(user_id, xpGained, res) {
   } catch (error) {
     console.error("❌ Error al añadir experiencia:", error);
     res.status(500).json({ error: "Error al añadir experiencia" });
-  }
-}
-
-async function addUpgradePoints (user_id, points, res) {
-  try {
-    if (!points || points <= 0) {
-      return res.status(400).json({ error: "Debes especificar una cantidad válida de puntos de mejora." });
-    }
-
-    // Obtener el personaje
-    const character = await new Promise((resolve, reject) => {
-      db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    if (!character) {
-      return res.status(404).json({ error: "Personaje no encontrado" });
-    }
-
-    let newUpgradePoints = character.upgrade_points + points;
-
-    // Actualizar en la base de datos
-    await new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE characters SET upgrade_points = ? WHERE user_id = ?`,
-        [newUpgradePoints, user_id],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
-
-    res.json({
-      message: `Se han añadido ${points} puntos de mejora.`,
-      total_upgrade_points: newUpgradePoints
-    });
-  } catch (error) {
-    console.error("❌ Error al añadir puntos de mejora:", error);
-    res.status(500).json({ error: "Error interno al añadir puntos de mejora." });
   }
 }
 
@@ -209,5 +167,52 @@ async function buyHealing(user_id, res) {
     res.status(500).json({ error: "Error al comprar sanación" });
   }
 }
+
+/**
+ * DEBUGGER
+ * 
+ */
+ async function addUpgradePoints (user_id, points, res) {
+  try {
+    if (!points || points <= 0) {
+      return res.status(400).json({ error: "Debes especificar una cantidad válida de puntos de mejora." });
+    }
+
+    // Obtener el personaje
+    const character = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!character) {
+      return res.status(404).json({ error: "Personaje no encontrado" });
+    }
+
+    let newUpgradePoints = character.upgrade_points + points;
+
+    // Actualizar en la base de datos
+    await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE characters SET upgrade_points = ? WHERE user_id = ?`,
+        [newUpgradePoints, user_id],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    res.json({
+      message: `Se han añadido ${points} puntos de mejora.`,
+      total_upgrade_points: newUpgradePoints
+    });
+  } catch (error) {
+    console.error("❌ Error al añadir puntos de mejora:", error);
+    res.status(500).json({ error: "Error interno al añadir puntos de mejora." });
+  }
+}
+
 
 module.exports = { addExperience,addUpgradePoints , upgradeAttribute, regenerateHealth, buyHealing };

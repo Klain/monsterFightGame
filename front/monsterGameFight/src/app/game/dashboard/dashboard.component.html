@@ -1,0 +1,29 @@
+<div class="dashboard-container">
+    <mat-card class="character-card">
+      <mat-card-title>Personaje</mat-card-title>
+      <mat-card-content>
+        <p><strong>Nombre:</strong> {{ character.name || 'Cargando...' }}</p>
+        <p><strong>Nivel:</strong> {{ character.level || 0 }}</p>
+        <p><strong>Salud:</strong> {{ character.health || 0 }}/100</p>
+        <p><strong>Oro:</strong> {{ character.currentGold || 0 }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary" (click)="train()">Entrenar</button>
+        <button mat-button color="warn" (click)="heal()">Sanar</button>
+      </mat-card-actions>
+    </mat-card>
+  
+    <mat-card class="combat-card">
+      <mat-card-title>Última Batalla</mat-card-title>
+      <mat-card-content>
+        <p><strong>Oponente:</strong> {{ character.lastOpponent || 'Desconocido' }}</p>
+        <p><strong>Resultado:</strong> {{ character.lastFightResult || 'N/A' }}</p>
+        <p><strong>Oro ganado:</strong> {{ character.lastGoldWon || 0 }}</p>
+        <p><strong>XP ganada:</strong> {{ character.lastXpWon || 0 }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="accent" (click)="findOpponent()">Buscar Nuevo Oponente</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+  
