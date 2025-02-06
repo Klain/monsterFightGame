@@ -1,0 +1,11 @@
+<div class="progress-container">
+    <div class="progress-bar" [style.width.%]="progressPercentage"></div>
+  </div>
+  
+  <p *ngIf="remainingTime > 0">Tiempo restante: {{ remainingTime | number:'1.0-0' }}s</p>
+  <p *ngIf="remainingTime <= 0">¡Actividad completada!</p>
+  
+  <button *ngIf="showCancelButton && remainingTime > 0" mat-button color="warn" (click)="cancelActivity()">
+    Cancelar Actividad
+  </button>
+  

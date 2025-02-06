@@ -1,0 +1,12 @@
+<div class="overview-container">
+  <h2>Actividad en Curso</h2>
+  <app-time-progress-bar 
+    *ngIf="activityData"
+    [duration]="activityData.remainingMinutes * 60" 
+    [startTime]="currentTime">
+  </app-time-progress-bar>
+
+  <button *ngIf="activityData?.isCompleted" (click)="claimReward()">
+    Reclamar Recompensa
+  </button>
+</div>

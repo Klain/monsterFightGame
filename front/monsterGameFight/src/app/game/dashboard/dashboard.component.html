@@ -1,29 +1,51 @@
-<div class="dashboard-container">
-    <mat-card class="character-card">
-      <mat-card-title>Personaje</mat-card-title>
-      <mat-card-content>
-        <p><strong>Nombre:</strong> {{ character.name || 'Cargando...' }}</p>
-        <p><strong>Nivel:</strong> {{ character.level || 0 }}</p>
-        <p><strong>Salud:</strong> {{ character.health || 0 }}/100</p>
-        <p><strong>Oro:</strong> {{ character.currentGold || 0 }}</p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button color="primary" (click)="train()">Entrenar</button>
-        <button mat-button color="warn" (click)="heal()">Sanar</button>
-      </mat-card-actions>
-    </mat-card>
-  
-    <mat-card class="combat-card">
-      <mat-card-title>Última Batalla</mat-card-title>
-      <mat-card-content>
-        <p><strong>Oponente:</strong> {{ character.lastOpponent || 'Desconocido' }}</p>
-        <p><strong>Resultado:</strong> {{ character.lastFightResult || 'N/A' }}</p>
-        <p><strong>Oro ganado:</strong> {{ character.lastGoldWon || 0 }}</p>
-        <p><strong>XP ganada:</strong> {{ character.lastXpWon || 0 }}</p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button color="accent" (click)="findOpponent()">Buscar Nuevo Oponente</button>
-      </mat-card-actions>
-    </mat-card>
-  </div>
-  
+<div class="dashboard-grid">
+  <app-character-attributes></app-character-attributes>
+
+  <!-- Tarjeta de Personaje -->
+  <mat-card *ngIf="character$ | async as character" class="character-card">
+    <mat-card-title>{{ character.name }}</mat-card-title>
+    <mat-card-content>
+      <p><strong>Nivel:</strong> {{ character.level }}</p>
+      <p><strong>Salud:</strong> {{ character.health }}/100</p>
+      <p><strong>Oro:</strong> {{ character.currentGold }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="primary" (click)="train()">Entrenar</button>
+      <button mat-button color="warn" (click)="heal()">Sanar</button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Tarjeta de Última Batalla -->
+  <mat-card *ngIf="character$ | async as character" class="combat-card">
+    <mat-card-title>Última Batalla</mat-card-title>
+    <mat-card-content>
+      <p><strong>Oponente:</strong> {{ character.lastOpponent || 'Desconocido' }}</p>
+      <p><strong>Resultado:</strong> {{ character.lastFightResult || 'N/A' }}</p>
+      <p><strong>Oro ganado:</strong> {{ character.lastGoldWon || 0 }}</p>
+      <p><strong>XP ganada:</strong> {{ character.lastXpWon || 0 }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="accent" (click)="findOpponent()">Buscar Oponente</button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Tarjeta de Estado de Actividades -->
+  <mat-card class="activity-summary-card">
+    <mat-card-title>Estado de Actividades</mat-card-title>
+    <mat-card-content>
+      <app-activity-summary></app-activity-summary>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="primary" routerLink="/activities">Ver Actividades</button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Tarjeta de Actividad en Curso -->
+  <mat-card class="activity-overview-card">
+    <mat-card-title>Actividad en Curso</mat-card-title>
+    <mat-card-content>
+      <app-activity-overview></app-activity-overview>
+    </mat-card-content>
+  </mat-card>
+
+</div>

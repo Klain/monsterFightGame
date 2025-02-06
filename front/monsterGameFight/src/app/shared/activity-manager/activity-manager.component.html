@@ -1,0 +1,17 @@
+<div class="activity-container">
+    <h3>{{ activityType | titlecase }}</h3>
+  
+    <div *ngIf="activityData; else startActivityTemplate">
+      <app-time-progress-bar 
+        [duration]="activityData.remainingMinutes" 
+        [startTime]="Date.now() - ((activityData.remainingMinutes * 60) - activityData.elapsedTime) * 1000">
+      </app-time-progress-bar>
+    </div>
+  
+    <ng-template #startActivityTemplate>
+      <button (click)="startActivity()" [disabled]="isLoading">
+        {{ isLoading ? 'Iniciando...' : 'Iniciar ' + (activityType | titlecase) }}
+      </button>
+    </ng-template>
+  </div>
+  

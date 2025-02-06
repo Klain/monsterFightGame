@@ -2,47 +2,69 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { CharacterService } from '../../core/services/character.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CharacterService, Character } from '../../core/services/character.service';
+import { ActivitySummaryComponent } from '../../shared/activity-summary/activity-summary.component';
+import { ActivityOverviewComponent } from '../activity-overview/activity-overview.component';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs';
+import { CharacterAttributesComponent } from '../../shared/character-attributes/character-attributes.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  imports: [CommonModule, MatCardModule, MatButtonModule]
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    ActivitySummaryComponent,
+    ActivityOverviewComponent,
+    CharacterAttributesComponent 
+  ]
 })
 export class DashboardComponent implements OnInit {
-  character: any = {};  // Datos del personaje
+  character$: Observable<Character | null>;
 
-  constructor(private characterService: CharacterService) {}
-
-  ngOnInit() {
-    this.loadCharacter(); // Cargar personaje al iniciar
+  constructor(private characterService: CharacterService, private snackBar: MatSnackBar) {
+    this.character$ = this.characterService.character$;
   }
 
-  loadCharacter() {
-    this.characterService.getCharacter().subscribe(data => {
-      this.character = data;
-    });
+  ngOnInit() {
+    this.characterService.refreshCharacter();
   }
 
   train() {
-    this.characterService.startTraining().subscribe(() => {
-      alert("Entrenamiento iniciado!");
-      this.loadCharacter(); // Recargar datos
+    this.characterService.startTraining().subscribe({
+      next: () => this.showToast("Entrenamiento iniciado!", "success"),
+      error: () => this.showToast("Error al iniciar entrenamiento.", "error")
     });
   }
 
   heal() {
-    this.characterService.startHealing().subscribe(() => {
-      alert("Sanación iniciada!");
-      this.loadCharacter();
+    this.characterService.startHealing().subscribe({
+      next: () => this.showToast("Sanación iniciada!", "success"),
+      error: () => this.showToast("Error al iniciar sanación.", "error")
     });
   }
 
   findOpponent() {
-    this.characterService.findOpponent().subscribe(opponent => {
-      alert(`Encontraste un oponente: ${opponent.name}`);
+    this.characterService.findOpponent().subscribe({
+      next: opponent => this.showToast(`Encontraste un oponente: ${opponent.name}`, "info"),
+      error: () => this.showToast("Error al buscar oponente.", "error")
     });
+  }
+
+  showToast(message: string, type: "success" | "error" | "info") {
+    let panelClass = "";
+    switch (type) {
+      case "success": panelClass = "toast-success"; break;
+      case "error": panelClass = "toast-error"; break;
+      case "info": panelClass = "toast-info"; break;
+    }
+    this.snackBar.open(message, "Cerrar", { duration: 3000, panelClass });
   }
 }

@@ -1,0 +1,25 @@
+.register-card {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  mat-form-field {
+    width: 100%;
+  }
+  
+  .error-text {
+    color: red;
+    font-size: 14px;
+  }
+  
+  button {
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  mat-progress-spinner {
+    margin-right: 10px;
+  }
+  

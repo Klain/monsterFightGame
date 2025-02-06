@@ -1,1 +1,28 @@
-<p>login works!</p>
+<mat-card class="login-card">
+  <h2>Iniciar Sesión</h2>
+  <form (ngSubmit)="login()">
+    <mat-form-field appearance="outline">
+      <mat-label>Usuario</mat-label>
+      <input matInput [(ngModel)]="username" name="username" required autocomplete="username">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Contraseña</mat-label>
+      <input matInput [type]="hidePassword ? 'password' : 'text'" [(ngModel)]="password" name="password" required autocomplete="current-password">
+      <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+        <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+      <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
+      {{ isLoading ? 'Cargando...' : 'Entrar' }}
+    </button>
+  </form>
+
+  <p *ngIf="errorMessage" class="error-text">{{ errorMessage }}</p>
+
+  <p>¿No tienes una cuenta? 
+    <button mat-button color="accent" routerLink="/auth/register">Regístrate aquí</button>
+  </p>
+</mat-card>

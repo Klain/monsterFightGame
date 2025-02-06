@@ -1,0 +1,13 @@
+<div class="activity-grid">
+    <mat-card *ngFor="let activity of activities" class="activity-card">
+      <mat-card-title>{{ activity.type | titlecase }}</mat-card-title>
+      <mat-card-content>
+        <p>Duración: {{ activity.duration }} min</p>
+        <p>Recompensa: {{ activity.xp }} XP, {{ activity.gold }} oro</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary" (click)="startActivity(activity.type)">Iniciar</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+  

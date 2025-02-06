@@ -324,11 +324,59 @@ paths:
         500:
           description: Error interno al obtener el ranking
 
-  /api/characters/upgrade-attribute:
-    post:
-      summary: Usar experiencia para mejorar atributos
+  /character/upgrade-cost/{attribute}:
+    get:
+      summary: "Obtener el costo de XP para mejorar un atributo"
+      description: "Devuelve cuánta XP cuesta mejorar un atributo del personaje."
+      tags:
+        - Character
       security:
-        - bearerAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: attribute
+          in: path
+          required: true
+          description: "Atributo a mejorar (attack, defense, health)"
+          schema:
+            type: string
+            enum: [attack, defense, health]
+      responses:
+        "200":
+          description: "Costo de XP para mejorar el atributo"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attribute:
+                    type: string
+                    example: "attack"
+                  cost:
+                    type: integer
+                    example: 150
+        "400":
+          description: "Atributo inválido"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Atributo inválido."
+        "401":
+          description: "No autorizado"
+        "500":
+          description: "Error interno"
+
+  /character/upgrade-attribute:
+    post:
+      summary: "Mejorar un atributo del personaje"
+      description: "Mejora un atributo del personaje si tiene suficiente XP."
+      tags:
+        - Character
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -338,15 +386,42 @@ paths:
               properties:
                 attribute:
                   type: string
-                  enum: ["attack", "defense", "health"]
+                  enum: [attack, defense, health]
                   example: "attack"
       responses:
-        200:
-          description: Atributo mejorado correctamente
-        400:
-          description: No se especificó un atributo válido
-        500:
-          description: Error interno al mejorar atributo
+        "200":
+          description: "Atributo mejorado correctamente"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Has mejorado attack a 6."
+                  new_value:
+                    type: integer
+                    example: 6
+                  remaining_xp:
+                    type: integer
+                    example: 350
+        "400":
+          description: "Error al mejorar el atributo"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No tienes suficiente experiencia para mejorar este atributo."
+        "401":
+          description: "No autorizado"
+        "500":
+          description: "Error interno"
 
   /api/characters/regenerate-health:
     get:

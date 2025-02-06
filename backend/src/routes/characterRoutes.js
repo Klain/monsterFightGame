@@ -2,11 +2,13 @@
 const express = require("express");
 const { db } = require("../database");
 const authenticateToken = require("../middleware/authMiddleware");
-const {
+const { 
+  calculateUpgradeCost, 
+  upgradeCharacterAttribute , 
+  regenerateHealth, 
+  buyHealing , 
   addExperience,
-  upgradeAttribute,
-  regenerateHealth,
-  buyHealing,
+  addUpgradePoints
 } = require("../services/characterService");
 
 const router = express.Router();
@@ -54,15 +56,11 @@ router.post("/", authenticateToken, async (req, res) => {
  */
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    console.log(`🛠️ Buscando personaje para el usuario ${req.user.id}...`);
-
     db.all("SELECT * FROM characters WHERE user_id = ?", [req.user.id], (err, rows) => {
       if (err) {
         console.error("❌ Error en la consulta SQL:", err);
         return res.status(500).json({ error: "Error interno en la base de datos." });
       }
-
-      console.log("📋 Resultado de la consulta:", rows);
 
       if (!rows || rows.length === 0) {
         console.warn("⚠️ No se encontró un personaje para este usuario.");
@@ -75,6 +73,67 @@ router.get("/", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("❌ Error al obtener personaje:", error);
     res.status(500).json({ error: "Error interno al recuperar el personaje." });
+  }
+});
+
+
+/**
+ * Obtener el costo de mejora de un atributo
+ */
+router.get("/upgrade-cost/:attribute", authenticateToken, async (req, res) => {
+  try {
+    const { attribute } = req.params;
+    const validAttributes = ["attack", "defense", "health"];
+
+    if (!validAttributes.includes(attribute)) {
+      return res.status(400).json({ error: "Atributo no válido." });
+    }
+
+    // Obtener el personaje usando una promesa
+    const character = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM characters WHERE user_id = ?", [req.user.id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!character) {
+      return res.status(404).json({ error: "Personaje no encontrado." });
+    }
+
+    if (!(attribute in character)) {
+      return res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
+    }
+
+    // Calcular el costo de mejora
+    const cost = calculateUpgradeCost(attribute, character[attribute]);
+
+    res.json({ attribute, cost });
+  } catch (error) {
+    console.error("❌ Error al obtener el costo de mejora:", error);
+    res.status(500).json({ error: "Error interno al calcular el costo de mejora." });
+  }
+});
+
+
+
+router.post("/upgrade-attribute", authenticateToken, async (req, res) => {
+  try {
+      const { attribute } = req.body;
+      if (!attribute) {
+          return res.status(400).json({ error: "Debes especificar un atributo para mejorar." });
+      }
+
+      const result = await upgradeCharacterAttribute(req.user.id, attribute);
+
+      if (result.success) {
+          res.json(result);
+      } else {
+          res.status(400).json({ error: result.message });
+      }
+  } catch (error) {
+      console.error("Error en la mejora de atributo:", error);
+      res.status(500).json({ error: "Error interno al mejorar el atributo." });
   }
 });
 

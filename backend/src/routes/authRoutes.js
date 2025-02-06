@@ -3,6 +3,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { getUserByUsername, createUser } = require("../database");
+const { createCharacterForUser } = require("../services/characterService"); 
 const authenticateToken = require("../middleware/authMiddleware");
 const { registerSession, logoutUser } = require("../sessionManager");
 require("dotenv").config();
@@ -23,14 +24,17 @@ router.post("/register", async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await createUser(username, hashedPassword);
+        const newUser = await createUser(username, hashedPassword);
 
-        return res.status(201).json({ message: "Usuario registrado exitosamente." });
+        await createCharacterForUser(newUser.id, username);
+
+        return res.status(201).json({ message: "Usuario y personaje creados exitosamente." });
     } catch (error) {
         console.error("Error en el registro de usuario:", error);
         return res.status(500).json({ error: "Error interno en el registro." });
     }
 });
+
 
 router.post("/login", async (req, res) => {
     try {
