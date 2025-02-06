@@ -6,15 +6,16 @@ const authMiddleware = (req, res, next) => {
     const token = req.header("Authorization");
 
     if (!token) {
-        return res.status(401).json({ message: "Acceso no autorizado" });
+        return res.status(401).json({ message: "Acceso no autorizado: No hay token." });
     }
 
     try {
-        const verified = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
-        req.user = verified;
+        const formattedToken = token.replace("Bearer ", "").trim();
+        const verified = jwt.verify(formattedToken, process.env.JWT_SECRET);
+        req.user = verified; // Almacena los datos del usuario en `req.user`
         next();
     } catch (error) {
-        return res.status(401).json({ message: "Token inválido o expirado" });
+        return res.status(401).json({ message: "Token inválido o expirado." });
     }
 };
 

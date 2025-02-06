@@ -5,10 +5,123 @@ info:
   description: API para la gestión de personajes y combates en el juego MonsterGameFight.
 
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:4000
     description: Servidor local
 
 paths:
+  /api/activities/start:
+    post:
+      summary: Iniciar una actividad para el personaje
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: integer
+                  example: 1
+                type:
+                  type: string
+                  enum: ["trabajo", "entrenamiento"]
+                  example: "trabajo"
+      responses:
+        200:
+          description: Actividad iniciada con éxito
+        400:
+          description: Faltan parámetros o el tipo de actividad no es válido
+        500:
+          description: Error en el servidor
+
+  /api/activities/status/{character_id}:
+    get:
+      summary: Consultar el estado de la actividad en curso
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Estado de la actividad en curso
+        400:
+          description: El ID del personaje es obligatorio
+        500:
+          description: Error en el servidor
+
+  /api/activities/claim/{character_id}:
+    post:
+      summary: Reclamar recompensa tras completar la actividad
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Recompensa reclamada correctamente
+        400:
+          description: El ID del personaje es obligatorio
+        500:
+          description: Error en el servidor
+
+  /api/activities/healing/start:
+    post:
+      summary: Iniciar una actividad de sanación para recuperar salud
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: integer
+                  example: 1
+                healingTime:
+                  type: integer
+                  example: 10
+      responses:
+        200:
+          description: Sanación iniciada correctamente
+        400:
+          description: Tiempo de sanación inválido o falta de parámetros
+        500:
+          description: Error en el servidor
+
+  /api/activities/healing/claim/{character_id}:
+    post:
+      summary: Reclamar la sanación tras completar el tiempo
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Sanación completada correctamente
+        400:
+          description: El ID del personaje es obligatorio
+        500:
+          description: Error en el servidor
+
   /api/auth/register:
     post:
       summary: Registra un nuevo usuario
@@ -29,9 +142,9 @@ paths:
         201:
           description: Usuario creado exitosamente
         400:
-          description: El nombre de usuario ya existe
+          description: El nombre de usuario ya existe o faltan datos obligatorios
         500:
-          description: Error del servidor
+          description: Error interno en el servidor
 
   /api/auth/login:
     post:
@@ -51,7 +164,7 @@ paths:
                   example: password123
       responses:
         200:
-          description: Token JWT generado
+          description: Token JWT generado correctamente
           content:
             application/json:
               schema:
@@ -59,10 +172,66 @@ paths:
                 properties:
                   token:
                     type: string
+                    example: "eyJhbGciOiJIUzI1NiIsIn..."
+        400:
+          description: Campos obligatorios faltantes
         401:
           description: Credenciales inválidas
         500:
-          description: Error del servidor
+          description: Error interno en el servidor
+
+  /api/auth/check-session:
+    get:
+      summary: Verifica si un usuario sigue autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Sesión válida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Sesión válida."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      username:
+                        type: string
+                        example: "testuser"
+        500:
+          description: Error interno en el servidor
+
+  /api/auth/logout:
+    post:
+      summary: Cierra sesión del usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Sesión cerrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Sesión cerrada correctamente."
+        500:
+          description: Error interno al cerrar sesión
 
   /api/characters:
     post:
@@ -89,9 +258,9 @@ paths:
         201:
           description: Personaje creado exitosamente
         400:
-          description: Faltan datos obligatorios
+          description: Faltan datos obligatorios o el usuario ya tiene un personaje
         500:
-          description: Error del servidor
+          description: Error interno al crear el personaje
 
     get:
       summary: Obtiene el personaje del usuario autenticado
@@ -103,7 +272,7 @@ paths:
         404:
           description: No se encontró un personaje para este usuario
         500:
-          description: Error del servidor
+          description: Error interno al recuperar el personaje
 
   /api/characters/add-xp:
     post:
@@ -125,71 +294,8 @@ paths:
           description: Experiencia añadida y nivel actualizado si es necesario
         400:
           description: La cantidad de experiencia debe ser positiva
-        404:
-          description: No se encontró un personaje para el usuario
         500:
-          description: Error del servidor
-
-  /api/combat/battle:
-    post:
-      summary: Iniciar un combate entre dos personajes
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                defender_id:
-                  type: integer
-                  example: 2
-      responses:
-        200:
-          description: Resultado del combate con el nuevo nivel, oro y experiencia
-        400:
-          description: Datos de entrada inválidos
-        404:
-          description: Personaje no encontrado
-        500:
-          description: Error del servidor
-
-  /api/combat/find-opponent:
-    get:
-      summary: Busca un oponente aleatorio para combatir en la arena
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: Oponente encontrado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Oponente encontrado"
-                  opponent:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      name:
-                        type: string
-                      level:
-                        type: integer
-                      attack:
-                        type: integer
-                      defense:
-                        type: integer
-                      health:
-                        type: integer
-        404:
-          description: No se encontró un oponente adecuado
-        500:
-          description: Error del servidor
+          description: Error interno al añadir experiencia
 
   /api/characters/leaderboard:
     get:
@@ -216,7 +322,7 @@ paths:
                         totalGold:
                           type: integer
         500:
-          description: Error del servidor
+          description: Error interno al obtener el ranking
 
   /api/characters/upgrade-attribute:
     post:
@@ -237,23 +343,344 @@ paths:
       responses:
         200:
           description: Atributo mejorado correctamente
+        400:
+          description: No se especificó un atributo válido
+        500:
+          description: Error interno al mejorar atributo
+
+  /api/characters/regenerate-health:
+    get:
+      summary: Regenerar salud del personaje con el tiempo
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Salud regenerada correctamente
+        500:
+          description: Error interno al regenerar salud
+
+  /api/characters/inventory:
+    get:
+      summary: Obtener el inventario del jugador
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Lista de ítems en el inventario del jugador
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                  new_value:
-                    type: integer
-                  remaining_xp:
-                    type: integer
-        400:
-          description: No hay suficiente XP o el atributo no es válido
+                  inventory:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        attack_bonus:
+                          type: integer
+                        defense_bonus:
+                          type: integer
+                        price:
+                          type: integer
+                        rarity:
+                          type: string
+                        level_required:
+                          type: integer
         404:
           description: Personaje no encontrado
         500:
-          description: Error del servidor
+          description: Error interno al obtener el inventario
+
+  /api/characters/inventory/equip:
+    post:
+      summary: Equipar o desequipar un ítem del inventario
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item_id:
+                  type: integer
+                  example: 5
+                equip:
+                  type: boolean
+                  example: true
+      responses:
+        200:
+          description: Ítem equipado o desequipado correctamente
+        400:
+          description: No posees este ítem o los parámetros son inválidos
+        404:
+          description: Personaje no encontrado
+        500:
+          description: Error interno al cambiar el estado del ítem
+
+
+  /api/combat/battle:
+    post:
+      summary: Iniciar un combate entre dos personajes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                defender_id:
+                  type: integer
+                  example: 2
+      responses:
+        200:
+          description: Resultado del combate con el nuevo nivel, oro y experiencia
+        400:
+          description: Datos de entrada inválidos o el usuario no puede atacar aún
+        500:
+          description: Error interno al procesar la batalla
+
+  /api/combat/find-opponent:
+    get:
+      summary: Busca un oponente aleatorio para combatir en la arena
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Oponente encontrado
+        404:
+          description: No se encontró un oponente adecuado
+        500:
+          description: Error interno al buscar un oponente
+
+  /api/combat/arena-battle:
+    post:
+      summary: Luchar en la arena contra un oponente aleatorio
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Resultado del combate en la arena
+        404:
+          description: No se encontró un oponente para la arena
+        500:
+          description: Error interno al iniciar la batalla en la arena
+
+  /api/combat/battle-log:
+    get:
+      summary: Obtener el historial de batallas del usuario
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Historial de batallas obtenido correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  battle_log:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        attacker_id:
+                          type: integer
+                        defender_id:
+                          type: integer
+                        winner_id:
+                          type: integer
+                        gold_won:
+                          type: integer
+                        xp_won:
+                          type: integer
+                        last_attack:
+                          type: string
+                          format: date-time
+        500:
+          description: Error interno al obtener el historial de batallas
+
+  /api/messages/send:
+    post:
+      summary: Enviar un mensaje a otro jugador
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                receiver_id:
+                  type: integer
+                  example: 3
+                subject:
+                  type: string
+                  example: "Bienvenido al juego"
+                body:
+                  type: string
+                  example: "¡Hola! Espero que disfrutes tu experiencia aquí."
+      responses:
+        200:
+          description: Mensaje enviado correctamente
+        400:
+          description: Faltan campos obligatorios
+        500:
+          description: Error interno al enviar el mensaje
+
+  /api/messages:
+    get:
+      summary: Obtener los mensajes del usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Lista de mensajes obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        sender_id:
+                          type: integer
+                        receiver_id:
+                          type: integer
+                        subject:
+                          type: string
+                        body:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        read:
+                          type: boolean
+        500:
+          description: Error interno al obtener los mensajes
+
+  /api/messages/read/{message_id}:
+    post:
+      summary: Marcar un mensaje como leído
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 5
+      responses:
+        200:
+          description: Mensaje marcado como leído correctamente
+        400:
+          description: El ID del mensaje es obligatorio
+        500:
+          description: Error interno al marcar el mensaje como leído
+
+  /api/store:
+    get:
+      summary: Obtener la lista de ítems disponibles en la tienda
+      responses:
+        200:
+          description: Lista de ítems disponibles en la tienda
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  store:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum: ["weapon", "armor", "accessory"]
+                        attack_bonus:
+                          type: integer
+                        defense_bonus:
+                          type: integer
+                        price:
+                          type: integer
+                        rarity:
+                          type: string
+                          enum: ["common", "rare", "legendary"]
+                        level_required:
+                          type: integer
+        500:
+          description: Error interno al obtener la tienda
+
+  /api/store/buy:
+    post:
+      summary: Comprar un ítem de la tienda
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item_id:
+                  type: integer
+                  example: 3
+      responses:
+        200:
+          description: Compra realizada con éxito
+        400:
+          description: No tienes suficiente oro o el ítem no existe
+        404:
+          description: Personaje no encontrado
+        500:
+          description: Error interno al comprar el ítem
+
+  /api/store/sell:
+    post:
+      summary: Vender un ítem del inventario
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item_id:
+                  type: integer
+                  example: 2
+      responses:
+        200:
+          description: Ítem vendido con éxito
+        400:
+          description: No posees este ítem
+        404:
+          description: Personaje no encontrado
+        500:
+          description: Error interno al vender el ítem
 
 components:
   securitySchemes:

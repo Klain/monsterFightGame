@@ -1,15 +1,33 @@
 //backend\src\services\combatService.js
-const db = require("../database");
+const { db } = require("../database");
 const { addExperience } = require("./characterService");
+const { getEquippedStats } = require("../services/characterService");
+const { sendMessage } = require("./messageService");
+const { connectedUsers, sendRealTimeNotification } = require("../sessionManager"); // Importar correctamente
 
 /**
- * Calcula el daño de un ataque basado en los atributos de atacante y defensor.
- * @param {Object} attacker - Datos del atacante.
- * @param {Object} defender - Datos del defensor.
- * @returns {number} - Daño infligido.
+ * Calcula el daño de un ataque basado en los atributos del atacante y defensor.
+ * Aplica chance de crítico (+50% daño) y evasión (evita el golpe).
  */
-function calculateDamage(attacker, defender) {
-  return Math.max(attacker.attack - defender.defense / 2, 1); // Daño mínimo 1
+async function calculateDamage(attacker_id, defender_id) {
+  const attackerStats = await getEquippedStats(attacker_id);
+  const defenderStats = await getEquippedStats(defender_id);
+
+  // Probabilidad de crítico (10% de chance, +50% daño)
+  const isCritical = Math.random() < 0.1;
+  let damage = Math.max(attackerStats.attack - defenderStats.defense / 2, 1);
+
+  if (isCritical) {
+    damage = Math.floor(damage * 1.5);
+  }
+
+  // Probabilidad de evasión (10% de chance, daño reducido a 0)
+  const evasionChance = Math.random() < 0.1;
+  if (evasionChance) {
+    return 0;
+  }
+
+  return damage;
 }
 
 /**
@@ -18,22 +36,28 @@ function calculateDamage(attacker, defender) {
 async function handleCombat(attacker_id, defender_id, res) {
   try {
     const attacker = await db.get("SELECT * FROM characters WHERE id = ?", [attacker_id]);
-    if (!attacker) {
-      return res.status(404).json({ error: "Atacante no encontrado" });
-    }
+    if (!attacker) return res.status(404).json({ error: "Atacante no encontrado" });
 
     const defender = await db.get("SELECT * FROM characters WHERE id = ?", [defender_id]);
-    if (!defender) {
-      return res.status(404).json({ error: "Defensor no encontrado" });
-    }
+    if (!defender) return res.status(404).json({ error: "Defensor no encontrado" });
 
     let attackerHP = attacker.health;
     let defenderHP = defender.health;
+    let turn = 1;
+    let battleLog = [];
 
     while (attackerHP > 0 && defenderHP > 0) {
-      defenderHP -= calculateDamage(attacker, defender);
+      const attackerDamage = await calculateDamage(attacker.id, defender.id);
+      defenderHP -= attackerDamage;
+      battleLog.push(`Turno ${turn}: ${attacker.name} ataca y hace ${attackerDamage} de daño.`);
+
       if (defenderHP <= 0) break;
-      attackerHP -= calculateDamage(defender, attacker);
+
+      const defenderDamage = await calculateDamage(defender.id, attacker.id);
+      attackerHP -= defenderDamage;
+      battleLog.push(`Turno ${turn}: ${defender.name} contraataca y hace ${defenderDamage} de daño.`);
+
+      turn++;
     }
 
     const winner = attackerHP > 0 ? attacker : defender;
@@ -42,7 +66,7 @@ async function handleCombat(attacker_id, defender_id, res) {
     const goldGained = Math.floor(Math.random() * 20) + 10;
     const lostGold = Math.min(loser.currentGold, goldGained / 2);
 
-    // Actualizar los valores del ganador
+    // Actualizar valores en BD
     await db.run(
       `UPDATE characters 
        SET currentGold = currentGold + ?, totalGold = totalGold + ?, currentXp = currentXp + ? 
@@ -50,17 +74,26 @@ async function handleCombat(attacker_id, defender_id, res) {
       [goldGained, goldGained, xpGained, winner.id]
     );
 
-    // Reducir oro al perdedor
     await db.run(
       `UPDATE characters SET currentGold = currentGold - ? WHERE id = ?`,
       [lostGold, loser.id]
     );
 
-    // Registrar la batalla
     await saveBattle(attacker_id, defender_id, winner.id, goldGained, xpGained);
 
-    // Añadir experiencia al ganador
-    await addExperience(winner.user_id, xpGained, res);
+    // Notificar al jugador atacado
+    if (connectedUsers.has(defender.id)) {
+      sendRealTimeNotification(defender.id, `¡${attacker.name} te ha atacado!`);
+    } else {
+      await sendMessage(attacker_id, defender_id, "Has sido atacado", `El jugador ${attacker.name} te ha atacado.`);
+    }
+
+    res.json({
+      message: `${winner.name} ha ganado la batalla.`,
+      battle_log: battleLog,
+      xpGained,
+      goldGained
+    });
   } catch (error) {
     console.error("Error en combate:", error);
     res.status(500).json({ error: "Error interno en el combate" });
@@ -107,4 +140,3 @@ async function saveBattle(attacker_id, defender_id, winner_id, goldWon, xpWon) {
 }
 
 module.exports = { handleCombat, canAttackAgain, saveBattle };
-

@@ -1,10 +1,8 @@
 //backend\src\services\characterService.js
-const db = require("../database");
+const { db } = require("../database");
 
 /**
  * Calcula la cantidad de experiencia necesaria para subir de nivel.
- * @param {number} level - Nivel actual del personaje.
- * @returns {number} - Experiencia requerida para el próximo nivel.
  */
 function getNextLevelXP(level) {
   return level * 100; // Fórmula de XP necesaria por nivel.
@@ -15,7 +13,12 @@ function getNextLevelXP(level) {
  */
 async function addExperience(user_id, xpGained, res) {
   try {
-    const character = await db.get("SELECT * FROM characters WHERE user_id = ?", [user_id]);
+    const character = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
 
     if (!character) {
       return res.status(404).json({ error: "Personaje no encontrado" });
@@ -27,32 +30,81 @@ async function addExperience(user_id, xpGained, res) {
     let xpRequired = getNextLevelXP(newLevel);
     let upgradePoints = character.upgrade_points;
 
-    while (newTotalXp >= xpRequired) {
-      newTotalXp -= xpRequired;
+    while (newCurrentXp >= xpRequired) {
+      newCurrentXp -= xpRequired;
       newLevel++;
       xpRequired = getNextLevelXP(newLevel);
       upgradePoints += 3; // Puntos de mejora por nivel
     }
 
-    await db.run(
-      `UPDATE characters SET currentXp = ?, totalXp = ?, level = ?, upgrade_points = ? WHERE user_id = ?`,
-      [newCurrentXp, newTotalXp, newLevel, upgradePoints, user_id]
-    );
+    await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE characters SET currentXp = ?, totalXp = ?, level = ?, upgrade_points = ? WHERE user_id = ?`,
+        [newCurrentXp, newTotalXp, newLevel, upgradePoints, user_id],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
 
     res.json({
       message: "Experiencia añadida",
-      level: newLevel,
       currentXp: newCurrentXp,
       totalXp: newTotalXp,
+      level: newLevel,
       upgrade_points: upgradePoints,
     });
   } catch (error) {
+    console.error("❌ Error al añadir experiencia:", error);
     res.status(500).json({ error: "Error al añadir experiencia" });
   }
 }
 
+async function addUpgradePoints (user_id, points, res) {
+  try {
+    if (!points || points <= 0) {
+      return res.status(400).json({ error: "Debes especificar una cantidad válida de puntos de mejora." });
+    }
+
+    // Obtener el personaje
+    const character = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!character) {
+      return res.status(404).json({ error: "Personaje no encontrado" });
+    }
+
+    let newUpgradePoints = character.upgrade_points + points;
+
+    // Actualizar en la base de datos
+    await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE characters SET upgrade_points = ? WHERE user_id = ?`,
+        [newUpgradePoints, user_id],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    res.json({
+      message: `Se han añadido ${points} puntos de mejora.`,
+      total_upgrade_points: newUpgradePoints
+    });
+  } catch (error) {
+    console.error("❌ Error al añadir puntos de mejora:", error);
+    res.status(500).json({ error: "Error interno al añadir puntos de mejora." });
+  }
+}
+
 /**
- * Mejora un atributo de un personaje usando experiencia.
+ * Mejora un atributo de un personaje usando puntos de mejora.
  */
 async function upgradeAttribute(user_id, attribute, res) {
   try {
@@ -61,30 +113,46 @@ async function upgradeAttribute(user_id, attribute, res) {
       return res.status(400).json({ error: "Atributo inválido, debe ser attack, defense o health" });
     }
 
-    const character = await db.get("SELECT * FROM characters WHERE user_id = ?", [user_id]);
+    // Obtener el personaje
+    const character = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
     if (!character) {
       return res.status(404).json({ error: "Personaje no encontrado" });
     }
 
-    const currentValue = character[attribute];
-    const cost = currentValue * 10;
-
-    if (character.currentXp < cost) {
-      return res.status(400).json({ error: "No tienes suficiente XP para mejorar este atributo" });
+    if (character.upgrade_points <= 0) {
+      return res.status(400).json({ error: "No tienes puntos de mejora suficientes" });
     }
 
-    await db.run(
-      `UPDATE characters SET ${attribute} = ${attribute} + 1, currentXp = currentXp - ? WHERE user_id = ?`,
-      [cost, user_id]
-    );
+    // Calcular nuevo valor del atributo
+    const newAttributeValue = character[attribute] + 1;
+    const newUpgradePoints = character.upgrade_points - 1;
+
+    // Actualizar en la base de datos
+    await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE characters SET ${attribute} = ?, upgrade_points = ? WHERE user_id = ?`,
+        [newAttributeValue, newUpgradePoints, user_id],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
 
     res.json({
-      message: `Has mejorado ${attribute} a ${currentValue + 1}`,
-      new_value: currentValue + 1,
-      remaining_xp: character.currentXp - cost,
+      message: `Has mejorado ${attribute} a ${newAttributeValue}`,
+      new_value: newAttributeValue,
+      remaining_upgrade_points: newUpgradePoints,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error al mejorar atributo" });
+    console.error("❌ Error al mejorar atributo:", error);
+    res.status(500).json({ error: "Error interno al mejorar atributo" });
   }
 }
 
@@ -142,4 +210,4 @@ async function buyHealing(user_id, res) {
   }
 }
 
-module.exports = { addExperience, upgradeAttribute, regenerateHealth, buyHealing };
+module.exports = { addExperience,addUpgradePoints , upgradeAttribute, regenerateHealth, buyHealing };

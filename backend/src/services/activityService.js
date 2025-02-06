@@ -1,6 +1,62 @@
-const db = require("../database");
+//backend\src\services\activityService.js
+const { db } = require("../database");
+const { sendRealTimeNotification, connectedUsers } = require("../sessionManager"); // Importar correctamente
+const { sendMessage } = require("../services/messageService");
 
-const HEALING_COST_PER_MINUTE = 1; // 1 oro por 2 puntos de salud recuperados
+/**
+ * Notifica al jugador cuando una actividad se completa.
+ */
+async function notifyActivityCompletion(character_id, title, message) {
+    try {
+        const character = await db.get("SELECT * FROM characters WHERE id = ?", [character_id]);
+        if (!character) return;
+
+        if (connectedUsers.has(character.user_id)) {
+            sendRealTimeNotification(character.user_id, message);
+        } else {
+            await sendMessage(0, character.user_id, title, message);
+        }
+    } catch (error) {
+        console.error("Error al enviar notificación de actividad:", error);
+    }
+}
+
+async function checkCompletedActivities() {
+    try {
+        const now = new Date();
+        const activities = await db.all(
+            "SELECT * FROM activities WHERE completed = FALSE"
+        );
+
+        for (const activity of activities) {
+            const startTime = new Date(activity.start_time);
+            const elapsedMinutes = Math.floor((now - startTime) / 60000);
+
+            if (elapsedMinutes >= activity.duration) {
+                await db.run("UPDATE activities SET completed = TRUE WHERE id = ?", [activity.id]);
+
+                const character = await db.get("SELECT * FROM characters WHERE id = ?", [activity.character_id]);
+                if (!character) continue;
+
+                // Añadir recompensas al personaje
+                await db.run(
+                    "UPDATE characters SET currentXp = currentXp + ?, currentGold = currentGold + ? WHERE id = ?",
+                    [activity.reward_xp, activity.reward_gold, activity.character_id]
+                );
+
+                const messageText = `Tu actividad '${activity.type}' ha terminado. Recolecta tu recompensa.`;
+
+                if (connectedUsers.has(character.user_id)) {
+                    sendRealTimeNotification(character.user_id, messageText);
+                } else {
+                    await sendMessage(0, character.user_id, "Actividad Finalizada", messageText);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error al verificar actividades completadas:", error);
+    }
+}
 
 
 /**
@@ -96,13 +152,17 @@ async function claimActivityReward(character_id, res) {
             [activity.reward_xp, activity.reward_gold, character_id]
         );
 
-        res.json({
-            message: `Actividad completada. Has ganado ${activity.reward_xp} XP y ${activity.reward_gold} de oro.`,
-        });
+        const messageText = `Has completado la actividad '${activity.type}' y ganado ${activity.reward_xp} XP y ${activity.reward_gold} de oro.`;
+
+        // Llamamos a la función común de notificación
+        await notifyActivityCompletion(character_id, "Actividad Completada", messageText);
+
+        res.json({ message: messageText });
     } catch (error) {
         res.status(500).json({ error: "Error al reclamar la recompensa." });
     }
 }
+
 
 
 /**
@@ -167,9 +227,6 @@ async function claimActivityReward(character_id, res) {
     }
 }
 
-/**
- * Reclamar la sanación tras completar el tiempo.
- */
 async function claimHealing(character_id, res) {
     try {
         const activity = await db.get(
@@ -190,7 +247,7 @@ async function claimHealing(character_id, res) {
         }
 
         // Calcular salud recuperada
-        const healthRecovered = activity.duration * 2; // 2 de salud por minuto
+        const healthRecovered = activity.duration * 2;
         const character = await db.get("SELECT * FROM characters WHERE id = ?", [character_id]);
 
         const newHealth = Math.min(character.health + healthRecovered, 100);
@@ -201,13 +258,16 @@ async function claimHealing(character_id, res) {
         // Restaurar salud
         await db.run("UPDATE characters SET health = ? WHERE id = ?", [newHealth, character_id]);
 
-        res.json({
-            message: `Sanación completada. Has recuperado ${healthRecovered} puntos de salud.`,
-            new_health: newHealth,
-        });
+        const messageText = `Tu sanación ha finalizado. Has recuperado ${healthRecovered} puntos de salud.`;
+
+        // Llamamos a la función común de notificación
+        await notifyActivityCompletion(character_id, "Sanación Completada", messageText);
+
+        res.json({ message: messageText, new_health: newHealth });
     } catch (error) {
         res.status(500).json({ error: "Error al reclamar la sanación." });
     }
 }
 
-module.exports = { startActivity, getActivityStatus, claimActivityReward };
+
+module.exports = { startActivity, getActivityStatus, claimActivityReward , notifyActivityCompletion  };
