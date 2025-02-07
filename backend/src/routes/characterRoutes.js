@@ -3,15 +3,18 @@ const express = require("express");
 const { db } = require("../database");
 const authenticateToken = require("../middleware/authMiddleware");
 const { 
+  getCharacterById,
   calculateUpgradeCost, 
   upgradeCharacterAttribute , 
   regenerateHealth, 
-  buyHealing , 
   addExperience,
-  addUpgradePoints
 } = require("../services/characterService");
-
+const { 
+  validateAttributeExist,
+} = require("../utils/validationUtils");
 const router = express.Router();
+
+
 
 /**
  * Crear un nuevo personaje
@@ -76,37 +79,21 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-
-/**
- * Obtener el costo de mejora de un atributo
- */
-router.get("/upgrade-cost/:attribute", authenticateToken, async (req, res) => {
+router.get("/attributes/upgrade-cost/:attribute", authenticateToken, async (req, res) => {
   try {
     const { attribute } = req.params;
-    const validAttributes = ["attack", "defense", "health"];
+    const character = await getCharacterById(req.user.id);
 
-    if (!validAttributes.includes(attribute)) {
-      return res.status(400).json({ error: "Atributo no válido." });
-    }
-
-    // Obtener el personaje usando una promesa
-    const character = await new Promise((resolve, reject) => {
-      db.get("SELECT * FROM characters WHERE user_id = ?", [req.user.id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    if (!character) {
-      return res.status(404).json({ error: "Personaje no encontrado." });
-    }
-
-    if (!(attribute in character)) {
-      return res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
-    }
-
-    // Calcular el costo de mejora
-    const cost = calculateUpgradeCost(attribute, character[attribute]);
+    if (!validateAttributeExist(attribute).success) 
+    return res.status(400).json({ error: validateAttributeExist(attribute).error });
+  
+    if (!character) 
+    return res.status(404).json({ error: "Personaje no encontrado." });
+    
+    if (!(attribute in character))
+    return res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
+    
+    const cost = calculateUpgradeCost(character[attribute]);
 
     res.json({ attribute, cost });
   } catch (error) {
@@ -115,25 +102,37 @@ router.get("/upgrade-cost/:attribute", authenticateToken, async (req, res) => {
   }
 });
 
-
-
-router.post("/upgrade-attribute", authenticateToken, async (req, res) => {
+router.post("/attributes/upgrade-attribute", authenticateToken, async (req, res) => {
   try {
-      const { attribute } = req.body;
-      if (!attribute) {
-          return res.status(400).json({ error: "Debes especificar un atributo para mejorar." });
-      }
+    console.log(req.body);
 
-      const result = await upgradeCharacterAttribute(req.user.id, attribute);
+    const { attribute } = req.body;
+    const character = await getCharacterById(req.user.id);
+    console.log("1");
+    if (!validateAttributeExist(attribute).success) 
+    return res.status(400).json({ error: validateAttributeExist(attribute).error });
 
-      if (result.success) {
-          res.json(result);
-      } else {
-          res.status(400).json({ error: result.message });
-      }
+    if (!character) 
+    return res.status(404).json({ error: "Personaje no encontrado." });
+    
+    if (!(attribute in character))
+    return res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
+    
+    const cost = calculateUpgradeCost(character[attribute]);
+
+    if (character.currentXp < cost) {
+      return res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
+    }
+
+    const upgradeResult = await upgradeCharacterAttribute(req.user.id, character, attribute, cost);
+    console.log("✅ Mejora exitosa:", upgradeResult);
+
+    return res.json({
+      message: `Has mejorado ${attribute} a ${character[attribute]+1}.`,
+    });
   } catch (error) {
-      console.error("Error en la mejora de atributo:", error);
-      res.status(500).json({ error: "Error interno al mejorar el atributo." });
+    console.error("Error en la mejora de atributo:", error);
+    return res.status(500).json({ error: "Error interno al mejorar el atributo." });
   }
 });
 
@@ -167,23 +166,6 @@ router.get("/leaderboard", async (req, res) => {
   } catch (error) {
     console.error("Error al obtener ranking:", error);
     res.status(500).json({ error: "Error interno al obtener el ranking." });
-  }
-});
-
-/**
- * Mejorar un atributo usando experiencia
- */
-router.post("/upgrade-attribute", authenticateToken, async (req, res) => {
-  try {
-    const { attribute } = req.body;
-    if (!attribute) {
-      return res.status(400).json({ error: "Debes especificar un atributo para mejorar." });
-    }
-
-    upgradeAttribute(req.user.id, attribute, res);
-  } catch (error) {
-    console.error("Error al mejorar atributo:", error);
-    res.status(500).json({ error: "Error interno al mejorar atributo." });
   }
 });
 
@@ -250,5 +232,6 @@ router.post("/inventory/equip", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Error interno al cambiar el estado del ítem." });
   }
 });
+
 
 module.exports = router;

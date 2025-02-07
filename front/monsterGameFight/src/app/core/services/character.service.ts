@@ -36,23 +36,24 @@ export class CharacterService {
   }
 
   refreshCharacter(): void {
-    this.getCharacter().subscribe(character => {
+    this.getCharacter().subscribe((character: any) => {
       this.characterSubject.next(character);
     });
   }
 
   // Obtener el costo de mejora de un atributo
   getUpgradeCost(attribute: string): Observable<{ attribute: string; cost: number }> {
-    return this.api.get(`characters/upgrade-cost/${attribute}`);
+    return this.api.get(`characters/attributes/upgrade-cost/${attribute}`);
   }
 
   // Mejorar un atributo del personaje
   upgradeAttribute(attribute: string): Observable<any> {
-    return this.api.post('character/upgrade-attribute', { attribute }).pipe(() => {
+    return this.api.post('characters/attributes/upgrade-attribute', { attribute }).pipe(() => {
       this.refreshCharacter();
       return this.character$;
     });
   }
+
 
   // Iniciar entrenamiento
   startTraining(): Observable<any> {

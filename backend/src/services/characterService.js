@@ -1,6 +1,7 @@
 //backend\src\services\characterService.js
 const { db } = require("../database");
 
+
 async function createCharacterForUser(user_id, username) {
   try {
       const defaultFaction = "Neutral";
@@ -26,16 +27,41 @@ async function createCharacterForUser(user_id, username) {
   }
 }
 
-/**
- * Calcula la cantidad de experiencia necesaria para subir de nivel.
- */
-function getNextLevelXP(level) {
-  return level * 100; // Fórmula de XP necesaria por nivel.
+async function getCharacterById(userId) {
+  return new Promise((resolve, reject) => {
+      db.get("SELECT * FROM characters WHERE user_id = ?", [userId], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+      });
+  });
 }
 
-/**
- * Añade experiencia a un personaje y maneja la subida de nivel.
- */
+function calculateUpgradeCost(currentValue) {
+  return 100 + (currentValue * 10); 
+}
+
+async function upgradeCharacterAttribute(userId, character, attribute,cost) {
+  const newAttributeValue = character[attribute] + 1;
+  const newXp = character.currentXp - cost;
+
+  await db.run(
+      `UPDATE characters SET ${attribute} = ?, currentXp = ? WHERE user_id = ?`,
+      [newAttributeValue, newXp, userId]
+  );
+
+  return {
+      success: true,
+      message: `Has mejorado ${attribute} a ${newAttributeValue}.`,
+      new_value: newAttributeValue,
+      remaining_xp: newXp
+  };
+}
+
+
+function getNextLevelXP(level) {
+  return level * 100; 
+}
+
  async function addExperience(user_id, xpGained, res) {
   try {
     const character = await new Promise((resolve, reject) => {
@@ -86,59 +112,6 @@ function getNextLevelXP(level) {
   }
 }
 
-function calculateUpgradeCost(attribute, currentValue) {
-  if (!["attack", "defense", "health"].includes(attribute)) {
-      throw new Error("Atributo inválido.");
-  }
-
-  return 100 + (currentValue * 10); // Fórmula de progresión
-}
-
-async function upgradeCharacterAttribute(user_id, attribute) {
-  try {
-      if (!["attack", "defense", "health"].includes(attribute)) {
-          throw new Error("Atributo inválido.");
-      }
-
-      // Obtener el personaje del usuario
-      const character = await db.get("SELECT * FROM characters WHERE user_id = ?", [user_id]);
-      if (!character) {
-          throw new Error("Personaje no encontrado.");
-      }
-
-      // Calcular el costo de mejora
-      const cost = calculateUpgradeCost(attribute, character[attribute]);
-
-      // Verificar que el personaje tenga suficiente XP
-      if (character.currentXp < cost) {
-          throw new Error("No tienes suficiente experiencia para mejorar este atributo.");
-      }
-
-      // Aplicar la mejora
-      const newAttributeValue = character[attribute] + 1;
-      const newXp = character.currentXp - cost;
-
-      await db.run(
-          `UPDATE characters SET ${attribute} = ?, currentXp = ? WHERE user_id = ?`,
-          [newAttributeValue, newXp, user_id]
-      );
-
-      return {
-          success: true,
-          message: `Has mejorado ${attribute} a ${newAttributeValue}.`,
-          new_value: newAttributeValue,
-          remaining_xp: newXp
-      };
-  } catch (error) {
-      console.error("Error al mejorar atributo:", error);
-      return { success: false, message: error.message };
-  }
-}
-
-
-/**
- * Regenera salud del personaje con base en el tiempo transcurrido desde la última batalla.
- */
 async function regenerateHealth(user_id, res) {
   try {
     const character = await db.get("SELECT * FROM characters WHERE user_id = ?", [user_id]);
@@ -162,9 +135,6 @@ async function regenerateHealth(user_id, res) {
   }
 }
 
-/**
- * Permite comprar sanación a cambio de oro.
- */
 async function buyHealing(user_id, res) {
   try {
     const character = await db.get("SELECT * FROM characters WHERE user_id = ?", [user_id]);
@@ -190,10 +160,7 @@ async function buyHealing(user_id, res) {
   }
 }
 
-/**
- * DEBUGGER
- * 
- */
+
  async function addUpgradePoints (user_id, points, res) {
   try {
     if (!points || points <= 0) {
@@ -236,5 +203,17 @@ async function buyHealing(user_id, res) {
   }
 }
 
+module.exports = { 
+  createCharacterForUser, 
+  getCharacterById, 
+  calculateUpgradeCost, 
+  upgradeCharacterAttribute , 
+  regenerateHealth, 
+  buyHealing , 
+  addExperience,
+  addUpgradePoints  };
 
-module.exports = { createCharacterForUser, calculateUpgradeCost, upgradeCharacterAttribute , regenerateHealth, buyHealing , addExperience,addUpgradePoints  };
+
+
+
+

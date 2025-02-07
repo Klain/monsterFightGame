@@ -29,8 +29,13 @@ const io = socketIo(server);
 const PORT = process.env.PORT || 4000;
 
 // Middlewares
-app.use(cors());
-app.use(bodyParser.json());
+app.use(cors({
+  origin: "*", // 👈 Permite cualquier origen (temporalmente para depuración)
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Rutas
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

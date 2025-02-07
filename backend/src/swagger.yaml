@@ -324,7 +324,7 @@ paths:
         500:
           description: Error interno al obtener el ranking
 
-  /character/upgrade-cost/{attribute}:
+  /api/characters/attributes/upgrade-cost/{attribute}:
     get:
       summary: "Obtener el costo de XP para mejorar un atributo"
       description: "Devuelve cuánta XP cuesta mejorar un atributo del personaje."
@@ -369,7 +369,7 @@ paths:
         "500":
           description: "Error interno"
 
-  /character/upgrade-attribute:
+  /api/characters/attributes/upgrade-attribute:
     post:
       summary: "Mejorar un atributo del personaje"
       description: "Mejora un atributo del personaje si tiene suficiente XP."
