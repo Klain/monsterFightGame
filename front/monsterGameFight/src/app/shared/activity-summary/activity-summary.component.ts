@@ -17,7 +17,7 @@ export class ActivitySummaryComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    this.getActivityStatus();
+    //this.getActivityStatus();
   }
 
   getActivityStatus() {

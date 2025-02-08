@@ -1,13 +1,12 @@
-//backend\src\database.js
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+import sqlite3 from "sqlite3";
+import path from "path";
 
-const dbPath = path.resolve(__dirname, '../data/monsterFight.db');
+const dbPath = path.resolve(__dirname, "../data/monsterFight.db");
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Error al conectar con la base de datos:', err);
+    console.error("Error al conectar con la base de datos:", err);
   } else {
-    console.log('Conectado a la base de datos SQLite.');
+    console.log("Conectado a la base de datos SQLite.");
   }
 });
 
@@ -28,22 +27,65 @@ db.serialize(() => {
       user_id INTEGER NOT NULL,
       name TEXT NOT NULL,
       faction TEXT NOT NULL,
-      class TEXT NOT NULL,
+      class INTEGER DEFAULT 1,
       level INTEGER DEFAULT 1,
-      currentXp INTEGER DEFAULT 0,
-      totalXp INTEGER DEFAULT 0,
-      currentGold INTEGER DEFAULT 0,
-      totalGold INTEGER DEFAULT 0,
-      health INTEGER DEFAULT 100,
-      attack INTEGER DEFAULT 10,
-      defense INTEGER DEFAULT 5,
+
+      STRENGTH INTEGER DEFAULT 1,
+      ENDURANCE INTEGER DEFAULT 1,
+      CONSTITUTION INTEGER DEFAULT 1,
+      PRECISION INTEGER DEFAULT 1,
+      AGILITY INTEGER DEFAULT 1,
+      VIGOR INTEGER DEFAULT 1,
+      SPIRIT INTEGER DEFAULT 1,
+      WILLPOWER INTEGER DEFAULT 1,
+      ARCANE INTEGER DEFAULT 1,
+
       upgrade_points INTEGER DEFAULT 0,
       last_fight TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
 
-  // Tabla de batallas
+  db.run(`
+    CREATE TABLE IF NOT EXISTS status (
+      character_id INTEGER PRIMARY KEY,
+      currentHealth INTEGER DEFAULT 100,
+      totalHealth INTEGER DEFAULT 100,
+      currentStamina INTEGER DEFAULT 100,
+      totalStamina INTEGER DEFAULT 100,
+      currentMana INTEGER DEFAULT 100,
+      totalMana INTEGER DEFAULT 100,
+      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS currencies (
+      character_id INTEGER PRIMARY KEY,
+      currentXp INTEGER DEFAULT 0,
+      totalXp INTEGER DEFAULT 0,
+      currentGold INTEGER DEFAULT 0,
+      totalGold INTEGER DEFAULT 0,
+      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS activities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      character_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      start_time TIMESTAMP NOT NULL,
+      duration INTEGER NOT NULL,
+      reward_xp INTEGER NOT NULL,
+      reward_gold INTEGER NOT NULL,
+      completed BOOLEAN DEFAULT FALSE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+    )
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS battles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,24 +101,6 @@ db.serialize(() => {
     )
   `);
 
-  // Tabla de actividades (trabajos, entrenamiento, sanación)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS activities (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      character_id INTEGER NOT NULL,
-      type TEXT NOT NULL,
-      start_time TIMESTAMP NOT NULL,
-      duration INTEGER NOT NULL, -- En minutos
-      reward_xp INTEGER NOT NULL,
-      reward_gold INTEGER NOT NULL,
-      completed BOOLEAN DEFAULT FALSE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
-    )
-  `);
-
-  // **NUEVA**: Tabla de tienda (items disponibles para comprar)
   db.run(`
     CREATE TABLE IF NOT EXISTS items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,7 +114,6 @@ db.serialize(() => {
     )
   `);
 
-  // **NUEVA**: Tabla de relación entre personajes e items (inventario)
   db.run(`
     CREATE TABLE IF NOT EXISTS character_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,7 +125,6 @@ db.serialize(() => {
     )
   `);
 
-  // **NUEVA**: Tabla de mensajes entre jugadores
   db.run(`
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,33 +140,41 @@ db.serialize(() => {
   `);
 });
 
-// Función para obtener un usuario por nombre de usuario
-async function getUserByUsername(username) {
+/**
+ * Obtiene un usuario por nombre de usuario.
+ * @param username - Nombre de usuario
+ * @returns Una promesa que resuelve con los datos del usuario o null si no se encuentra
+ */
+export async function getUserByUsername(username: string): Promise<any | null> {
   return new Promise((resolve, reject) => {
     db.get("SELECT * FROM users WHERE username = ?", [username], (err, row) => {
-      if (err) reject(err);
-      resolve(row);
+      if (err) {
+        return reject(err);
+      }
+      resolve(row || null);
     });
   });
 }
 
-// Función para crear un nuevo usuario con contraseña encriptada
-async function createUser(username, hashedPassword) {
+/**
+ * Crea un nuevo usuario con contraseña encriptada.
+ * @param username - Nombre de usuario
+ * @param hashedPassword - Contraseña encriptada
+ * @returns Una promesa que resuelve con el ID del nuevo usuario
+ */
+export async function createUser(username: string, hashedPassword: string): Promise<{ id: number }> {
   return new Promise((resolve, reject) => {
     db.run(
       "INSERT INTO users (username, password) VALUES (?, ?)",
       [username, hashedPassword],
       function (err) {
-        if (err) reject(err);
+        if (err) {
+          return reject(err);
+        }
         resolve({ id: this.lastID });
       }
     );
   });
 }
 
-// Exportar las funciones para usarlas en authRoutes.js
-module.exports = {
-  db,
-  getUserByUsername,
-  createUser,
-};
+export { db };

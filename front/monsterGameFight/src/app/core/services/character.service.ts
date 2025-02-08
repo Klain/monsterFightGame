@@ -1,28 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { ApiService } from './api.service';
+import { Character } from '../models/chacter.models';
 
-export interface Character {
-  id: number;
-  name: string;
-  level: number;
-  health: number;
-  currentGold: number;
-  lastOpponent?: string;
-  lastFightResult?: string;
-  lastGoldWon?: number;
-  lastXpWon?: number;
-  totalXp?: number;
-  currentXp?: number;  // 👈 Asegurar que existe
-  totalGold?: number;
-  attack?: number;
-  defense?: number;
-  upgrade_points?: number;
-  last_fight?: Date;
-}
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CharacterService {
   private characterSubject = new BehaviorSubject<Character | null>(null);
@@ -47,35 +30,46 @@ export class CharacterService {
   }
 
   // Mejorar un atributo del personaje
-  upgradeAttribute(attribute: string): Observable<any> {
-    return this.api.post('characters/attributes/upgrade-attribute', { attribute }).pipe(() => {
-      this.refreshCharacter();
-      return this.character$;
-    });
+  upgradeAttribute(attribute: string): Observable<Character> {
+    return this.api.post<Character>('characters/attributes/upgrade-attribute', { attribute }).pipe(
+      tap((updatedCharacter: Character) => {
+        this.characterSubject.next(updatedCharacter); // Actualiza directamente el flujo reactivo
+      })
+    );
   }
 
+  activityCheckStatus(){
+    return this.api.get(`activities/status/`);
+  }
+
+  activityClaimReward(){
+    return this.api.post<Character>('activities/claim',).pipe(
+      tap((updatedCharacter: Character) => {
+        this.characterSubject.next(updatedCharacter);
+      })
+    );
+  }
 
   // Iniciar entrenamiento
-  startTraining(): Observable<any> {
-    return this.api.post('characters/train').pipe(() => {
-      this.refreshCharacter();
-      return this.character$;
-    });
+  startTraining(duration:number): Observable<Character> {
+    return this.api.post<Character>('activities/training/start',{duration:duration}).pipe(
+      tap((updatedCharacter: Character) => {
+        this.characterSubject.next(updatedCharacter);
+      })
+    );
   }
 
   // Iniciar sanación
-  startHealing(): Observable<any> {
-    return this.api.post('characters/heal').pipe(() => {
-      this.refreshCharacter();
-      return this.character$;
-    });
+  startHealing(): Observable<Character> {
+    return this.api.post<Character>('activities/heal').pipe(
+      tap((updatedCharacter: Character) => {
+        this.characterSubject.next(updatedCharacter);
+      })
+    );
   }
 
   // Buscar oponente para combate
   findOpponent(): Observable<any> {
-    return this.api.get('characters/find-opponent').pipe(() => {
-      this.refreshCharacter();
-      return this.character$;
-    });
+    return this.api.get('characters/find-opponent'); 
   }
 }

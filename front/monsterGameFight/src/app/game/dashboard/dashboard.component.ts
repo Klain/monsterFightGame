@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { CharacterService, Character } from '../../core/services/character.service';
+import { CharacterService} from '../../core/services/character.service';
+import { Character } from '../../core/models/chacter.models';
 import { ActivitySummaryComponent } from '../../shared/activity-summary/activity-summary.component';
 import { ActivityOverviewComponent } from '../activity-overview/activity-overview.component';
 import { RouterModule } from '@angular/router';
@@ -35,27 +36,6 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.characterService.refreshCharacter();
-  }
-
-  train() {
-    this.characterService.startTraining().subscribe({
-      next: () => this.showToast("Entrenamiento iniciado!", "success"),
-      error: () => this.showToast("Error al iniciar entrenamiento.", "error")
-    });
-  }
-
-  heal() {
-    this.characterService.startHealing().subscribe({
-      next: () => this.showToast("Sanación iniciada!", "success"),
-      error: () => this.showToast("Error al iniciar sanación.", "error")
-    });
-  }
-
-  findOpponent() {
-    this.characterService.findOpponent().subscribe({
-      next: opponent => this.showToast(`Encontraste un oponente: ${opponent.name}`, "info"),
-      error: () => this.showToast("Error al buscar oponente.", "error")
-    });
   }
 
   showToast(message: string, type: "success" | "error" | "info") {

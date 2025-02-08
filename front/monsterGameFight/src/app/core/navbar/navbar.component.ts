@@ -18,7 +18,7 @@ import { AuthService } from '../../core/services/auth.service';
     CommonModule,
     RouterModule,
     MatToolbarModule,
-    MatButtonModule
+    MatButtonModule,
   ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {

@@ -1,7 +1,12 @@
 <mat-card *ngIf="character$ | async as character" class="attributes-card">
-    <mat-card-title>Atributos del Personaje</mat-card-title>
-    <mat-card-content>
+  <mat-card-title>{{ character.name }}</mat-card-title>
+  <mat-card-content>
+    <p><strong>faction:</strong> {{ character.faction }} <strong>class:</strong> {{ character.class }}</p>
+
       <p><strong>Nivel:</strong> {{ character.level }}</p>
+      <p><strong>Salud:</strong> {{ character.health }}/100</p>
+      <p><strong>Oro:</strong> {{ character.currentGold }}</p>
+
       <p><strong>XP Disponible:</strong> {{ character.currentXp }}</p>
       <p><strong>Puntos de Mejora:</strong> {{ character.upgrade_points }}</p>
   
@@ -34,6 +39,11 @@
           {{ isLoading['health'] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts['health'] + ')' }}
         </button>
       </div>
+
+      <mat-card-actions>
+        <button mat-button color="primary" (click)="train()">Entrenar</button>
+        <button mat-button color="warn" (click)="heal()">Sanar</button>
+      </mat-card-actions>
     </mat-card-content>
   </mat-card>
   

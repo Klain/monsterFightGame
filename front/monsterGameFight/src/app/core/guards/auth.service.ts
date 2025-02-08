@@ -1,3 +1,4 @@
+//front\monsterGameFight\src\app\core\guards\auth.service.ts
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';

@@ -1,21 +1,36 @@
-//backend\src\services\combatService.js
-const { db } = require("../database");
-const { addExperience } = require("./characterService");
-const { getEquippedStats } = require("../services/characterService");
-const { sendMessage } = require("./messageService");
-const { connectedUsers, sendRealTimeNotification } = require("../sessionManager"); // Importar correctamente
+import DatabaseService from "./databaseService";
+import { sendMessage } from "./messageService";
+import CharacterService from "./characterService";
+import { connectedUsers, sendRealTimeNotification } from "../sessionManager";
+import { Response } from "express";
+
+interface Character {
+  id: number;
+  name: string;
+  health: number;
+  currentGold: number;
+  currentXp: number;
+  [key: string]: any; // Para propiedades adicionales
+}
+
+interface Stats {
+  attack: number;
+  defense: number;
+}
 
 /**
  * Calcula el daño de un ataque basado en los atributos del atacante y defensor.
  * Aplica chance de crítico (+50% daño) y evasión (evita el golpe).
  */
-async function calculateDamage(attacker_id, defender_id) {
-  const attackerStats = await getEquippedStats(attacker_id);
-  const defenderStats = await getEquippedStats(defender_id);
-
+async function calculateDamage(attacker_id: number, defender_id: number): Promise<number> {
+  const attackerStats = await CharacterService.getEquippedStats(attacker_id);
+  const defenderStats = await CharacterService.getEquippedStats(defender_id);
+  if(!attackerStats || attackerStats===null || !defenderStats || defenderStats===null){
+    return 0;
+  }
   // Probabilidad de crítico (10% de chance, +50% daño)
   const isCritical = Math.random() < 0.1;
-  let damage = Math.max(attackerStats.attack - defenderStats.defense / 2, 1);
+  let damage = Math.max(attackerStats.strength - defenderStats.endurance / 2, 1);
 
   if (isCritical) {
     damage = Math.floor(damage * 1.5);
@@ -33,18 +48,18 @@ async function calculateDamage(attacker_id, defender_id) {
 /**
  * Maneja un combate entre dos personajes.
  */
-async function handleCombat(attacker_id, defender_id, res) {
+async function handleCombat(attacker_id: number, defender_id: number, res: Response): Promise<Response> {
   try {
-    const attacker = await db.get("SELECT * FROM characters WHERE id = ?", [attacker_id]);
+    const attacker = await DatabaseService.get<Character>("SELECT * FROM characters WHERE id = ?", [attacker_id]);
     if (!attacker) return res.status(404).json({ error: "Atacante no encontrado" });
 
-    const defender = await db.get("SELECT * FROM characters WHERE id = ?", [defender_id]);
+    const defender = await DatabaseService.get<Character>("SELECT * FROM characters WHERE id = ?", [defender_id]);
     if (!defender) return res.status(404).json({ error: "Defensor no encontrado" });
 
     let attackerHP = attacker.health;
     let defenderHP = defender.health;
     let turn = 1;
-    let battleLog = [];
+    const battleLog: string[] = [];
 
     while (attackerHP > 0 && defenderHP > 0) {
       const attackerDamage = await calculateDamage(attacker.id, defender.id);
@@ -67,14 +82,14 @@ async function handleCombat(attacker_id, defender_id, res) {
     const lostGold = Math.min(loser.currentGold, goldGained / 2);
 
     // Actualizar valores en BD
-    await db.run(
+    await DatabaseService.run(
       `UPDATE characters 
        SET currentGold = currentGold + ?, totalGold = totalGold + ?, currentXp = currentXp + ? 
        WHERE id = ?`,
       [goldGained, goldGained, xpGained, winner.id]
     );
 
-    await db.run(
+    await DatabaseService.run(
       `UPDATE characters SET currentGold = currentGold - ? WHERE id = ?`,
       [lostGold, loser.id]
     );
@@ -88,24 +103,24 @@ async function handleCombat(attacker_id, defender_id, res) {
       await sendMessage(attacker_id, defender_id, "Has sido atacado", `El jugador ${attacker.name} te ha atacado.`);
     }
 
-    res.json({
+    return res.json({
       message: `${winner.name} ha ganado la batalla.`,
       battle_log: battleLog,
       xpGained,
-      goldGained
+      goldGained,
     });
   } catch (error) {
     console.error("Error en combate:", error);
-    res.status(500).json({ error: "Error interno en el combate" });
+    return res.status(500).json({ error: "Error interno en el combate" });
   }
 }
 
 /**
  * Verifica si un atacante puede atacar a un defensor nuevamente.
  */
-async function canAttackAgain(attacker_id, defender_id) {
+async function canAttackAgain(attacker_id: number, defender_id: number): Promise<boolean> {
   try {
-    const row = await db.get(
+    const row = await DatabaseService.get<{ last_attack: string }>(
       `SELECT last_attack FROM battles WHERE attacker_id = ? AND defender_id = ? 
        ORDER BY last_attack DESC LIMIT 1`,
       [attacker_id, defender_id]
@@ -115,7 +130,7 @@ async function canAttackAgain(attacker_id, defender_id) {
 
     const lastAttackTime = new Date(row.last_attack);
     const now = new Date();
-    const minutesSinceLastAttack = (now - lastAttackTime) / 60000;
+    const minutesSinceLastAttack = (now.getTime() - lastAttackTime.getTime()) / 60000;
 
     return minutesSinceLastAttack >= 60; // Puede atacar si ha pasado 1 hora
   } catch (error) {
@@ -127,9 +142,15 @@ async function canAttackAgain(attacker_id, defender_id) {
 /**
  * Registra una batalla en la base de datos.
  */
-async function saveBattle(attacker_id, defender_id, winner_id, goldWon, xpWon) {
+async function saveBattle(
+  attacker_id: number,
+  defender_id: number,
+  winner_id: number,
+  goldWon: number,
+  xpWon: number
+): Promise<void> {
   try {
-    await db.run(
+    await DatabaseService.run(
       `INSERT INTO battles (attacker_id, defender_id, winner_id, gold_won, xp_won) 
        VALUES (?, ?, ?, ?, ?)`,
       [attacker_id, defender_id, winner_id, goldWon, xpWon]
@@ -139,4 +160,4 @@ async function saveBattle(attacker_id, defender_id, winner_id, goldWon, xpWon) {
   }
 }
 
-module.exports = { handleCombat, canAttackAgain, saveBattle };
+export { handleCombat, canAttackAgain, saveBattle };
