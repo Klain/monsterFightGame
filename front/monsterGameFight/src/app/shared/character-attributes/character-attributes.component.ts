@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatGridListModule } from '@angular/material/grid-list';
 import { CharacterService } from '../../core/services/character.service';
 import { Observable, forkJoin } from 'rxjs';
 import { Character } from '../../core/models/chacter.models';
@@ -13,7 +14,7 @@ import { validAttributes } from '../../core/constants/attributes';
   standalone: true,
   templateUrl: './character-attributes.component.html',
   styleUrls: ['./character-attributes.component.css'],
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatSnackBarModule]
+  imports: [CommonModule, MatCardModule, MatGridListModule, MatButtonModule]
 })
 export class CharacterAttributesComponent implements OnInit {
   character$: Observable<Character | null>;

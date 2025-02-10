@@ -1,0 +1,53 @@
+<mat-card class="activity-card">
+  <mat-card-title>{{ activity | titlecase }}</mat-card-title>
+  <mat-card-content>
+    <div *ngIf="!isInProgress">
+      <mat-slider
+        min="1"
+        [max]="maxDuration"
+        step="1"
+        thumbLabel
+        [disabled]="maxDuration <= 1">
+        <input matSliderThumb [(ngModel)]="selectedDuration" />
+      </mat-slider>
+      <p *ngIf="maxDuration > 1">Duración seleccionada: {{ selectedDuration }} minutos</p>
+      <p *ngIf="maxDuration <= 1">No puedes realizar esta actividad ahora.</p>
+    </div>
+    <div *ngIf="isInProgress">
+      <p>Tiempo restante: {{ remainingTime | secondsToTimer }}</p>
+      <mat-progress-bar [value]="progress" mode="determinate"></mat-progress-bar>
+    </div>
+  </mat-card-content>
+  <mat-card-actions>
+    <button
+      mat-raised-button
+      color="primary"
+      *ngIf="!isInProgress && maxDuration > 1"
+      (click)="startActivity()"
+      [disabled]="isLoading || selectedDuration < 1">
+      Iniciar
+    </button>
+    <button
+      mat-raised-button
+      color="accent"
+      *ngIf="isInProgress && remainingTime > 0"
+      [disabled]="true">
+      En progreso
+    </button>
+    <button
+      mat-raised-button
+      color="accent"
+      *ngIf="isInProgress && remainingTime === 0"
+      (click)="claimReward()"
+      [disabled]="isLoading">
+      Reclamar Recompensa
+    </button>
+    <button
+      mat-raised-button
+      color="warn"
+      *ngIf="!isInProgress && maxDuration <= 1"
+      disabled>
+      No disponible
+    </button>
+  </mat-card-actions>
+</mat-card>

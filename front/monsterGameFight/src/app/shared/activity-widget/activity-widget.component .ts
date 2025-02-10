@@ -1,8 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { ActivityService } from '../../core/services/activity.service';
+import { Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-activity-widget',
@@ -11,45 +12,70 @@ import { ActivityService } from '../../core/services/activity.service';
   templateUrl: './activity-widget.component.html',
   styleUrls: ['./activity-widget.component.css']
 })
-export class ActivityWidgetComponent implements OnInit {
-  @Input() activityName: string = '';
-  @Input() totalDuration: number = 0;
-  @Input() remainingTime: number = 0; 
-
-  progress: number = 0; 
-  intervalId: any = null;
+export class ActivityWidgetComponent implements OnInit, OnDestroy {
+  activityName: string = '';
+  totalDuration: number = 0;
+  remainingTime: number = 0;
+  progress: number = 0;
   isCompleted: boolean = false;
+
+  private countdownSub: Subscription | null = null;
 
   constructor(private activityService: ActivityService) {}
 
   ngOnInit() {
-    this.startCountdown();
+    this.loadActivityStatus();
+  }
+
+  loadActivityStatus() {
+    this.activityService.checkActivityStatus().subscribe({
+      next: (data) => {
+        if(data){
+          if (data.status === 'in_progress' && data.activity) {
+            this.activityName = data.activity.type;
+            this.totalDuration = data.activity.duration;
+            this.remainingTime = data.activity.getRemainingTime();
+            this.startCountdown();
+          } else if (data.status === 'completed') {
+            this.isCompleted = true;
+          }
+        }
+      },
+      error: () => {
+        console.error('Error al obtener el estado de la actividad.');
+      }
+    });
   }
 
   startCountdown() {
     this.updateProgress();
 
-    this.intervalId = setInterval(() => {
+    this.countdownSub = interval(1000).subscribe(() => {
       if (this.remainingTime > 0) {
         this.remainingTime--;
         this.updateProgress();
       } else {
-        clearInterval(this.intervalId);
-        this.remainingTime = 0;
-        this.isCompleted = true;
+        this.completeActivity();
       }
-    }, 1000); 
+    });
   }
 
   updateProgress() {
     this.progress = ((this.totalDuration * 60 - this.remainingTime) / (this.totalDuration * 60)) * 100;
   }
 
+  completeActivity() {
+    this.isCompleted = true;
+    if (this.countdownSub) {
+      this.countdownSub.unsubscribe();
+    }
+  }
+
   claimReward() {
     this.activityService.claimActivityReward().subscribe({
       next: () => {
         this.isCompleted = false;
-        alert('Recompensa reclamada con éxito.');
+        this.loadActivityStatus(); 
       },
       error: () => {
         alert('Error al reclamar recompensa.');
@@ -58,8 +84,8 @@ export class ActivityWidgetComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
+    if (this.countdownSub) {
+      this.countdownSub.unsubscribe();
     }
   }
 }

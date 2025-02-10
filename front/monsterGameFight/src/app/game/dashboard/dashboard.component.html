@@ -1,46 +1,5 @@
 <div class="dashboard-grid">
   <app-character-attributes></app-character-attributes>
-    <!-- Widget de actividad -->
-  <ng-container *ngIf="currentActivity$ | async as activity">
-    <app-activity-widget
-      [activityName]="activity.activityName"
-      [totalDuration]="activity.totalDuration"
-      [remainingTime]="activity.remainingTime"
-      (onComplete)="completeActivity()"
-    ></app-activity-widget>
-  </ng-container>
-  
-  <!-- Tarjeta de Última Batalla 
-  <mat-card *ngIf="character$ | async as character" class="combat-card">
-    <mat-card-title>Última Batalla</mat-card-title>
-    <mat-card-content>
-      <p><strong>Oponente:</strong> {{ character.lastOpponent || 'Desconocido' }}</p>
-      <p><strong>Resultado:</strong> {{ character.lastFightResult || 'N/A' }}</p>
-      <p><strong>Oro ganado:</strong> {{ character.lastGoldWon || 0 }}</p>
-      <p><strong>XP ganada:</strong> {{ character.lastXpWon || 0 }}</p>
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button color="accent" (click)="findOpponent()">Buscar Oponente</button>
-    </mat-card-actions>
-  </mat-card>-->
-
-  <!-- Tarjeta de Estado de Actividades --> 
-  <mat-card class="activity-summary-card">
-    <mat-card-title>Estado de Actividades</mat-card-title>
-    <mat-card-content>
-      <app-activity-summary></app-activity-summary>
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button color="primary" routerLink="/activities">Ver Actividades</button>
-    </mat-card-actions>
-  </mat-card>
-
-  <!-- Tarjeta de Actividad en Curso -->
-  <mat-card class="activity-overview-card">
-    <mat-card-title>Actividad en Curso</mat-card-title>
-    <mat-card-content>
-      <app-activity-overview></app-activity-overview>
-    </mat-card-content>
-  </mat-card>
-
+  <app-activity-grid></app-activity-grid>
+  <app-activity-widget></app-activity-widget>
 </div>

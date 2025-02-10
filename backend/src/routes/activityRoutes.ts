@@ -1,17 +1,14 @@
 import express, { Request, response, Response } from "express";
-import CharacterService from "../services/characterService";
 import ActivityService from "../services/activityService";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateActivityMiddleware } from "../middleware/validateActivityMiddleware";
 import { validateActivityStartMiddleware } from "../middleware/validateActivityStartMiddleware";
-import { ActivityType } from "../constants/activities";
 
 const router = express.Router();
 
-//Obtener duración máxima permitida para una actividad
 router.get(
-  "/max-duration/:activity",
+  "/max-duration/:activityType",
   authMiddleware,
   validateCharacterMiddleware,
   validateActivityMiddleware,

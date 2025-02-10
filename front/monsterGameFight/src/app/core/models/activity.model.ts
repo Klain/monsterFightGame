@@ -4,7 +4,7 @@ export class Activity {
   id: number = 0;
   userId: number = 0;
   characterId: number = 0;
-  type: ActivityType = "trabajo"; // Cambiado a tipo fuerte
+  type: ActivityType = "explorar"; // Cambiado a tipo fuerte
   startTime: Date = new Date();
   duration: number = 0; // En minutos
   completed: boolean = false;

@@ -12,17 +12,17 @@ export const validateActivityStartMiddleware = async (
     const activityType =  req.locals.activityType;
 
     const existingActivity = await ActivityService.getActivityStatus(character);
-    if (existingActivity) {
-      res.status(400).json({ error: "El personaje ya está en otra actividad." });
+    if (existingActivity.activity) {
+      res.status(400).json({ message: "El personaje ya está en otra actividad." });
       return;
     }
 
     let maxDuration = 1;
-    if (activity === "explorar") {
+    if (activityType === "explorar") {
       maxDuration = character.currentStamina;
-    } else if (activity === "sanar") {
+    } else if (activityType === "sanar") {
       maxDuration = character.currentHealth < character.totalHealth ? 60 : 0;
-    } else if (activity === "meditar") {
+    } else if (activityType === "meditar") {
       maxDuration = character.currentMana < character.totalMana ? 60 : 0;
     }
 

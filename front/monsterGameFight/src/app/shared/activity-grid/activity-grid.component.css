@@ -1,0 +1,31 @@
+.activity-grid {
+  display: flex;
+  flex-wrap: wrap; /* Permitir que las tarjetas se ajusten en múltiples filas si es necesario */
+  justify-content: space-between; /* Espaciado uniforme entre las tarjetas */
+  gap: 15px; /* Espaciado entre las tarjetas */
+}
+
+.activity-card-wrapper {
+  flex: 1 1 calc(33.333% - 15px); /* Cada tarjeta ocupa un tercio del ancho menos el espacio del gap */
+  max-width: calc(33.333% - 15px); /* Para evitar que se expandan más del 33% */
+  box-sizing: border-box; /* Incluye el padding y border en el tamaño total */
+}
+
+.activity-tile {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Centra las cards dentro del grid-tile */
+}
+
+mat-grid-tile {
+  background: none; /* Elimina cualquier color de fondo adicional */
+  padding: 10px; /* Agrega un pequeño padding dentro de cada tile */
+}
+
+.app-activity-card {
+  width: 100%; /* Asegura que las cards ocupen todo el espacio del tile */
+  max-width: 300px; /* Limita el ancho máximo para una mejor apariencia */
+  height: 100%; /* Ocupa la altura completa del tile */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombras suaves */
+  border-radius: 8px; /* Bordes redondeados */
+}

@@ -65,13 +65,11 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS activities (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
       character_id INTEGER NOT NULL,
       type TEXT NOT NULL,
       start_time TIMESTAMP NOT NULL,
       duration INTEGER NOT NULL,
       completed BOOLEAN DEFAULT FALSE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
     )
   `);

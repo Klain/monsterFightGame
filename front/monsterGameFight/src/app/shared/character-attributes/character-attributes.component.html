@@ -8,18 +8,20 @@
     <p><strong>XP Disponible:</strong> {{ character.currentXp }}</p>
     <p><strong>Puntos de Mejora:</strong> {{ character.upgradePoints }}</p>
 
-    <ng-container *ngFor="let attribute of attributeList">
-      <div class="attribute">
-        <p><strong>{{ attribute.label }}:</strong> {{ character[attribute.key] }}</p>
-        <button 
-          mat-button 
-          color="primary" 
-          *ngIf="attributeCosts[attribute.key] !== undefined && character.currentXp >= attributeCosts[attribute.key]"
-          (click)="upgradeAttribute(attribute.key)"
-          [disabled]="isLoading[attribute.key]">
-          {{ isLoading[attribute.key] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts[attribute.key] + ')' }}
-        </button>
-      </div>
-    </ng-container>
+    <mat-grid-list cols="3" rowHeight="100px" class="attribute-grid">
+      <mat-grid-tile *ngFor="let attribute of attributeList" class="attribute-tile">
+        <div class="attribute">
+          <p><strong>{{ attribute.label }}:</strong> {{ character[attribute.key] }}</p>
+          <button 
+            mat-button 
+            color="primary" 
+            *ngIf="attributeCosts[attribute.key] !== undefined && character.currentXp >= attributeCosts[attribute.key]"
+            (click)="upgradeAttribute(attribute.key)"
+            [disabled]="isLoading[attribute.key]">
+            {{ isLoading[attribute.key] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts[attribute.key] + ')' }}
+          </button>
+        </div>
+      </mat-grid-tile>
+    </mat-grid-list>
   </mat-card-content>
 </mat-card>
