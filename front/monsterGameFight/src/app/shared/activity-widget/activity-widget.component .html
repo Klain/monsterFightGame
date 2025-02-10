@@ -1,0 +1,25 @@
+<div class="activity-widget">
+  <div class="activity-header">
+    <h3>{{ activityName }}</h3>
+    <span *ngIf="!isCompleted">
+      {{ remainingTime | timeFormatter }}
+    </span>
+    <span *ngIf="isCompleted" class="completed-text">
+      Completado
+    </span>
+  </div>
+
+  <mat-progress-bar
+    *ngIf="!isCompleted"
+    [value]="progress"
+    mode="determinate">
+  </mat-progress-bar>
+
+  <button
+    *ngIf="isCompleted"
+    mat-raised-button
+    color="primary"
+    (click)="claimReward()">
+    Reclamar Recompensa
+  </button>
+</div>

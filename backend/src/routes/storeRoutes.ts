@@ -25,7 +25,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 router.post("/buy", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { item_id } = req.body;
-    const userId = req.locals.user.id;
+    const userId = req.locals?.user?.id || 0;
 
     if (!item_id) {
       res.status(400).json({ error: "El ID del ítem es obligatorio." });
@@ -86,7 +86,7 @@ router.post("/buy", authMiddleware, async (req: Request, res: Response): Promise
 router.post("/sell", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { item_id } = req.body;
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
 
     if (!item_id) {
       res.status(400).json({ error: "El ID del ítem es obligatorio." });

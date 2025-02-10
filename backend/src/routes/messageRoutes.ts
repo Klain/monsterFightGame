@@ -7,7 +7,7 @@ const router = express.Router();
 // Ruta: Enviar mensaje
 router.post("/send", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
 
     const { receiver_id, subject, body } = req.body;
 
@@ -27,7 +27,7 @@ router.post("/send", authMiddleware, async (req: Request, res: Response): Promis
 // Ruta: Obtener mensajes
 router.get("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
 
     const messages = await getMessages(userId);
     res.json({ messages });
@@ -40,7 +40,7 @@ router.get("/", authMiddleware, async (req: Request, res: Response): Promise<voi
 // Ruta: Marcar mensaje como leído
 router.post("/read/:message_id", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
     
     const { message_id } = req.params;
 

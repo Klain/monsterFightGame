@@ -61,16 +61,20 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 
 // Ruta: Cerrar sesión
 router.post("/logout", authMiddleware, (req: Request, res: Response) => {
-  logoutUser(req.locals.user.id);
-  res.json({ success: true, message: "Sesión cerrada correctamente." });
+  const userId = req.locals.user?.id || 0;
+  logoutUser(userId);
+    res.json({ success: true, message: "Sesión cerrada correctamente." });
+
 });
 
 // Ruta: Verificar sesión
 router.get("/check-session", authMiddleware, (req: Request, res: Response) => {
+  const userId = req.locals.user?.id || 0;
+
   res.json({
     success: true,
     message: "Sesión válida.",
-    user: req.locals.user, 
+    user: userId, 
   });
 });
 

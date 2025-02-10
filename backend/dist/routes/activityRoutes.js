@@ -4,121 +4,70 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const authMiddleware_1 = __importDefault(require("../middleware/authMiddleware"));
-const characterService_1 = __importDefault(require("../services/characterService"));
 const activityService_1 = __importDefault(require("../services/activityService"));
+const authMiddleware_1 = __importDefault(require("../middleware/authMiddleware"));
+const validateCharacterMiddleware_1 = require("../middleware/validateCharacterMiddleware");
+const validateActivityMiddleware_1 = require("../middleware/validateActivityMiddleware");
+const validateActivityStartMiddleware_1 = require("../middleware/validateActivityStartMiddleware");
 const router = express_1.default.Router();
-// Ruta: Iniciar actividad
-router.post("/start", authMiddleware_1.default, async (req, res) => {
+//Obtener duración máxima permitida para una actividad
+router.get("/max-duration/:activity", authMiddleware_1.default, validateCharacterMiddleware_1.validateCharacterMiddleware, validateActivityMiddleware_1.validateActivityMiddleware, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
+        const activityType = req.locals.activityType;
+        const character = req.locals.character;
+        let maxDuration = 1;
+        if (activityType === "explorar") {
+            maxDuration = character.currentStamina;
         }
-        const { character_id, type } = req.body;
-        if (!character_id || !type) {
-            res.status(400).json({ error: "character_id y type son obligatorios." });
-            return;
+        else if (activityType === "sanar") {
+            maxDuration = character.currentHealth < character.totalHealth ? 60 : 0;
         }
-        const activityTypes = {
-            trabajo: { duration: 1, reward_xp: 100, reward_gold: 50 },
-            entrenamiento: { duration: 1, reward_xp: 150, reward_gold: 20 },
-        };
-        if (!activityTypes[type]) {
-            res.status(400).json({ error: "Tipo de actividad no válido." });
-            return;
+        else if (activityType === "meditar") {
+            maxDuration = character.currentMana < character.totalMana ? 60 : 0;
         }
-        const { duration, reward_xp, reward_gold } = activityTypes[type];
-        await activityService_1.default.startActivity(req.user.id, character_id, type, duration, reward_xp, reward_gold, res);
-        res.json({ message: "Actividad iniciada exitosamente." });
+        res.json({ activity: activityType, maxDuration });
+    }
+    catch (error) {
+        console.error("Error al obtener duración máxima:", error);
+        res.status(500).json({ error: "Error interno." });
+    }
+});
+// Ruta: Iniciar actividad
+router.post("/start", authMiddleware_1.default, validateCharacterMiddleware_1.validateCharacterMiddleware, validateActivityMiddleware_1.validateActivityMiddleware, validateActivityStartMiddleware_1.validateActivityStartMiddleware, async (req, res) => {
+    try {
+        const character = req.locals.character;
+        const activityType = req.locals.activityType;
+        const { duration } = req.body;
+        await activityService_1.default.startActivity(character, activityType, duration);
+        res.json({ message: "Actividad iniciada correctamente." });
     }
     catch (error) {
         console.error("Error al iniciar actividad:", error);
-        res.status(500).json({ error: "Error interno al iniciar la actividad." });
+        res.status(500).json({ error: "Error interno." });
     }
 });
-// Ruta: Estado de la actividad
-router.get("/status", authMiddleware_1.default, async (req, res) => {
+//Consultar estado de actividad
+router.get("/status", authMiddleware_1.default, validateCharacterMiddleware_1.validateCharacterMiddleware, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const character = await characterService_1.default.getCharacterById(req.user.id);
-        if (!character) {
-            res.status(404).json({ error: "Personaje no encontrado." });
-            return;
-        }
-        const status = await activityService_1.default.getActivityStatus(character.id, res);
+        const character = req.locals.character;
+        const status = await activityService_1.default.getActivityStatus(character);
         res.json(status);
     }
     catch (error) {
         console.error("Error al obtener estado de la actividad:", error);
-        res.status(500).json({ error: "Error interno al consultar la actividad." });
+        res.status(500).json({ error: "Error interno." });
     }
 });
-// Ruta: Reclamar recompensa
-router.post("/claim", authMiddleware_1.default, async (req, res) => {
+//Reclamar recompensa de actividad
+router.post("/claim", authMiddleware_1.default, validateCharacterMiddleware_1.validateCharacterMiddleware, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const character = await characterService_1.default.getCharacterById(req.user.id);
-        if (!character) {
-            res.status(404).json({ error: "Personaje no encontrado." });
-            return;
-        }
-        await activityService_1.default.claimActivityReward(character.id, res);
-        const updatedCharacter = await characterService_1.default.getCharacterById(req.user.id);
+        const character = req.locals.character;
+        const updatedCharacter = await activityService_1.default.claimActivityReward(character);
         res.json(updatedCharacter);
     }
     catch (error) {
-        console.error("Error al reclamar recompensa de la actividad:", error);
-        res.status(500).json({ error: "Error interno al reclamar la recompensa." });
-    }
-});
-router.post("/training/start", authMiddleware_1.default, async (req, res) => {
-    try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const { duration } = req.body;
-        const character = await characterService_1.default.getCharacterById(req.user.id);
-        if (!character) {
-            res.status(404).json({ error: "Personaje no encontrado." });
-            return;
-        }
-        if (!duration || duration <= 0) {
-            res.status(400).json({ error: "El tiempo de entrenamiento debe ser mayor a 0." });
-            return;
-        }
-        await activityService_1.default.startActivity(req.user.id, character.id, "train", duration, duration * 10, 0, res);
-        res.json({ message: "Entrenamiento iniciado correctamente." });
-    }
-    catch (error) {
-        console.error("Error al iniciar el entrenamiento:", error);
-        res.status(500).json({ error: "Error interno al iniciar el entrenamiento." });
-    }
-});
-router.post("/training/claim/:character_id", authMiddleware_1.default, async (req, res) => {
-    try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const { character_id } = req.params;
-        if (!character_id) {
-            res.status(400).json({ error: "El ID del personaje es obligatorio." });
-            return;
-        }
-        await activityService_1.default.claimActivityReward(Number(character_id), res);
-        res.json({ message: "Recompensa reclamada correctamente." });
-    }
-    catch (error) {
-        console.error("Error al reclamar recompensa de entrenamiento:", error);
-        res.status(500).json({ error: "Error interno al reclamar la recompensa." });
+        console.error("Error al reclamar recompensa:", error);
+        res.status(500).json({ error: "Error interno." });
     }
 });
 exports.default = router;

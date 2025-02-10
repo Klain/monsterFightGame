@@ -1,12 +1,10 @@
+//backend\src\routes\characterRoutes.ts
 import express, { Request, Response } from "express";
 import { db } from "../database";
 import CharacterService from "../services/characterService";
-import DatabaseService from "../services/databaseService";
 import authMiddleware from "../middleware/authMiddleware";
-import { AttributeType } from "../constants/attributes";
-import { Character } from "../models/character.model";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
-import { validateAttributeMiddleware } from "../middleware/validateAttributeMiddleware copy";
+import { validateAttributeMiddleware } from "../middleware/validateAttributeMiddleware";
 
 const router = express.Router();
 
@@ -16,7 +14,7 @@ router.get("/attributes/upgrade-cost/:attribute", authMiddleware , validateAttri
     const { attribute } = req.params;
     const character = req.locals.character;
 
-    const currentValue = character[attribute as keyof Pick<Character, AttributeType>];
+    const currentValue = character[attribute];
     const cost = character.calculateUpgradeCost(currentValue);
 
     res.json({ attribute, cost });
@@ -30,23 +28,25 @@ router.get("/attributes/upgrade-cost/:attribute", authMiddleware , validateAttri
 router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { attribute } = req.body;
-    const userId = req.locals.user.id;
-    const character = req.locals.character;
+    if(req.locals && req.locals.user && req.locals.character){
+      const userId = req.locals.user.id;
+      const character = req.locals.character;
 
-    const currentValue = character[attribute as keyof Pick<Character, AttributeType>];
-    const cost = character.calculateUpgradeCost(currentValue);
-    const currencies = DatabaseService.getCurrenciesFromCache(character.id);
+      const currentValue = character[attribute];
+      const cost = character.calculateUpgradeCost(currentValue);
 
-    if (!currencies || currencies.currentXp < cost) {
-      res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
-      return;
+      if (character.currentXp < cost) {
+        res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
+        return;
+      }
+
+      await CharacterService.upgradeCharacterAttribute(character,attribute,cost);
+
+      const updatedCharacter = await CharacterService.getCharacterById(userId);
+      res.json(updatedCharacter);
+    }else{
+      throw new Error("endpoint /attributes/upgrade-attribute: error locals");
     }
-
-    await CharacterService.upgradeCharacterAttribute(userId, attribute);
-
-    const updatedCharacter = await CharacterService.getCharacterById(userId);
-    res.json(updatedCharacter);
-    
   } catch (error) {
     console.error("Error en la mejora de atributo:", error);
     res.status(500).json({ error: "Error interno al mejorar el atributo." });

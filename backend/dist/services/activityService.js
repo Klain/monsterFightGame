@@ -6,14 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const databaseService_1 = __importDefault(require("./databaseService"));
 const sessionManager_1 = require("../sessionManager");
 const messageService_1 = require("./messageService");
-const HEALING_COST_PER_MINUTE = 10;
+const characterService_1 = __importDefault(require("./characterService"));
 class ActivityService {
     // Función: Notificar finalización de actividad
-    static async notifyActivityCompletion(character_id, title, message) {
+    static async notifyActivityCompletion(character, title, message) {
         try {
-            const character = await databaseService_1.default.get("SELECT * FROM characters WHERE id = ?", [character_id]);
-            if (!character)
-                return;
             if (sessionManager_1.connectedUsers.has(character.userId)) {
                 (0, sessionManager_1.sendRealTimeNotification)(character.userId, message);
             }
@@ -38,8 +35,8 @@ class ActivityService {
                     const character = await databaseService_1.default.get("SELECT * FROM characters WHERE id = ?", [activity.characterId]);
                     if (!character)
                         continue;
-                    // Actualizar recompensas del personaje
-                    await databaseService_1.default.run("UPDATE characters SET currentXp = currentXp + ?, currentGold = currentGold + ? WHERE id = ?", [activity.rewardXp, activity.rewardGold, activity.characterId]);
+                    const rewards = this.calculateActivityReward(activity.type, activity.duration);
+                    await characterService_1.default.updateCharacterRewards(character, rewards);
                     const messageText = `Tu actividad '${activity.type}' ha terminado. Recolecta tu recompensa.`;
                     if (sessionManager_1.connectedUsers.has(character.userId)) {
                         (0, sessionManager_1.sendRealTimeNotification)(character.userId, messageText);
@@ -54,66 +51,50 @@ class ActivityService {
             console.error("Error al verificar actividades completadas:", error);
         }
     }
-    // Función: Iniciar actividad
-    static async startActivity(user_id, character_id, type, duration, reward_xp, reward_gold, res) {
-        try {
-            const existingActivity = await databaseService_1.default.get("SELECT * FROM activities WHERE character_id = ? AND completed = FALSE", [character_id]);
-            if (existingActivity) {
-                return res.status(400).json({ error: "Tu personaje ya está ocupado en otra actividad." });
-            }
-            const start_time = new Date();
-            await databaseService_1.default.run(`INSERT INTO activities (user_id, character_id, type, start_time, duration, reward_xp, reward_gold) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`, [user_id, character_id, type, start_time, duration, reward_xp, reward_gold]);
-            return res.json({ message: `Has comenzado la actividad: ${type}. Duración: ${duration} minutos.` });
-        }
-        catch (error) {
-            return res.status(500).json({ error: "Error al iniciar la actividad." });
-        }
+    static async startActivity(character, activity, duration) {
+        return databaseService_1.default.run("INSERT INTO activities (character_id, type, start_time, duration, completed) VALUES (?, ?, CURRENT_TIMESTAMP, ?, FALSE)", [character.id, activity, duration]);
     }
-    // Función: Consultar estado de la actividad
-    static async getActivityStatus(character_id, res) {
-        try {
-            const activity = await databaseService_1.default.get("SELECT * FROM activities WHERE character_id = ? AND completed = FALSE", [character_id]);
-            if (!activity) {
-                return res.json({ message: "No tienes ninguna actividad en curso." });
-            }
-            const now = new Date();
-            const startTime = new Date(activity.startTime);
-            const elapsedMinutes = Math.floor((now.getTime() - startTime.getTime()) / 60000);
-            const remainingMinutes = Math.max(activity.duration - elapsedMinutes, 0);
-            const isCompleted = remainingMinutes === 0;
-            return res.json({
-                type: activity.type,
-                remainingMinutes,
-                isCompleted,
-            });
+    static async getActivityStatus(character) {
+        const activity = await databaseService_1.default.get("SELECT * FROM activities WHERE character_id = ? AND completed = FALSE", [character.id]);
+        if (!activity) {
+            return { status: "idle" };
         }
-        catch (error) {
-            return res.status(500).json({ error: "Error al consultar el estado de la actividad." });
-        }
+        const remainingTime = activity.getRemainingTime();
+        return remainingTime > 0
+            ? { status: "in_progress", remainingTime }
+            : { status: "completed" };
     }
-    // Función: Reclamar recompensa de actividad
-    static async claimActivityReward(character_id, res) {
-        try {
-            const activity = await databaseService_1.default.get("SELECT * FROM activities WHERE character_id = ? AND completed = FALSE", [character_id]);
-            if (!activity) {
-                return res.status(400).json({ error: "No tienes ninguna actividad para reclamar." });
-            }
-            const now = new Date();
-            const startTime = new Date(activity.startTime);
-            const elapsedMinutes = Math.floor((now.getTime() - startTime.getTime()) / 60000);
-            if (elapsedMinutes < activity.duration) {
-                return res.status(400).json({ error: "Aún no ha pasado el tiempo necesario." });
-            }
-            // Marcar actividad como completada
-            await databaseService_1.default.run("UPDATE activities SET completed = TRUE WHERE id = ?", [activity.id]);
-            // Añadir recompensas al personaje
-            await databaseService_1.default.run("UPDATE characters SET currentXp = currentXp + ?, currentGold = currentGold + ? WHERE id = ?", [activity.rewardXp, activity.rewardGold, character_id]);
-            return res.json({ message: "Recompensa reclamada exitosamente." });
+    static async claimActivityReward(character) {
+        const activity = await databaseService_1.default.get("SELECT * FROM activities WHERE character_id = ? AND completed = FALSE", [character.id]);
+        if (!activity) {
+            throw new Error("No hay una actividad para reclamar.");
         }
-        catch (error) {
-            return res.status(500).json({ error: "Error al reclamar la recompensa." });
+        const remainingTime = activity.getRemainingTime();
+        if (remainingTime > 0) {
+            throw new Error("La actividad aún no está completada.");
         }
+        const rewards = this.calculateActivityReward(activity.type, activity.duration);
+        await characterService_1.default.updateCharacterRewards(character, rewards);
+        await databaseService_1.default.run("UPDATE activities SET completed = TRUE WHERE character_id = ?", [character.id]);
+        return characterService_1.default.getCharacterById(character.id);
+    }
+    static calculateActivityReward(activityType, duration) {
+        let reward = {};
+        switch (activityType) {
+            case "explorar":
+                reward = { xp: duration * 5, gold: duration * 2 };
+                break;
+            case "sanar":
+                reward = { health: duration * 5 };
+                break;
+            case "sanar":
+                reward = { stamina: duration * 5 };
+                break;
+            case "meditar":
+                reward = { mana: duration * 5 };
+                break;
+        }
+        return reward;
     }
 }
 exports.default = ActivityService;

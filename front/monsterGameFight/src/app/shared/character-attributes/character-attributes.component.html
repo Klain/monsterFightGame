@@ -1,49 +1,25 @@
 <mat-card *ngIf="character$ | async as character" class="attributes-card">
   <mat-card-title>{{ character.name }}</mat-card-title>
   <mat-card-content>
-    <p><strong>faction:</strong> {{ character.faction }} <strong>class:</strong> {{ character.class }}</p>
+    <p><strong>Facción:</strong> {{ character.faction }} <strong>Clase:</strong> {{ character.class }}</p>
+    <p><strong>Nivel:</strong> {{ character.level }}</p>
+    <p><strong>Salud:</strong> {{ character.currentHealth }} / {{ character.totalHealth }}</p>
+    <p><strong>Oro:</strong> {{ character.currentGold }}</p>
+    <p><strong>XP Disponible:</strong> {{ character.currentXp }}</p>
+    <p><strong>Puntos de Mejora:</strong> {{ character.upgradePoints }}</p>
 
-      <p><strong>Nivel:</strong> {{ character.level }}</p>
-      <p><strong>Salud:</strong> {{ character.health }}/100</p>
-      <p><strong>Oro:</strong> {{ character.currentGold }}</p>
-
-      <p><strong>XP Disponible:</strong> {{ character.currentXp }}</p>
-      <p><strong>Puntos de Mejora:</strong> {{ character.upgrade_points }}</p>
-  
+    <ng-container *ngFor="let attribute of attributeList">
       <div class="attribute">
-        <p><strong>Ataque:</strong> {{ character.attack }}</p>
-        <button mat-button color="primary"
-          *ngIf="attributeCosts['attack'] !== undefined && character.currentXp !== undefined && character.currentXp >= attributeCosts['attack']"
-          (click)="upgradeAttribute('attack')"
-          [disabled]="isLoading['attack']">
-          {{ isLoading['attack'] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts['attack'] + ')' }}
+        <p><strong>{{ attribute.label }}:</strong> {{ character[attribute.key] }}</p>
+        <button 
+          mat-button 
+          color="primary" 
+          *ngIf="attributeCosts[attribute.key] !== undefined && character.currentXp >= attributeCosts[attribute.key]"
+          (click)="upgradeAttribute(attribute.key)"
+          [disabled]="isLoading[attribute.key]">
+          {{ isLoading[attribute.key] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts[attribute.key] + ')' }}
         </button>
       </div>
-  
-      <div class="attribute">
-        <p><strong>Defensa:</strong> {{ character.defense }}</p>
-        <button mat-button color="primary"
-          *ngIf="attributeCosts['defense'] !== undefined && character.currentXp !== undefined && character.currentXp >= attributeCosts['defense']"
-          (click)="upgradeAttribute('defense')"
-          [disabled]="isLoading['defense']">
-          {{ isLoading['defense'] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts['defense'] + ')' }}
-        </button>
-      </div>
-  
-      <div class="attribute">
-        <p><strong>Salud:</strong> {{ character.health }}</p>
-        <button mat-button color="primary"
-          *ngIf="attributeCosts['health'] !== undefined && character.currentXp !== undefined && character.currentXp >= attributeCosts['health']"
-          (click)="upgradeAttribute('health')"
-          [disabled]="isLoading['health']">
-          {{ isLoading['health'] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts['health'] + ')' }}
-        </button>
-      </div>
-
-      <mat-card-actions>
-        <button mat-button color="primary" (click)="train()">Entrenar</button>
-        <button mat-button color="warn" (click)="heal()">Sanar</button>
-      </mat-card-actions>
-    </mat-card-content>
-  </mat-card>
-  
+    </ng-container>
+  </mat-card-content>
+</mat-card>

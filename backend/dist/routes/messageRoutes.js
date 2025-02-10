@@ -10,16 +10,13 @@ const router = express_1.default.Router();
 // Ruta: Enviar mensaje
 router.post("/send", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
+        const userId = req.locals.user?.id || 0;
         const { receiver_id, subject, body } = req.body;
         if (!receiver_id || !subject || !body) {
             res.status(400).json({ error: "receiver_id, subject y body son obligatorios." });
             return;
         }
-        const result = await (0, messageService_1.sendMessage)(req.user.id, receiver_id, subject, body);
+        const result = await (0, messageService_1.sendMessage)(userId, receiver_id, subject, body);
         res.json(result);
     }
     catch (error) {
@@ -30,11 +27,8 @@ router.post("/send", authMiddleware_1.default, async (req, res) => {
 // Ruta: Obtener mensajes
 router.get("/", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const messages = await (0, messageService_1.getMessages)(req.user.id);
+        const userId = req.locals.user?.id || 0;
+        const messages = await (0, messageService_1.getMessages)(userId);
         res.json({ messages });
     }
     catch (error) {
@@ -45,10 +39,7 @@ router.get("/", authMiddleware_1.default, async (req, res) => {
 // Ruta: Marcar mensaje como leído
 router.post("/read/:message_id", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
+        const userId = req.locals.user?.id || 0;
         const { message_id } = req.params;
         if (!message_id) {
             res.status(400).json({ error: "El ID del mensaje es obligatorio." });

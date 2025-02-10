@@ -1,24 +1,34 @@
 export interface Character {
   id: number;
+  userId: number;
   name: string;
-  faction:string;
-  class:string;
+  faction: string;
+  class: number;
   level: number;
 
-  currentGold: number;
-  totalGold: number;
+  strength: number;
+  endurance: number;
+  constitution: number;
+  precision: number;
+  agility: number;
+  vigor: number;
+  spirit: number;
+  willpower: number;
+  arcane: number;
+
+  currentHealth: number;
+  totalHealth: number;
+  currentStamina: number;
+  totalStamina: number;
+  currentMana: number;
+  totalMana: number;
+
+  characterId: number;
   currentXp: number;
   totalXp: number;
-  upgrade_points?: number;
+  currentGold: number;
+  totalGold: number;
 
-  attack?: number;
-  defense?: number;
-  health: number;
-
-  last_fight?: Date;
-  lastFightResult?: string;
-
-  lastOpponent?: string;
-  lastGoldWon?: number;
-  lastXpWon?: number;
+  upgradePoints: number;
+  lastFight?: Date;
 }

@@ -17,6 +17,19 @@
   willpower: number = 1;
   arcane: number = 1;
 
+  currentHealth: number = 100;
+  totalHealth: number = 100;
+  currentStamina: number = 100;
+  totalStamina: number = 100;
+  currentMana: number = 100;
+  totalMana: number = 100;
+
+  characterId: number = 0;
+  currentXp: number = 0;
+  totalXp: number = 0;
+  currentGold: number = 0;
+  totalGold: number = 0;
+
   upgradePoints: number = 0;
   lastFight?: Date;
 
@@ -28,18 +41,21 @@
     return 100 + attributeValue * 10;
   }
 
-  isValidAttribute(attribute: string): boolean {
-    const validAttributes = [
-      "strength",
-      "endurance",
-      "constitution",
-      "precision",
-      "agility",
-      "vigor",
-      "spirit",
-      "willpower",
-      "arcane",
-    ];
-    return validAttributes.includes(attribute);
+  getHealthPercentage(): number {
+    return (this.currentHealth / this.totalHealth) * 100;
+  }
+
+  isDead(): boolean {
+    return this.currentHealth <= 0;
+  }
+
+  // Método para calcular el nivel basado en la experiencia total
+  getLevelFromXp(): number {
+    return Math.floor(this.totalXp / 1000);
+  }
+
+  // Método para verificar si tiene suficiente oro
+  hasEnoughGold(amount: number): boolean {
+    return this.currentGold >= amount;
   }
 }

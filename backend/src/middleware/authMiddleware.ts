@@ -20,7 +20,8 @@ const authMiddleware: RequestHandler = async (req, res, next) => {
       res.status(400).json({ error: "Token inválido o mal formado." });
       return;
     }
-
+    
+    if (!req.locals) { req.locals = {}; }
     // Asigna `req.user` directamente
     req.locals.user = {
       id: verified.id,

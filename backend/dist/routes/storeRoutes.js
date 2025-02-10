@@ -27,18 +27,14 @@ router.get("/", async (req, res) => {
 // Ruta: Comprar un ítem
 router.post("/buy", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
         const { item_id } = req.body;
-        const user_id = req.user.id;
+        const userId = req.locals?.user?.id || 0;
         if (!item_id) {
             res.status(400).json({ error: "El ID del ítem es obligatorio." });
             return;
         }
         const character = await new Promise((resolve, reject) => {
-            database_1.db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
+            database_1.db.get("SELECT * FROM characters WHERE user_id = ?", [userId], (err, row) => {
                 if (err)
                     return reject(err);
                 resolve(row);
@@ -87,18 +83,14 @@ router.post("/buy", authMiddleware_1.default, async (req, res) => {
 // Ruta: Vender un ítem
 router.post("/sell", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
         const { item_id } = req.body;
-        const user_id = req.user.id;
+        const userId = req.locals.user?.id || 0;
         if (!item_id) {
             res.status(400).json({ error: "El ID del ítem es obligatorio." });
             return;
         }
         const character = await new Promise((resolve, reject) => {
-            database_1.db.get("SELECT * FROM characters WHERE user_id = ?", [user_id], (err, row) => {
+            database_1.db.get("SELECT * FROM characters WHERE user_id = ?", [userId], (err, row) => {
                 if (err)
                     return reject(err);
                 resolve(row);

@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-    "target": "es2020",                  // Versión de JavaScript que quieres generar
-    "module": "commonjs",               // Usar `commonjs` para Node.js
-    "strict": true,                     // Activar todas las comprobaciones estrictas
-    "esModuleInterop": true,            // Habilitar importaciones de módulos ES
-    "forceConsistentCasingInFileNames": true, // Consistencia en el nombre de archivos
-    "skipLibCheck": true,               // Evitar errores en archivos de definición de terceros
-    "outDir": "./dist",                 // Carpeta de salida para los archivos compilados
-    "rootDir": "./src",                 // Carpeta raíz del código fuente
-    "typeRoots": ["./node_modules/@types", "./src/types"], // Incluir tipos personalizados
-    "resolveJsonModule": true           // Permitir importar JSON
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "typeRoots": ["./node_modules/@types", "./src/types"], 
+    "resolveJsonModule": true
   },
-"include": ["src/**/*.ts", "src/types/**/*.d.ts"],
-"exclude": ["node_modules", "dist"]   // Excluir directorios innecesarios
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

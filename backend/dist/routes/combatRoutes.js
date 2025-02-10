@@ -11,11 +11,7 @@ const router = express_1.default.Router();
 // Ruta: Iniciar un combate entre jugadores
 router.post("/battle", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const userId = req.user.id;
+        const userId = req.locals.user?.id || 0;
         const { defender_id } = req.body;
         if (!defender_id) {
             res.status(400).json({ error: "El ID del defensor es obligatorio." });
@@ -36,11 +32,7 @@ router.post("/battle", authMiddleware_1.default, async (req, res) => {
 // Ruta: Buscar un oponente aleatorio para combatir
 router.get("/find-opponent", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const userId = req.user.id;
+        const userId = req.locals.user?.id || 0;
         const player = await new Promise((resolve, reject) => {
             database_1.db.get("SELECT * FROM characters WHERE user_id = ?", [userId], (err, row) => {
                 if (err)
@@ -85,11 +77,7 @@ router.get("/find-opponent", authMiddleware_1.default, async (req, res) => {
 // Ruta: Luchar en la arena contra un oponente aleatorio
 router.post("/arena-battle", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const userId = req.user.id;
+        const userId = req.locals.user?.id || 0;
         const player = await new Promise((resolve, reject) => {
             database_1.db.get("SELECT id FROM characters WHERE user_id = ?", [userId], (err, row) => {
                 if (err)
@@ -123,11 +111,7 @@ router.post("/arena-battle", authMiddleware_1.default, async (req, res) => {
 // Ruta: Obtener el historial de batallas
 router.get("/battle-log", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const userId = req.user.id;
+        const userId = req.locals.user?.id || 0;
         const battle_log = await new Promise((resolve, reject) => {
             database_1.db.all(`SELECT * FROM battles WHERE attacker_id = ? OR defender_id = ? ORDER BY last_attack DESC LIMIT 10`, [userId, userId], (err, rows) => {
                 if (err)

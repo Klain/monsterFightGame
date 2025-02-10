@@ -8,7 +8,7 @@ const router = express.Router();
 // Ruta: Iniciar un combate entre jugadores
 router.post("/battle", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
     const { defender_id } = req.body;
 
     if (!defender_id) {
@@ -32,7 +32,7 @@ router.post("/battle", authMiddleware, async (req: Request, res: Response): Prom
 // Ruta: Buscar un oponente aleatorio para combatir
 router.get("/find-opponent", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
 
     const player = await new Promise<any>((resolve, reject) => {
       db.get("SELECT * FROM characters WHERE user_id = ?", [userId], (err, row) => {
@@ -85,7 +85,7 @@ router.get("/find-opponent", authMiddleware, async (req: Request, res: Response)
 // Ruta: Luchar en la arena contra un oponente aleatorio
 router.post("/arena-battle", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
 
     const player = await new Promise<any>((resolve, reject) => {
       db.get("SELECT id FROM characters WHERE user_id = ?", [userId], (err, row) => {
@@ -126,7 +126,7 @@ router.post("/arena-battle", authMiddleware, async (req: Request, res: Response)
 // Ruta: Obtener el historial de batallas
 router.get("/battle-log", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user.id;
+    const userId = req.locals.user?.id || 0;
 
     const battle_log = await new Promise<any[]>((resolve, reject) => {
       db.all(

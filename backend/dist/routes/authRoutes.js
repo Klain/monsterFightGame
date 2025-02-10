@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const database_1 = require("../database");
+const userServices_1 = require("../services/userServices");
 const characterService_1 = __importDefault(require("../services/characterService"));
 const sessionManager_1 = require("../sessionManager");
 require("dotenv/config");
@@ -21,13 +21,13 @@ router.post("/register", async (req, res) => {
             res.status(400).json({ error: "Todos los campos son obligatorios." });
             return;
         }
-        const existingUser = await (0, database_1.getUserByUsername)(username);
+        const existingUser = await (0, userServices_1.getUserByUsername)(username);
         if (existingUser) {
             res.status(400).json({ error: "El usuario ya existe." });
             return;
         }
         const hashedPassword = await bcrypt_1.default.hash(password, 10);
-        const newUser = await (0, database_1.createUser)(username, hashedPassword);
+        const newUser = await (0, userServices_1.createUser)(username, hashedPassword);
         await characterService_1.default.createCharacterForUser(newUser.id, username);
         res.status(201).json({ message: "Usuario y personaje creados exitosamente." });
     }
@@ -40,7 +40,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await (0, database_1.getUserByUsername)(username);
+        const user = await (0, userServices_1.getUserByUsername)(username);
         if (!user || !(await bcrypt_1.default.compare(password, user.password))) {
             res.status(401).json({ error: "Credenciales inválidas." });
             return;
@@ -56,15 +56,17 @@ router.post("/login", async (req, res) => {
 });
 // Ruta: Cerrar sesión
 router.post("/logout", authMiddleware_1.default, (req, res) => {
-    (0, sessionManager_1.logoutUser)(req.user.id); // `req.user` ya está definido
+    const userId = req.locals.user?.id || 0;
+    (0, sessionManager_1.logoutUser)(userId);
     res.json({ success: true, message: "Sesión cerrada correctamente." });
 });
 // Ruta: Verificar sesión
 router.get("/check-session", authMiddleware_1.default, (req, res) => {
+    const userId = req.locals.user?.id || 0;
     res.json({
         success: true,
         message: "Sesión válida.",
-        user: req.user,
+        user: userId,
     });
 });
 exports.default = router;

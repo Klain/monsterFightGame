@@ -11,30 +11,52 @@ class CharacterService {
         try {
             const defaultFaction = "Neutral";
             const defaultClass = 1;
-            const result = await databaseService_1.default.run(`INSERT INTO characters (user_id, name, faction, class, level, strength, endurance, constitution, precision, agility, vigor, spirit, willpower, arcane, upgrade_points) 
-         VALUES (?, ?, ?, ?, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)`, [userId, username, defaultFaction, defaultClass]);
-            const character = new character_model_1.Character({
-                id: result.lastID, // lastID proviene del resultado de DatabaseService.run
+            // Crea una instancia inicial del personaje con valores predeterminados
+            const newCharacter = new character_model_1.Character({
                 userId,
                 name: username,
                 faction: defaultFaction,
                 class: defaultClass,
-                level: 1,
-                strength: 1,
-                endurance: 1,
-                constitution: 1,
-                precision: 1,
-                agility: 1,
-                vigor: 1,
-                spirit: 1,
-                willpower: 1,
-                arcane: 1,
-                upgradePoints: 0,
             });
-            // Actualizar el caché
-            databaseService_1.default.updateCharacterInCache(character.id, character);
+            // Inserta el personaje en la base de datos usando sus propiedades
+            const result = await databaseService_1.default.run(`INSERT INTO characters (
+          user_id, name, faction, class, level, strength, endurance, constitution, precision, agility, vigor, spirit, willpower, arcane, 
+          current_health, total_health, current_stamina, total_stamina, current_mana, total_mana, 
+          current_xp, total_xp, current_gold, total_gold, upgrade_points, last_fight
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                newCharacter.userId,
+                newCharacter.name,
+                newCharacter.faction,
+                newCharacter.class,
+                newCharacter.level,
+                newCharacter.strength,
+                newCharacter.endurance,
+                newCharacter.constitution,
+                newCharacter.precision,
+                newCharacter.agility,
+                newCharacter.vigor,
+                newCharacter.spirit,
+                newCharacter.willpower,
+                newCharacter.arcane,
+                newCharacter.currentHealth,
+                newCharacter.totalHealth,
+                newCharacter.currentStamina,
+                newCharacter.totalStamina,
+                newCharacter.currentMana,
+                newCharacter.totalMana,
+                newCharacter.currentXp,
+                newCharacter.totalXp,
+                newCharacter.currentGold,
+                newCharacter.totalGold,
+                newCharacter.upgradePoints,
+                newCharacter.lastFight || null, // Manejo del valor opcional
+            ]);
+            // Añade el `id` del personaje recién creado
+            newCharacter.id = result.lastID;
+            // Actualizar el caché (si lo usas)
+            databaseService_1.default.updateCharacterInCache(newCharacter.id, newCharacter);
             console.log(`✅ Personaje creado para el usuario ${userId}`);
-            return character;
+            return newCharacter;
         }
         catch (error) {
             console.error("❌ Error al crear personaje:", error);
@@ -44,42 +66,41 @@ class CharacterService {
     // Obtener un personaje por su ID de usuario
     static async getCharacterById(userId) {
         const character = databaseService_1.default.getCharacterFromCache(userId);
-        if (!character) {
-            throw new Error("Personaje no encontrado en el caché");
-        }
         return character;
     }
     // Mejorar un atributo del personaje
     // Restringimos el tipo del atributo dinámico
-    static async upgradeCharacterAttribute(userId, attribute) {
+    static async upgradeCharacterAttribute(character, attribute, cost) {
         try {
-            const character = await this.getCharacterById(userId);
-            // Validar si el atributo es un atributo válido y de tipo `number`
-            if (!character.isValidAttribute(attribute)) {
-                throw new Error(`El atributo '${attribute}' no es válido.`);
-            }
             const currentValue = character[attribute];
-            if (typeof currentValue !== "number") {
-                throw new Error(`El atributo '${attribute}' no es un número válido.`);
-            }
-            const cost = character.calculateUpgradeCost(currentValue);
-            // Obtener monedas del caché
-            const currencies = databaseService_1.default.getCurrenciesFromCache(character.id);
-            if (!currencies || currencies.currentXp < cost) {
-                throw new Error("No tienes suficiente experiencia para mejorar este atributo.");
-            }
-            // Actualizar valores
-            character[attribute] = currentValue + 1; // Aseguramos que solo atributos numéricos son modificados
-            currencies.currentXp -= cost;
+            const updatedValue = currentValue + 1;
+            const updatedXp = character.currentXp - cost;
             // Sincronizar con la base de datos
-            await databaseService_1.default.run(`UPDATE characters SET ${attribute} = ?, currentXp = ? WHERE id = ?`, [character[attribute], currencies.currentXp, character.id]);
-            // Actualizar el caché
+            await databaseService_1.default.run(`UPDATE characters SET ${attribute} = ?, currentXp = ? WHERE id = ?`, [updatedValue, updatedXp, character.id]);
+            // Actualizar el objeto en caché
+            character[attribute] = updatedValue;
+            character.currentXp = updatedXp;
             databaseService_1.default.updateCharacterInCache(character.id, character);
             return character;
         }
         catch (error) {
-            console.error("Error en upgradeCharacterAttribute:", error);
+            console.error("❌ Error en upgradeCharacterAttribute:", error);
             throw new Error("No se pudo actualizar el personaje. Inténtalo nuevamente.");
+        }
+    }
+    static async updateCharacterRewards(character, rewards) {
+        try {
+            character.currentXp += rewards.xp ?? 0;
+            character.currentGold += rewards.gold ?? 0;
+            character.currentHealth = Math.min(character.totalHealth, character.currentHealth + (rewards.health ?? 0));
+            character.currentStamina = Math.min(character.totalStamina, character.currentStamina + (rewards.stamina ?? 0));
+            character.currentMana = Math.min(character.totalMana, character.currentMana + (rewards.mana ?? 0));
+            await databaseService_1.default.run(`UPDATE characters SET currentXp = ?, currentGold = ?, currentHealth = ?, currentStamina = ?, currentMana = ? WHERE id = ?`, [character.currentXp, character.currentGold, character.currentHealth, character.currentStamina, character.currentMana, character.id]);
+            databaseService_1.default.updateCharacterInCache(character.id, character);
+        }
+        catch (error) {
+            console.error("Error al actualizar las recompensas del personaje:", error);
+            throw new Error("No se pudo actualizar las recompensas del personaje.");
         }
     }
     static async getEquippedStats(id) {

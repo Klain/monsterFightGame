@@ -1,13 +1,9 @@
 import { db } from "../database"; 
 import { Character } from "../models/character.model";
-import { Status } from "../models/status.model";
-import { Currencies } from "../models/currencies.model";
 import { Item } from "../models/item.model";
 
 class DatabaseService {
   static characterCache: Map<number, Character> = new Map(); // Caché para personajes
-  static statusCache: Map<number, Status> = new Map(); // Caché para status
-  static currenciesCache: Map<number, Currencies> = new Map(); // Caché para monedas
   static inventoryCache: Map<number, Item[]> = new Map(); // Caché para inventario (characterId -> array de ítems)
 
   // Inicializar todos los cachés
@@ -18,16 +14,6 @@ class DatabaseService {
       const characters = await this.all<Character>("SELECT * FROM characters");
       characters.forEach((character) => {
         this.characterCache.set(character.id, new Character(character));
-      });
-
-      const statuses = await this.all<Status>("SELECT * FROM status");
-      statuses.forEach((status) => {
-        this.statusCache.set(status.characterId, new Status(status));
-      });
-
-      const currencies = await this.all<Currencies>("SELECT * FROM currencies");
-      currencies.forEach((currency) => {
-        this.currenciesCache.set(currency.characterId, new Currencies(currency));
       });
 
       const inventory = await this.all<Item & { character_id: number }>(`
@@ -66,18 +52,13 @@ class DatabaseService {
   // Obtener un personaje completo con inventario y relaciones
   static getCharacterWithRelations(characterId: number): {
     character: Character;
-    status: Status | null;
-    currencies: Currencies | null;
     inventory: Item[];
   } {
     const character = this.getCharacterFromCache(characterId);
     if (!character) throw new Error("Personaje no encontrado en el caché");
-
-    const status = this.getStatusFromCache(characterId);
-    const currencies = this.getCurrenciesFromCache(characterId);
     const inventory = this.getInventoryFromCache(characterId);
 
-    return { character, status, currencies, inventory };
+    return { character, inventory };
   }
 
   // Obtener un personaje desde el caché
@@ -90,17 +71,6 @@ class DatabaseService {
   static removeCharacterFromCache(id: number) {
     this.characterCache.delete(id);
   }
-
-  // Obtener el estado de un personaje desde el caché
-  static getStatusFromCache(characterId: number): Status | null {
-    return this.statusCache.get(characterId) || null;
-  }
-
-  // Obtener las monedas de un personaje desde el caché
-  static getCurrenciesFromCache(characterId: number): Currencies | null {
-    return this.currenciesCache.get(characterId) || null;
-  }
-
   // Métodos genéricos para consultas SQL
   static async get<T>(query: string, params: unknown[] = []): Promise<T | null> {
     return new Promise((resolve, reject) => {

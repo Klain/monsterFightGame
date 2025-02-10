@@ -3,33 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+//backend\src\routes\characterRoutes.ts
 const express_1 = __importDefault(require("express"));
 const database_1 = require("../database");
 const characterService_1 = __importDefault(require("../services/characterService"));
-const validationUtils_1 = require("../utils/validationUtils");
-const databaseService_1 = __importDefault(require("../services/databaseService"));
 const authMiddleware_1 = __importDefault(require("../middleware/authMiddleware"));
+const validateCharacterMiddleware_1 = require("../middleware/validateCharacterMiddleware");
+const validateAttributeMiddleware_1 = require("../middleware/validateAttributeMiddleware");
 const router = express_1.default.Router();
-router.get("/attributes/upgrade-cost/:attribute", authMiddleware_1.default, async (req, res) => {
+// Ruta: Obtener el costo de mejora de un atributo
+router.get("/attributes/upgrade-cost/:attribute", authMiddleware_1.default, validateAttributeMiddleware_1.validateAttributeMiddleware, validateCharacterMiddleware_1.validateCharacterMiddleware, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
         const { attribute } = req.params;
-        const character = await characterService_1.default.getCharacterById(req.user.id);
-        if (!(0, validationUtils_1.validateAttributeExist)(attribute).success) {
-            res.status(400).json({ error: (0, validationUtils_1.validateAttributeExist)(attribute).error });
-            return;
-        }
-        if (!character) {
-            res.status(404).json({ error: "Personaje no encontrado." });
-            return;
-        }
-        if (!(attribute in character)) {
-            res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
-            return;
-        }
+        const character = req.locals.character;
         const currentValue = character[attribute];
         const cost = character.calculateUpgradeCost(currentValue);
         res.json({ attribute, cost });
@@ -39,36 +25,26 @@ router.get("/attributes/upgrade-cost/:attribute", authMiddleware_1.default, asyn
         res.status(500).json({ error: "Error interno al calcular el costo de mejora." });
     }
 });
-router.post("/attributes/upgrade-attribute", authMiddleware_1.default, async (req, res) => {
+// Ruta: Mejorar un atributo del personaje
+router.post("/attributes/upgrade-attribute", authMiddleware_1.default, validateAttributeMiddleware_1.validateAttributeMiddleware, validateCharacterMiddleware_1.validateCharacterMiddleware, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
         const { attribute } = req.body;
-        const character = await characterService_1.default.getCharacterById(req.user.id);
-        if (!(0, validationUtils_1.validateAttributeExist)(attribute).success) {
-            res.status(400).json({ error: (0, validationUtils_1.validateAttributeExist)(attribute).error });
-            return;
+        if (req.locals && req.locals.user && req.locals.character) {
+            const userId = req.locals.user.id;
+            const character = req.locals.character;
+            const currentValue = character[attribute];
+            const cost = character.calculateUpgradeCost(currentValue);
+            if (character.currentXp < cost) {
+                res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
+                return;
+            }
+            await characterService_1.default.upgradeCharacterAttribute(character, attribute, cost);
+            const updatedCharacter = await characterService_1.default.getCharacterById(userId);
+            res.json(updatedCharacter);
         }
-        if (!character) {
-            res.status(404).json({ error: "Personaje no encontrado." });
-            return;
+        else {
+            throw new Error("endpoint /attributes/upgrade-attribute: error locals");
         }
-        if (!(attribute in character)) {
-            res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
-            return;
-        }
-        const currentValue = character[attribute];
-        const cost = character.calculateUpgradeCost(currentValue);
-        const currencies = databaseService_1.default.getCurrenciesFromCache(character.id);
-        if (!currencies || currencies.currentXp < cost) {
-            res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
-            return;
-        }
-        await characterService_1.default.upgradeCharacterAttribute(req.user.id, attribute);
-        const updatedCharacter = await characterService_1.default.getCharacterById(req.user.id);
-        res.json(updatedCharacter);
     }
     catch (error) {
         console.error("Error en la mejora de atributo:", error);
@@ -96,11 +72,7 @@ router.get("/leaderboard", async (req, res) => {
 // Ruta: Crear un nuevo personaje
 router.post("/", authMiddleware_1.default, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const userId = req.user;
+        const userId = req.locals.user;
         const { name, faction, class: characterClass } = req.body;
         if (!name || !faction || !characterClass) {
             res.status(400).json({ error: "Todos los campos son obligatorios." });
@@ -141,26 +113,10 @@ router.post("/", authMiddleware_1.default, async (req, res) => {
     }
 });
 // Ruta: Obtener el personaje del usuario autenticado
-router.get("/", authMiddleware_1.default, async (req, res) => {
+router.get("/", authMiddleware_1.default, validateCharacterMiddleware_1.validateCharacterMiddleware, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: "Usuario no autenticado." });
-            return;
-        }
-        const userId = req.user.id;
-        const rows = await new Promise((resolve, reject) => {
-            database_1.db.all("SELECT * FROM characters WHERE user_id = ?", [userId], (err, rows) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(rows);
-            });
-        });
-        if (!rows.length) {
-            res.status(404).json({ error: "No se encontró un personaje para este usuario." });
-            return;
-        }
-        res.json(rows[0]);
+        const character = req.locals.character;
+        res.json(character);
     }
     catch (error) {
         console.error("❌ Error al obtener personaje:", error);

@@ -19,25 +19,36 @@ class Character {
         this.spirit = 1;
         this.willpower = 1;
         this.arcane = 1;
+        this.currentHealth = 100;
+        this.totalHealth = 100;
+        this.currentStamina = 100;
+        this.totalStamina = 100;
+        this.currentMana = 100;
+        this.totalMana = 100;
+        this.characterId = 0;
+        this.currentXp = 0;
+        this.totalXp = 0;
+        this.currentGold = 0;
+        this.totalGold = 0;
         this.upgradePoints = 0;
         Object.assign(this, data);
     }
     calculateUpgradeCost(attributeValue) {
         return 100 + attributeValue * 10;
     }
-    isValidAttribute(attribute) {
-        const validAttributes = [
-            "strength",
-            "endurance",
-            "constitution",
-            "precision",
-            "agility",
-            "vigor",
-            "spirit",
-            "willpower",
-            "arcane",
-        ];
-        return validAttributes.includes(attribute);
+    getHealthPercentage() {
+        return (this.currentHealth / this.totalHealth) * 100;
+    }
+    isDead() {
+        return this.currentHealth <= 0;
+    }
+    // Método para calcular el nivel basado en la experiencia total
+    getLevelFromXp() {
+        return Math.floor(this.totalXp / 1000);
+    }
+    // Método para verificar si tiene suficiente oro
+    hasEnoughGold(amount) {
+        return this.currentGold >= amount;
     }
 }
 exports.Character = Character;

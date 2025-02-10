@@ -19,7 +19,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node --exec ts-node src/app.ts",
-    "dev": "nodemon --exec ts-node src/app.ts",
+    "dev": "ts-node --files src/app.ts",
     "test": "jest"
   },
   "repository": {
