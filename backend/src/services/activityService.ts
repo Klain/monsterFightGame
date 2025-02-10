@@ -5,7 +5,6 @@ import { sendMessage } from "./messageService";
 import { Character } from "../models/character.model";
 import { Activity } from "../models/activity.model";
 
-const HEALING_COST_PER_MINUTE = 10;
 
 class ActivityService {
   // Función: Notificar finalización de actividad
@@ -28,8 +27,7 @@ class ActivityService {
   static async checkCompletedActivities(): Promise<void> {
     try {
       const now = new Date();
-      const activities = await DatabaseService.all<Activity>("SELECT * FROM activities WHERE completed = FALSE");
-
+      const activities = await DatabaseService.all<Activity>("SELECT * FROM activities WHERE character_id completed = FALSE");
       for (const activity of activities) {
         const startTime = new Date(activity.startTime);
         const elapsedMinutes = Math.floor((now.getTime() - startTime.getTime()) / 60000);
@@ -94,7 +92,6 @@ class ActivityService {
     }
   }
 
-
   // Función: Consultar estado de la actividad
   static async getActivityStatus(character_id: number, res: Response): Promise<Response> {
     try {
@@ -123,7 +120,6 @@ class ActivityService {
       return res.status(500).json({ error: "Error al consultar el estado de la actividad." });
     }
   }
-
 
   // Función: Reclamar recompensa de actividad
   static async claimActivityReward(character_id: number, res: Response): Promise<Response> {

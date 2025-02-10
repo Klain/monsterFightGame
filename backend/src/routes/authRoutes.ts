@@ -2,7 +2,7 @@
 import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { getUserByUsername, createUser } from "../database";
+import { getUserByUsername, createUser } from '../services/userServices';
 import CharacterService from "../services/characterService";
 import { registerSession, logoutUser } from "../sessionManager";
 import "dotenv/config";

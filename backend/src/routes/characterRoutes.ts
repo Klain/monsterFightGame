@@ -45,8 +45,8 @@ router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeM
     await CharacterService.upgradeCharacterAttribute(userId, attribute);
 
     const updatedCharacter = await CharacterService.getCharacterById(userId);
-
     res.json(updatedCharacter);
+    
   } catch (error) {
     console.error("Error en la mejora de atributo:", error);
     res.status(500).json({ error: "Error interno al mejorar el atributo." });
@@ -79,9 +79,7 @@ router.get("/leaderboard", async (req: Request, res: Response): Promise<void> =>
 
 router.post("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-
     const userId = req.locals.user;
-
     const { name, faction, class: characterClass } = req.body;
 
     if (!name || !faction || !characterClass) {
@@ -133,8 +131,6 @@ router.post("/", authMiddleware, async (req: Request, res: Response): Promise<vo
 // Ruta: Obtener el personaje del usuario autenticado
 router.get("/", authMiddleware,validateCharacterMiddleware , async (req: Request, res: Response): Promise<void> => {
   try {
-
-    const userId = req.locals.user.id;
     const character = req.locals.character;
 
     res.json(character);

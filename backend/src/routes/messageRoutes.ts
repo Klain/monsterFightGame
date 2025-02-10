@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 import authMiddleware from "../middleware/authMiddleware";
-import authenticateToken from "../middleware/authMiddleware";
 import { sendMessage, getMessages, markMessageAsRead } from "../services/messageService";
 
 const router = express.Router();
@@ -8,10 +7,7 @@ const router = express.Router();
 // Ruta: Enviar mensaje
 router.post("/send", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
+    const userId = req.locals.user.id;
 
     const { receiver_id, subject, body } = req.body;
 
@@ -20,7 +16,7 @@ router.post("/send", authMiddleware, async (req: Request, res: Response): Promis
       return;
     }
 
-    const result = await sendMessage(req.user.id, receiver_id, subject, body);
+    const result = await sendMessage(userId, receiver_id, subject, body);
     res.json(result);
   } catch (error) {
     console.error("Error al enviar mensaje:", error);
@@ -31,12 +27,9 @@ router.post("/send", authMiddleware, async (req: Request, res: Response): Promis
 // Ruta: Obtener mensajes
 router.get("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
+    const userId = req.locals.user.id;
 
-    const messages = await getMessages(req.user.id);
+    const messages = await getMessages(userId);
     res.json({ messages });
   } catch (error) {
     console.error("Error al obtener mensajes:", error);
@@ -47,11 +40,8 @@ router.get("/", authMiddleware, async (req: Request, res: Response): Promise<voi
 // Ruta: Marcar mensaje como leído
 router.post("/read/:message_id", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
-
+    const userId = req.locals.user.id;
+    
     const { message_id } = req.params;
 
     if (!message_id) {

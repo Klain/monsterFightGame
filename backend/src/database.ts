@@ -29,45 +29,37 @@ db.serialize(() => {
       faction TEXT NOT NULL,
       class INTEGER DEFAULT 1,
       level INTEGER DEFAULT 1,
-
-      STRENGTH INTEGER DEFAULT 1,
-      ENDURANCE INTEGER DEFAULT 1,
-      CONSTITUTION INTEGER DEFAULT 1,
-      PRECISION INTEGER DEFAULT 1,
-      AGILITY INTEGER DEFAULT 1,
-      VIGOR INTEGER DEFAULT 1,
-      SPIRIT INTEGER DEFAULT 1,
-      WILLPOWER INTEGER DEFAULT 1,
-      ARCANE INTEGER DEFAULT 1,
-
+    
+      -- Atributos
+      strength INTEGER DEFAULT 1,
+      endurance INTEGER DEFAULT 1,
+      constitution INTEGER DEFAULT 1,
+      precision INTEGER DEFAULT 1,
+      agility INTEGER DEFAULT 1,
+      vigor INTEGER DEFAULT 1,
+      spirit INTEGER DEFAULT 1,
+      willpower INTEGER DEFAULT 1,
+      arcane INTEGER DEFAULT 1,
+    
+      -- Status
+      current_health INTEGER DEFAULT 100,
+      total_health INTEGER DEFAULT 100,
+      current_stamina INTEGER DEFAULT 100,
+      total_stamina INTEGER DEFAULT 100,
+      current_mana INTEGER DEFAULT 100,
+      total_mana INTEGER DEFAULT 100,
+    
+      -- Currencies
+      current_xp INTEGER DEFAULT 0,
+      total_xp INTEGER DEFAULT 0,
+      current_gold INTEGER DEFAULT 0,
+      total_gold INTEGER DEFAULT 0,
+    
+      -- Otros
       upgrade_points INTEGER DEFAULT 0,
       last_fight TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS status (
-      character_id INTEGER PRIMARY KEY,
-      currentHealth INTEGER DEFAULT 100,
-      totalHealth INTEGER DEFAULT 100,
-      currentStamina INTEGER DEFAULT 100,
-      totalStamina INTEGER DEFAULT 100,
-      currentMana INTEGER DEFAULT 100,
-      totalMana INTEGER DEFAULT 100,
-      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
-    );
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS currencies (
-      character_id INTEGER PRIMARY KEY,
-      currentXp INTEGER DEFAULT 0,
-      totalXp INTEGER DEFAULT 0,
-      currentGold INTEGER DEFAULT 0,
-      totalGold INTEGER DEFAULT 0,
-      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
-    );
+    )  
   `);
 
   db.run(`
@@ -139,42 +131,5 @@ db.serialize(() => {
     )
   `);
 });
-
-/**
- * Obtiene un usuario por nombre de usuario.
- * @param username - Nombre de usuario
- * @returns Una promesa que resuelve con los datos del usuario o null si no se encuentra
- */
-export async function getUserByUsername(username: string): Promise<any | null> {
-  return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM users WHERE username = ?", [username], (err, row) => {
-      if (err) {
-        return reject(err);
-      }
-      resolve(row || null);
-    });
-  });
-}
-
-/**
- * Crea un nuevo usuario con contraseña encriptada.
- * @param username - Nombre de usuario
- * @param hashedPassword - Contraseña encriptada
- * @returns Una promesa que resuelve con el ID del nuevo usuario
- */
-export async function createUser(username: string, hashedPassword: string): Promise<{ id: number }> {
-  return new Promise((resolve, reject) => {
-    db.run(
-      "INSERT INTO users (username, password) VALUES (?, ?)",
-      [username, hashedPassword],
-      function (err) {
-        if (err) {
-          return reject(err);
-        }
-        resolve({ id: this.lastID });
-      }
-    );
-  });
-}
 
 export { db };

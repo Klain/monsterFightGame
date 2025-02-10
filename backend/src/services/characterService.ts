@@ -45,11 +45,8 @@ class CharacterService {
   }
 
   // Obtener un personaje por su ID de usuario
-  static async getCharacterById(userId: number): Promise<Character> {
+  static async getCharacterById(userId: number): Promise<Character|null> {
     const character = DatabaseService.getCharacterFromCache(userId);
-    if (!character) {
-      throw new Error("Personaje no encontrado en el caché");
-    }
     return character;
   }
 
