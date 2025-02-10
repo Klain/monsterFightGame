@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import authMiddleware from "../middleware/authMiddleware";
 import authenticateToken from "../middleware/authMiddleware";
 import { sendMessage, getMessages, markMessageAsRead } from "../services/messageService";
 import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
@@ -6,7 +7,7 @@ import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 const router = express.Router();
 
 // Ruta: Enviar mensaje
-router.post("/send", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/send", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -29,7 +30,7 @@ router.post("/send", authenticateToken, async (req: AuthenticatedRequest, res: R
 });
 
 // Ruta: Obtener mensajes
-router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get("/", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -45,7 +46,7 @@ router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Respon
 });
 
 // Ruta: Marcar mensaje como leído
-router.post("/read/:message_id", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/read/:message_id", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });

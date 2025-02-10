@@ -3,27 +3,31 @@ import { Request, Response, NextFunction } from "express";
 import "dotenv/config";
 import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
-// Extender JwtPayload para incluir las propiedades de User
 interface DecodedToken extends jwt.JwtPayload {
   id: number;
   username: string;
 }
 
-const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-  const token = req.header("Authorization");
-
-  if (!token) {
-    next(new Error("Acceso no autorizado: No hay token."));
-    return;
-  }
-
+const authMiddleware = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   try {
-    const formattedToken = token.replace("Bearer ", "").trim();
-    const verified = jwt.verify(formattedToken, process.env.JWT_SECRET!) as DecodedToken;
+    const authHeader = req.header("Authorization");
 
-    // Garantizamos que el token decodificado contiene las propiedades esperadas
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ error: "Acceso no autorizado: No hay token o formato incorrecto." });
+      return; 
+    }
+
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    const verified = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+
     if (!verified.id || !verified.username) {
-      throw new Error("Token inválido o mal formado.");
+      res.status(400).json({ error: "Token inválido o mal formado." });
+      return; 
     }
 
     req.user = {
@@ -33,7 +37,11 @@ const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunc
 
     next();
   } catch (error) {
-    next(new Error("Token inválido o expirado."));
+    if (error instanceof Error) {
+      res.status(401).json({ error: "Token inválido o expirado." });
+    } else {
+      res.status(500).json({ error: "Error interno del servidor." });
+    }
   }
 };
 

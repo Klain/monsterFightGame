@@ -1,13 +1,13 @@
 import express, { Request, Response } from "express";
 import { db } from "../database";
-import authenticateToken from "../middleware/authMiddleware";
+import authMiddleware from "../middleware/authMiddleware";
 import { handleCombat, canAttackAgain } from "../services/combatService";
 import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
 const router = express.Router();
 
 // Ruta: Iniciar un combate entre jugadores
-router.post("/battle", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/battle", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -35,7 +35,7 @@ router.post("/battle", authenticateToken, async (req: AuthenticatedRequest, res:
 });
 
 // Ruta: Buscar un oponente aleatorio para combatir
-router.get("/find-opponent", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get("/find-opponent", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -92,7 +92,7 @@ router.get("/find-opponent", authenticateToken, async (req: AuthenticatedRequest
 });
 
 // Ruta: Luchar en la arena contra un oponente aleatorio
-router.post("/arena-battle", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/arena-battle", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -137,7 +137,7 @@ router.post("/arena-battle", authenticateToken, async (req: AuthenticatedRequest
 });
 
 // Ruta: Obtener el historial de batallas
-router.get("/battle-log", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get("/battle-log", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });

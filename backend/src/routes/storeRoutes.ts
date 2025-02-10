@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { db } from "../database";
-import authenticateToken from "../middleware/authMiddleware";
+import authMiddleware from "../middleware/authMiddleware";
 import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
 const router = express.Router();
@@ -23,7 +23,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 });
 
 // Ruta: Comprar un ítem
-router.post("/buy", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/buy", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -89,7 +89,7 @@ router.post("/buy", authenticateToken, async (req: AuthenticatedRequest, res: Re
 });
 
 // Ruta: Vender un ítem
-router.post("/sell", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/sell", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });

@@ -1,10 +1,10 @@
 import express, { Request, Response } from "express";
 import { db } from "../database";
-import authenticateToken from "../middleware/authMiddleware";
 import CharacterService from "../services/characterService";
 import { validateAttributeExist } from "../utils/validationUtils";
 import DatabaseService from "../services/databaseService";
 import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
+import authMiddleware from "../middleware/authMiddleware";
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ interface UpgradeCostRequest extends AuthenticatedRequest {
   };
 }
 
-router.get("/attributes/upgrade-cost/:attribute", authenticateToken, async (req: UpgradeCostRequest, res: Response): Promise<void> => {
+router.get("/attributes/upgrade-cost/:attribute", authMiddleware, async (req: UpgradeCostRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -56,7 +56,7 @@ interface UpgradeAttributeRequest extends AuthenticatedRequest {
         attribute: "strength" | "endurance" | "constitution" | "precision" | "agility" | "vigor" | "spirit" | "willpower" | "arcane"
   };
 }
-router.post("/attributes/upgrade-attribute", authenticateToken, async (req: UpgradeAttributeRequest, res: Response): Promise<void> => {
+router.post("/attributes/upgrade-attribute", authMiddleware, async (req: UpgradeAttributeRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -125,7 +125,7 @@ router.get("/leaderboard", async (req: Request, res: Response): Promise<void> =>
 
 // Ruta: Crear un nuevo personaje
 
-router.post("/", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
@@ -182,7 +182,7 @@ router.post("/", authenticateToken, async (req: AuthenticatedRequest, res: Respo
 });
 
 // Ruta: Obtener el personaje del usuario autenticado
-router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get("/", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Usuario no autenticado." });
