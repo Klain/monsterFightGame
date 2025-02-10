@@ -3,7 +3,7 @@ import DatabaseService from "./databaseService";
 import { sendRealTimeNotification, connectedUsers } from "../sessionManager";
 import { sendMessage } from "./messageService";
 import { Character } from "../models/character.model";
-import { Activity } from "../models/activity";
+import { Activity } from "../models/activity.model";
 
 const HEALING_COST_PER_MINUTE = 10;
 

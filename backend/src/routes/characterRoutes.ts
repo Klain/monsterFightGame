@@ -1,46 +1,22 @@
 import express, { Request, Response } from "express";
 import { db } from "../database";
 import CharacterService from "../services/characterService";
-import { validateAttributeExist } from "../utils/validationUtils";
 import DatabaseService from "../services/databaseService";
-import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 import authMiddleware from "../middleware/authMiddleware";
+import { AttributeType } from "../constants/attributes";
+import { Character } from "../models/character.model";
+import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
+import { validateAttributeMiddleware } from "../middleware/validateAttributeMiddleware copy";
 
 const router = express.Router();
 
 // Ruta: Obtener el costo de mejora de un atributo
-interface UpgradeCostRequest extends AuthenticatedRequest {
-  params: {
-        attribute: "strength" | "endurance" | "constitution" | "precision" | "agility" | "vigor" | "spirit" | "willpower" | "arcane"
-  };
-}
-
-router.get("/attributes/upgrade-cost/:attribute", authMiddleware, async (req: UpgradeCostRequest, res: Response): Promise<void> => {
+router.get("/attributes/upgrade-cost/:attribute", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware , async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
-
     const { attribute } = req.params;
-    const character = await CharacterService.getCharacterById(req.user.id);
+    const character = req.locals.character;
 
-    if (!validateAttributeExist(attribute).success) {
-      res.status(400).json({ error: validateAttributeExist(attribute).error });
-      return;
-    }
-
-    if (!character) {
-      res.status(404).json({ error: "Personaje no encontrado." });
-      return;
-    }
-
-    if (!(attribute in character)) {
-      res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
-      return;
-    }
-
-    const currentValue = character[attribute];
+    const currentValue = character[attribute as keyof Pick<Character, AttributeType>];
     const cost = character.calculateUpgradeCost(currentValue);
 
     res.json({ attribute, cost });
@@ -51,37 +27,13 @@ router.get("/attributes/upgrade-cost/:attribute", authMiddleware, async (req: Up
 });
 
 // Ruta: Mejorar un atributo del personaje
-interface UpgradeAttributeRequest extends AuthenticatedRequest {
-  body: {
-        attribute: "strength" | "endurance" | "constitution" | "precision" | "agility" | "vigor" | "spirit" | "willpower" | "arcane"
-  };
-}
-router.post("/attributes/upgrade-attribute", authMiddleware, async (req: UpgradeAttributeRequest, res: Response): Promise<void> => {
+router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
-
     const { attribute } = req.body;
-    const character = await CharacterService.getCharacterById(req.user.id);
+    const userId = req.locals.user.id;
+    const character = req.locals.character;
 
-    if (!validateAttributeExist(attribute).success) {
-      res.status(400).json({ error: validateAttributeExist(attribute).error });
-      return;
-    }
-
-    if (!character) {
-      res.status(404).json({ error: "Personaje no encontrado." });
-      return;
-    }
-
-    if (!(attribute in character)) {
-      res.status(400).json({ error: `El atributo '${attribute}' no existe en el personaje.` });
-      return;
-    }
-
-    const currentValue = character[attribute];
+    const currentValue = character[attribute as keyof Pick<Character, AttributeType>];
     const cost = character.calculateUpgradeCost(currentValue);
     const currencies = DatabaseService.getCurrenciesFromCache(character.id);
 
@@ -90,9 +42,9 @@ router.post("/attributes/upgrade-attribute", authMiddleware, async (req: Upgrade
       return;
     }
 
-    await CharacterService.upgradeCharacterAttribute(req.user.id, attribute);
+    await CharacterService.upgradeCharacterAttribute(userId, attribute);
 
-    const updatedCharacter = await CharacterService.getCharacterById(req.user.id);
+    const updatedCharacter = await CharacterService.getCharacterById(userId);
 
     res.json(updatedCharacter);
   } catch (error) {
@@ -125,13 +77,10 @@ router.get("/leaderboard", async (req: Request, res: Response): Promise<void> =>
 
 // Ruta: Crear un nuevo personaje
 
-router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.post("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
-    const userId = req.user;
+
+    const userId = req.locals.user;
 
     const { name, faction, class: characterClass } = req.body;
 
@@ -182,29 +131,13 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
 });
 
 // Ruta: Obtener el personaje del usuario autenticado
-router.get("/", authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get("/", authMiddleware,validateCharacterMiddleware , async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      res.status(401).json({ error: "Usuario no autenticado." });
-      return;
-    }
-    const userId = req.user.id;
 
-    const rows = await new Promise<any[]>((resolve, reject) => {
-      db.all("SELECT * FROM characters WHERE user_id = ?", [userId], (err, rows) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(rows);
-      });
-    });
+    const userId = req.locals.user.id;
+    const character = req.locals.character;
 
-    if (!rows.length) {
-      res.status(404).json({ error: "No se encontró un personaje para este usuario." });
-      return;
-    }
-
-    res.json(rows[0]);
+    res.json(character);
   } catch (error) {
     console.error("❌ Error al obtener personaje:", error);
     res.status(500).json({ error: "Error interno al recuperar el personaje." });

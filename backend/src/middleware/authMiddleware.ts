@@ -1,48 +1,39 @@
+// backend/src/middleware/authMiddleware.ts
 import jwt from "jsonwebtoken";
-import { Request, Response, NextFunction } from "express";
+import { RequestHandler } from "express";
 import "dotenv/config";
-import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
-interface DecodedToken extends jwt.JwtPayload {
-  id: number;
-  username: string;
-}
-
-const authMiddleware = (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): void => {
+const authMiddleware: RequestHandler = async (req, res, next) => {
   try {
     const authHeader = req.header("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res.status(401).json({ error: "Acceso no autorizado: No hay token o formato incorrecto." });
-      return; 
+      return;
     }
 
     const token = authHeader.replace("Bearer ", "").trim();
 
-    const verified = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+    const verified = jwt.verify(token, process.env.JWT_SECRET!) as { id: number; username: string };
 
     if (!verified.id || !verified.username) {
       res.status(400).json({ error: "Token inválido o mal formado." });
-      return; 
+      return;
     }
 
-    req.user = {
+    // Asigna `req.user` directamente
+    req.locals.user = {
       id: verified.id,
       username: verified.username,
     };
 
-    next();
+    next(); // Continúa al controlador
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(401).json({ error: "Token inválido o expirado." });
-    } else {
-      res.status(500).json({ error: "Error interno del servidor." });
-    }
+    console.error("Error al validar el token:", error);
+    res.status(401).json({ error: "Token inválido o expirado." });
   }
 };
 
 export default authMiddleware;
+
+

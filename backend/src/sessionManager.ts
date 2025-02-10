@@ -35,6 +35,35 @@ export function logoutUser(userId: number): void {
 }
 
 /**
+ * Verifica si un token sigue siendo válido y está registrado como una sesión activa.
+ * @param userId - ID del usuario asociado al token
+ * @param token - Token JWT a verificar
+ * @returns {boolean} - `true` si el token es válido y está activo; de lo contrario, `false`.
+ */
+ export async function isSessionValid(userId: number, token: string): Promise<boolean> {
+  try {
+    // Verifica si el token existe en las sesiones activas para el usuario
+    const activeToken = activeSessions.get(userId);
+    if (!activeToken || activeToken !== token) {
+      return false; // El token no está activo o no coincide
+    }
+
+    // Verifica que el token sea válido y no esté expirado
+    jwt.verify(token, process.env.JWT_SECRET!);
+    return true; // El token es válido y está activo
+  } catch (error) {
+    // Verifica si el error es una instancia de `Error`
+    if (error instanceof Error) {
+      console.error(`Error verificando la sesión para el usuario ${userId}:`, error.message);
+    } else {
+      console.error(`Error desconocido verificando la sesión para el usuario ${userId}:`, error);
+    }
+    return false; // El token no es válido o ha expirado
+  }
+}
+
+
+/**
  * Envía notificaciones en tiempo real a un usuario si está conectado por WebSocket.
  * @param userId - ID del usuario al que se enviará la notificación
  * @param message - Mensaje a enviar

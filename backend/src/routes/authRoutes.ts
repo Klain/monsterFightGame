@@ -1,17 +1,14 @@
+//backend\src\routes\authRoutes.ts
 import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { getUserByUsername, createUser } from "../database";
 import CharacterService from "../services/characterService";
-import authenticateToken from "../middleware/authMiddleware";
 import { registerSession, logoutUser } from "../sessionManager";
 import "dotenv/config";
-import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 import authMiddleware from "../middleware/authMiddleware";
 
 const router = express.Router();
-
-
 
 // Ruta: Registro
 router.post("/register", async (req: Request, res: Response): Promise<void> => {
@@ -63,34 +60,18 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 });
 
 // Ruta: Cerrar sesión
-router.post("/logout", authMiddleware, (req: AuthenticatedRequest , res: Response): void => {
-  if (!req.user) {
-    res.status(401).json({ error: "Usuario no autenticado." });
-    return;
-  }
-
-  logoutUser(req.user.id);
+router.post("/logout", authMiddleware, (req: Request, res: Response) => {
+  logoutUser(req.locals.user.id);
   res.json({ success: true, message: "Sesión cerrada correctamente." });
 });
 
 // Ruta: Verificar sesión
-router.get(
-  "/check-session",
-  authMiddleware, 
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    try {
-      res.json({
-        success: true,
-        message: "Sesión válida.",
-        user: req.user, 
-      });
-    } catch (error) {
-      console.error("Error inesperado:", error);
-      res.status(500).json({ error: "Error interno al verificar la sesión." });
-    }
-  }
-);
-
-
+router.get("/check-session", authMiddleware, (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    message: "Sesión válida.",
+    user: req.locals.user, 
+  });
+});
 
 export default router;

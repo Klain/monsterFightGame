@@ -1,8 +1,10 @@
+import { ActivityType } from "../constants/activities";
+
 export class Activity {
   id: number = 0;
   userId: number = 0;
   characterId: number = 0;
-  type: string = ""; // Ejemplo: "training", "healing", "work"
+  type: ActivityType = "trabajo"; // Cambiado a tipo fuerte
   startTime: Date = new Date();
   duration: number = 0; // En minutos
   rewardXp: number = 0;
