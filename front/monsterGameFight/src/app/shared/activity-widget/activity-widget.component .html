@@ -1,7 +1,8 @@
 <div class="activity-widget">
+  <!-- Encabezado -->
   <div class="activity-header">
-    <h3>{{ activityName }}</h3>
-    <span *ngIf="!isCompleted">
+    <h3>{{ activityType }}</h3>
+    <span *ngIf="activity && !isCompleted">
       {{ remainingTime | timeFormatter }}
     </span>
     <span *ngIf="isCompleted" class="completed-text">
@@ -9,14 +10,33 @@
     </span>
   </div>
 
+  <!-- Slider y botón para estado "parado" -->
+  <div *ngIf="!activity">
+    <mat-slider
+      min="1"
+      [max]="maxDuration"
+      step="1"
+      [(ngModel)]="duration"
+    ></mat-slider>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="startActivity()"
+      [disabled]="duration <= 0 || maxDuration <= 0">
+      Iniciar Actividad
+    </button>
+  </div>
+
+  <!-- Barra de progreso para estado "en curso" -->
   <mat-progress-bar
-    *ngIf="!isCompleted"
+    *ngIf="activity && !isCompleted && activity.type === activityType"
     [value]="progress"
     mode="determinate">
   </mat-progress-bar>
 
+  <!-- Botón para reclamar recompensa en estado "completado" -->
   <button
-    *ngIf="isCompleted"
+    *ngIf="isCompleted && activity?.type === activityType"
     mat-raised-button
     color="primary"
     (click)="claimReward()">

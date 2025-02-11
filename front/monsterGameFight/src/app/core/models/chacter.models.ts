@@ -1,11 +1,20 @@
+import { ActivityType } from "../constants/activities";
+
 export interface Character {
-  id: number;
-  userId: number;
   name: string;
   faction: string;
   class: number;
   level: number;
+  attributes:Attributes;
+  attributesUpgradeCost : Attributes;
+  status:Status;
+  currencies:Currencies;
+  activity: Activity | null;
+  maxActivityDuration:Activities;
+  lastFight?: Date;
+}
 
+export interface Attributes{
   strength: number;
   endurance: number;
   constitution: number;
@@ -15,20 +24,34 @@ export interface Character {
   spirit: number;
   willpower: number;
   arcane: number;
+}
 
+export interface Status{
   currentHealth: number;
   totalHealth: number;
   currentStamina: number;
   totalStamina: number;
   currentMana: number;
   totalMana: number;
+}
 
-  characterId: number;
+export interface Currencies{
   currentXp: number;
   totalXp: number;
   currentGold: number;
   totalGold: number;
-
   upgradePoints: number;
-  lastFight?: Date;
+
 }
+
+export interface Activity {
+    type: ActivityType; 
+    startTime: Date;
+    duration: number; 
+}
+
+export interface Activities extends Record<ActivityType, number> {}
+
+
+
+

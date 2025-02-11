@@ -3,19 +3,27 @@ import ActivityService from "../services/activityService";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateActivityMiddleware } from "../middleware/validateActivityMiddleware";
-import { validateActivityStartMiddleware } from "../middleware/validateActivityStartMiddleware";
+import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
 
-router.get(
-  "/max-duration/:activityType",
+router.post(
+  "/start",
   authMiddleware,
   validateCharacterMiddleware,
   validateActivityMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const activityType =req.locals.activityType;
+      const userId = req.locals.user!.id;
       const character = req.locals.character;
+      const activityType = req.locals.activityType!;
+      const { duration } = req.body;
+
+      const existingActivity = await ActivityService.getActivityStatus(character);
+      if (existingActivity) {
+        res.status(400).json({ message: "El personaje ya está en otra actividad." });
+        return;
+      }
 
       let maxDuration = 1;
       if (activityType === "explorar") {
@@ -26,50 +34,20 @@ router.get(
         maxDuration = character.currentMana < character.totalMana ? 60 : 0;
       }
 
-      res.json({ activity: activityType, maxDuration });
-    } catch (error) {
-      console.error("Error al obtener duración máxima:", error);
-      res.status(500).json({ error: "Error interno." });
-    }
-  }
-);
+      if (duration < 1 || duration > maxDuration) {
+        res.status(400).json({ error: `Duración inválida. Máximo permitido: ${maxDuration} minutos.` });
 
-
-// Ruta: Iniciar actividad
-router.post(
-  "/start",
-  authMiddleware,
-  validateCharacterMiddleware,
-  validateActivityMiddleware,
-  validateActivityStartMiddleware,
-  async (req: Request, res: Response) => {
-    try {
-      const character = req.locals.character;
-      const activityType = req.locals.activityType!;
-      const { duration } = req.body;
-
+      }
 
       await ActivityService.startActivity(character, activityType, duration);
-      res.json({ message: "Actividad iniciada correctamente." });
+      const activity =  await ActivityService.getActivityStatus(character);
+
+      webSocketService.characterRefresh(userId,
+        (activity ? activity.wsr() : { activity: null }),
+        );
+      res.status(200);
     } catch (error) {
       console.error("Error al iniciar actividad:", error);
-      res.status(500).json({ error: "Error interno." });
-    }
-  }
-);
-
-//Consultar estado de actividad
-router.get(
-  "/status",
-  authMiddleware,
-  validateCharacterMiddleware,
-  async (req: Request, res: Response) => {
-    try {
-      const character = req.locals.character;
-      const status = await ActivityService.getActivityStatus(character);
-      res.json(status);
-    } catch (error) {
-      console.error("Error al obtener estado de la actividad:", error);
       res.status(500).json({ error: "Error interno." });
     }
   }
@@ -82,9 +60,16 @@ router.post(
   validateCharacterMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const userId = req.locals.user!.id;
       const character = req.locals.character;
       const updatedCharacter = await ActivityService.claimActivityReward(character);
-      res.json(updatedCharacter);
+      const activity =  await ActivityService.getActivityStatus(character);
+
+      webSocketService.characterRefresh(userId,{
+        ...updatedCharacter?.wsr(),
+        ...(activity ? activity.wsr() : { activity: null }),
+      });
+      res.status(200);
     } catch (error) {
       console.error("Error al reclamar recompensa:", error);
       res.status(500).json({ error: "Error interno." });

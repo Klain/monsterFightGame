@@ -1,91 +1,131 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonModule } from '@angular/material/button';
-import { ActivityService } from '../../core/services/activity.service';
-import { Subscription, interval } from 'rxjs';
+import { MatSliderModule } from '@angular/material/slider';
+import { CharacterService } from '../../core/services/character.service';
+import { Character, Activity } from '../../core/models/chacter.models';
+import { Observable, Subscription, interval, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { ActivityType } from '../../core/constants/activities';
 
 @Component({
   selector: 'app-activity-widget',
   standalone: true,
-  imports: [CommonModule, MatProgressBarModule, MatButtonModule],
+  imports: [CommonModule, MatProgressBarModule, MatButtonModule, MatSliderModule],
   templateUrl: './activity-widget.component.html',
-  styleUrls: ['./activity-widget.component.css']
+  styleUrls: ['./activity-widget.component.css'],
 })
 export class ActivityWidgetComponent implements OnInit, OnDestroy {
-  activityName: string = '';
-  totalDuration: number = 0;
-  remainingTime: number = 0;
+  @Input() activityType!: ActivityType;
+
+  activity: Activity | null = null;
   progress: number = 0;
+  remainingTime: number = 0;
   isCompleted: boolean = false;
+  duration: number = 1; // Duración seleccionada por el slider
+  maxDuration: number = 0; // Duración máxima para el tipo de actividad
 
-  private countdownSub: Subscription | null = null;
+  private destroy$ = new Subject<void>();
 
-  constructor(private activityService: ActivityService) {}
+  constructor(private characterService: CharacterService) {}
 
   ngOnInit() {
-    this.loadActivityStatus();
-  }
+    // Escuchar cambios en el estado del personaje
+    this.characterService.character$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((character: Character | null) => {
+        if (character) {
+          this.maxDuration = character.maxActivityDuration[this.activityType] || 0;
 
-  loadActivityStatus() {
-    this.activityService.checkActivityStatus().subscribe({
-      next: (data) => {
-        if(data){
-          if (data.status === 'in_progress' && data.activity) {
-            this.activityName = data.activity.type;
-            this.totalDuration = data.activity.duration;
-            this.remainingTime = data.activity.getRemainingTime();
-            this.startCountdown();
-          } else if (data.status === 'completed') {
-            this.isCompleted = true;
+          if (character.activity) {
+            this.activity = character.activity;
+
+            // Verificar si la actividad en curso coincide con el tipo recibido
+            if (this.activity.type === this.activityType) {
+              this.startCountdown();
+            } else {
+              this.resetActivityState();
+            }
+          } else {
+            this.resetActivityState();
           }
         }
-      },
-      error: () => {
-        console.error('Error al obtener el estado de la actividad.');
-      }
-    });
+      });
   }
 
-  startCountdown() {
+  private startCountdown() {
+    if (!this.activity) return;
+
+    const now = new Date().getTime();
+    const startTime = new Date(this.activity.startTime).getTime();
+    const elapsedMinutes = Math.floor((now - startTime) / 60000);
+    const totalDuration = this.activity.duration;
+    this.remainingTime = Math.max(totalDuration - elapsedMinutes, 0);
+
     this.updateProgress();
 
-    this.countdownSub = interval(1000).subscribe(() => {
-      if (this.remainingTime > 0) {
-        this.remainingTime--;
-        this.updateProgress();
-      } else {
-        this.completeActivity();
-      }
-    });
-  }
-
-  updateProgress() {
-    this.progress = ((this.totalDuration * 60 - this.remainingTime) / (this.totalDuration * 60)) * 100;
-  }
-
-  completeActivity() {
-    this.isCompleted = true;
-    if (this.countdownSub) {
-      this.countdownSub.unsubscribe();
+    if (this.remainingTime > 0) {
+      interval(1000)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          if (this.remainingTime > 0) {
+            this.remainingTime--;
+            this.updateProgress();
+          } else {
+            this.completeActivity();
+          }
+        });
+    } else {
+      this.completeActivity();
     }
+  }
+
+  private updateProgress() {
+    if (!this.activity) return;
+
+    const totalSeconds = this.activity.duration * 60;
+    const elapsedSeconds = totalSeconds - this.remainingTime * 60;
+    this.progress = (elapsedSeconds / totalSeconds) * 100;
+  }
+
+  private completeActivity() {
+    this.isCompleted = true;
+  }
+
+  startActivity() {
+    if (this.activity) return; // No iniciar si ya hay una actividad en curso
+
+    this.characterService.startActivity(this.activityType, this.duration).subscribe({
+      next: () => {
+        console.log('Actividad iniciada.');
+      },
+      error: () => {
+        alert('Error al iniciar la actividad.');
+      },
+    });
   }
 
   claimReward() {
-    this.activityService.claimActivityReward().subscribe({
+    this.characterService.claimActivityReward().subscribe({
       next: () => {
-        this.isCompleted = false;
-        this.loadActivityStatus(); 
+        this.resetActivityState();
       },
       error: () => {
-        alert('Error al reclamar recompensa.');
-      }
+        alert('Error al reclamar la recompensa.');
+      },
     });
   }
 
+  private resetActivityState() {
+    this.activity = null;
+    this.progress = 0;
+    this.remainingTime = 0;
+    this.isCompleted = false;
+  }
+
   ngOnDestroy() {
-    if (this.countdownSub) {
-      this.countdownSub.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

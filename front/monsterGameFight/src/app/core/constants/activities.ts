@@ -1,5 +1,5 @@
 //src\constants\activities.ts
-export const validActivities = ["explorar", "sanar","descansar","meditar"] as const;
+export const validActivities = ["null","explorar", "sanar","descansar","meditar"] as const;
 
 export type ActivityType = typeof validActivities[number];
 

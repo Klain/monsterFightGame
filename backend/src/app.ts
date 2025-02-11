@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import { connectedUsers } from "./sessionManager"; 
+import webSocketService from "./services/webSocketService";
 import DatabaseService from "./services/databaseService";
 import authRouter from "./routes/authRoutes";
 import characterRoutes from "./routes/characterRoutes";
@@ -59,9 +60,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Socket.IO
+webSocketService.initialize(io);
 io.on("connection", (socket: Socket) => {
   console.log("Un usuario ha intentado conectar vía WebSockets:", socket.id);
-
   socket.on("register", (token: string) => {
     try {
       const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET!) as jwt.JwtPayload;

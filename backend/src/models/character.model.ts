@@ -58,4 +58,83 @@
   hasEnoughGold(amount: number): boolean {
     return this.currentGold >= amount;
   }
+
+  wsr():any{
+    return{
+      name: this.name,
+      faction: this.faction,
+      class: this.class,
+      level: this.level,
+      ...this.wsrAttributes(),
+      ...this.wsrAttributesUpgradeCost(),
+      ...this.wsrCurrencies(),
+      ...this.wsrStatus(),
+      ...this.wsrActivitiesDuration(),
+    }
+  }
+  wsrAttributes():any{
+    return {
+      attributes:{
+        strength: this.strength,
+        endurance: this.endurance,
+        constitution: this.constitution,
+        precision: this.precision,
+        agility: this.agility,
+        vigor: this.vigor,
+        spirit: this.spirit,
+        willpower: this.willpower,
+        arcane: this.arcane,
+      }
+    }
+  }
+  wsrAttributesUpgradeCost():any{
+    return {
+      attributesUpgradeCost:{
+        strength: this.calculateUpgradeCost(this.strength),
+        endurance: this.calculateUpgradeCost(this.endurance),
+        constitution: this.calculateUpgradeCost(this.constitution),
+        precision: this.calculateUpgradeCost(this.precision),
+        agility: this.calculateUpgradeCost(this.agility),
+        vigor: this.calculateUpgradeCost(this.vigor),
+        spirit: this.calculateUpgradeCost(this.spirit),
+        willpower: this.calculateUpgradeCost(this.willpower),
+        arcane: this.calculateUpgradeCost(this.arcane),
+      }
+    }
+  }
+  wsrCurrencies():any{
+    return {
+      currencies:{
+        currentXp: this.currentXp,
+        totalXp: this.totalXp,
+        currentGold: this.currentGold,
+        totalGold: this.totalGold,
+        upgradePoints: this.upgradePoints,
+      }
+    }
+  }
+  wsrStatus():any{
+    return {
+      status:{
+        currentHealth: this.currentHealth,
+        totalHealth: this.totalHealth,
+        currentStamina: this.currentStamina,
+        totalStamina: this.totalStamina,
+        currentMana: this.currentMana,
+        totalMana: this.totalMana,
+      }
+    }
+  }
+  wsrActivitiesDuration(): any {
+    const validActivities = ["null", "explorar", "sanar", "descansar", "meditar"] as const;
+    const maxActivityDuration = validActivities.reduce((acc: Record<string, number>, activity) => {
+      acc[activity] = this.currentStamina * 1; 
+      return acc;
+    }, {});
+  
+    return {
+      maxActivityDuration:maxActivityDuration,
+    };
+  }
+  
 }

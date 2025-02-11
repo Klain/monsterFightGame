@@ -27,17 +27,9 @@ import { Activity } from '../../core/models/activity.model';
   styleUrls: ['./activity-card.component.css'],
 })
 export class ActivityCardComponent implements OnInit, OnDestroy {
-  @Input() activity!: ActivityType;
-
-  maxDuration: number = 1;
-  selectedDuration: number = 1;
-  remainingTime: number = 0;
-  totalDuration: number = 0;
-  progress: number = 0;
-  isInProgress: boolean = false;
-  isLoading: boolean = false;
-
+  @Input() activityType!: ActivityType;
   currentActivitySubscription: Subscription | null = null;
+  activity : any = {};
 
   constructor(private activityService: ActivityService) {}
 
@@ -51,11 +43,9 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
   }
   
   listenToActivityStatus() {
-    this.currentActivitySubscription = this.activityService.currentActivity$.subscribe((status) => {
-      if (status?.status === 'in_progress' && status.activity?.type === this.activity) {
-        this.setActivityInProgress(status.activity);
-      } else {
-        this.fetchMaxDuration();
+    this.currentActivitySubscription = this.activityService.currentActivity$.subscribe((activity:Activity) => {
+      if(activity){
+        this.activity = activity;
       }
     });
   }

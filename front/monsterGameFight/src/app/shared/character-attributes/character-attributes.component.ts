@@ -2,67 +2,61 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { CharacterService } from '../../core/services/character.service';
-import { Observable, forkJoin } from 'rxjs';
 import { Character } from '../../core/models/chacter.models';
 import { validAttributes } from '../../core/constants/attributes';
+import { Observable } from 'rxjs';
+
 
 @Component({
   selector: 'app-character-attributes',
   standalone: true,
   templateUrl: './character-attributes.component.html',
   styleUrls: ['./character-attributes.component.css'],
-  imports: [CommonModule, MatCardModule, MatGridListModule, MatButtonModule]
+  imports: [CommonModule, MatCardModule, MatGridListModule, MatButtonModule],
 })
 export class CharacterAttributesComponent implements OnInit {
+  // Observable del personaje
   character$: Observable<Character | null>;
-  attributeCosts: { [key: string]: number } = {};
   isLoading: { [key: string]: boolean } = {};
 
-  // Lista de atributos a mejorar (cargada dinámicamente)
-  attributeList = validAttributes.map(attr => ({ label: this.formatLabel(attr), key: attr }));
+  // Lista de atributos a mejorar
+  attributeList = validAttributes.map(attr => ({
+    label: this.formatLabel(attr),
+    key: attr,
+  }));
 
   constructor(private characterService: CharacterService, private snackBar: MatSnackBar) {
+    // Observable reactivo del servicio
     this.character$ = this.characterService.character$;
   }
 
   ngOnInit() {
-    this.loadUpgradeCosts();
+    // No necesitamos cargar costos por separado porque ahora están en el modelo del personaje.
   }
 
-  loadUpgradeCosts() {
-    const requests = validAttributes.map(attr => this.characterService.getUpgradeCost(attr));
-    
-    forkJoin(requests).subscribe((costsArray: any[]) => {
-      this.attributeCosts = costsArray.reduce((acc, cost) => {
-        acc[cost.attribute] = cost.cost;
-        return acc;
-      }, {} as { [key: string]: number });
-    });
-  }
-
+  // Mejorar un atributo
   upgradeAttribute(attribute: string) {
     if (this.isLoading[attribute]) return;
-    
+
     this.isLoading[attribute] = true;
 
     this.characterService.upgradeAttribute(attribute).subscribe({
       next: () => {
-        this.showToast(`Has mejorado ${this.formatLabel(attribute)}!`, "success");
-        this.loadUpgradeCosts(); // Refrescar costos después de mejorar
+        this.showToast(`¡Has mejorado ${this.formatLabel(attribute)}!`, 'success');
       },
-      error: () => this.showToast("No tienes suficiente XP para mejorar este atributo.", "error"),
-      complete: () => this.isLoading[attribute] = false
+      error: () => this.showToast('No tienes suficiente XP para mejorar este atributo.', 'error'),
+      complete: () => (this.isLoading[attribute] = false),
     });
   }
 
- 
-  showToast(message: string, type: "success" | "error" | "info") {
-    this.snackBar.open(message, "Cerrar", {
+  // Mostrar un mensaje tipo toast
+  showToast(message: string, type: 'success' | 'error' | 'info') {
+    this.snackBar.open(message, 'Cerrar', {
       duration: 3000,
-      panelClass: type === "success" ? "toast-success" : "toast-error"
+      panelClass: type === 'success' ? 'toast-success' : 'toast-error',
     });
   }
 

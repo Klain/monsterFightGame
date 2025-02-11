@@ -1,27 +1,27 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import { Observable } from 'rxjs';
+import { Constants } from '../constants/config';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class WebSocketService {
-  private socket!: Socket;
+  private socket: Socket;
 
   constructor() {
-    this.socket = io('http://localhost:4000', {
-      transports: ['websocket']
+    this.socket = io(Constants.baseUrl); 
+  }
+
+  on(event: string): Observable<any> {
+    return new Observable((observer : any) => {
+      this.socket.on(event, (data : any) => {
+        observer.next(data);
+      });
     });
   }
 
-  sendMessage(event: string, data: any) {
+  emit(event: string, data: any) {
     this.socket.emit(event, data);
-  }
-
-  listen(event: string, callback: (data: any) => void) {
-    this.socket.on(event, callback);
-  }
-
-  disconnect() {
-    this.socket.disconnect();
   }
 }

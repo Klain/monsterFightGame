@@ -61,7 +61,7 @@ class ActivityService {
     );
   }
 
-  static async getActivityStatus(character: Character): Promise<{ status: string; activity?: Activity }> {
+  static async getActivityStatus(character: Character): Promise<Activity | null> {
     const activityDb = await DatabaseService.get<any>(
       "SELECT * FROM activities WHERE character_id = ? AND completed = FALSE",
       [character.id]
@@ -70,13 +70,10 @@ class ActivityService {
     const activity = Activity.parseDb(activityDb);
   
     if (!activity) {
-      return { status: "idle" };
+      return null;
     }
   
-    const remainingTime = activity.getRemainingTime();
-    return remainingTime > 0
-      ? { status: "in_progress", activity }
-      : { status: "completed", activity };
+    return activity;
   }
   
   static async claimActivityReward(character: Character) {

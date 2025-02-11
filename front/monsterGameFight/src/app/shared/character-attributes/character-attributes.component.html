@@ -3,22 +3,23 @@
   <mat-card-content>
     <p><strong>Facción:</strong> {{ character.faction }} <strong>Clase:</strong> {{ character.class }}</p>
     <p><strong>Nivel:</strong> {{ character.level }}</p>
-    <p><strong>Salud:</strong> {{ character.currentHealth }} / {{ character.totalHealth }}</p>
-    <p><strong>Oro:</strong> {{ character.currentGold }}</p>
-    <p><strong>XP Disponible:</strong> {{ character.currentXp }}</p>
-    <p><strong>Puntos de Mejora:</strong> {{ character.upgradePoints }}</p>
+    <p><strong>Salud:</strong> {{ character.status.currentHealth }} / {{ character.status.totalHealth }}</p>
+    <p><strong>Oro:</strong> {{ character.currencies.currentGold }}</p>
+    <p><strong>XP Disponible:</strong> {{ character.currencies.currentXp }}</p>
+    <p><strong>Puntos de Mejora:</strong> {{ character.currencies.upgradePoints }}</p>
 
     <mat-grid-list cols="3" rowHeight="100px" class="attribute-grid">
       <mat-grid-tile *ngFor="let attribute of attributeList" class="attribute-tile">
         <div class="attribute">
-          <p><strong>{{ attribute.label }}:</strong> {{ character[attribute.key] }}</p>
+          <p><strong>{{ attribute.label }}:</strong> {{ character.attributes[attribute.key] }}</p>
           <button 
             mat-button 
             color="primary" 
-            *ngIf="attributeCosts[attribute.key] !== undefined && character.currentXp >= attributeCosts[attribute.key]"
+            *ngIf="character.attributesUpgradeCost[attribute.key] !== undefined && 
+                   character.currencies.currentXp >= character.attributesUpgradeCost[attribute.key]"
             (click)="upgradeAttribute(attribute.key)"
             [disabled]="isLoading[attribute.key]">
-            {{ isLoading[attribute.key] ? 'Mejorando...' : 'Mejorar (XP: ' + attributeCosts[attribute.key] + ')' }}
+            {{ isLoading[attribute.key] ? 'Mejorando...' : 'Mejorar (XP: ' + character.attributesUpgradeCost[attribute.key] + ')' }}
           </button>
         </div>
       </mat-grid-tile>

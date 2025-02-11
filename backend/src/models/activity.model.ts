@@ -20,6 +20,16 @@ export class Activity {
     return Math.max(this.duration - elapsed, 0);
   }
 
+  wsr():any{
+    return {
+      activity:{
+        type : this.type ,
+        startTime : this.startTime ,
+        duration : this.duration, 
+      }
+    }
+  }
+
   static parseDb(data: {
     character_id: number;
     completed: boolean;
