@@ -15,40 +15,31 @@ export class AuthGuard implements CanActivate {
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
 
+    // Si no hay tokens, redirigimos al login
     if (!accessToken || !refreshToken) {
-      // No hay tokens, redirige al login
+      console.warn('No hay tokens disponibles. Redirigiendo al login.');
       this.router.navigate(['/auth/login']);
       return false;
     }
 
-    const tokenData = this.decodeToken(accessToken);
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    if (tokenData.exp > currentTime) {
-      // El `accessToken` es válido, permite el acceso
+    // Verificar si el accessToken es válido
+    if (this.authService.isAuthenticated()) {
       return true;
     } else {
-      // El `accessToken` ha expirado, intenta renovarlo
+      // Intentar renovar el token
+      console.warn('Access token expirado. Intentando renovar...');
       return this.authService.refreshToken().pipe(
         map(() => {
-          // Renovación exitosa, permite el acceso
+          console.log('Renovación exitosa. Acceso permitido.');
           return true;
         }),
-        catchError(() => {
-          // Si falla la renovación, redirige al login
+        catchError((error:any) => {
+          console.error('Error al renovar el token:', error);
           this.authService.logout();
           this.router.navigate(['/auth/login']);
-          return of(false); // Devuelve un observable con el valor `false`
+          return of(false);
         })
       );
-    }
-  }
-
-  private decodeToken(token: string): any {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-      return null;
     }
   }
 }

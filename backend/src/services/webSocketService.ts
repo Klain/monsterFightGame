@@ -1,94 +1,99 @@
 //backend\src\services\webSocketService.ts
 import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
-import { Activity } from "../models/activity.model";
-import { Character } from "../models/character.model";
-import { connectedUsers } from "../sessionManager";
+import "dotenv/config";
+
+// Map para rastrear usuarios conectados
+const connectedUsers = new Map<number, Socket>();
 
 class WebSocketService {
   private io: Server | null = null;
 
-  // Inicializar WebSocketService con la instancia de Socket.IO
+  // Inicializar el servicio WebSocket
   initialize(io: Server) {
     this.io = io;
 
+    // Middleware para autenticar conexiones WebSocket
+    this.io.use((socket, next) => {
+      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+      if (!token) {
+        return next(new Error("Token de autenticación requerido"));
+      }
+      try {
+        const decoded = jwt.verify(token, process.env.ACCESS_SECRET!) as jwt.JwtPayload;
+        if (typeof decoded === "object" && "id" in decoded) {
+          socket.data.userId = decoded.id; // Almacenar userId en los datos del socket
+          next();
+        } else {
+          next(new Error("Token inválido: no contiene un ID de usuario"));
+        }
+      } catch (error) {
+        next(new Error("Token inválido o expirado"));
+      }
+    });
+
     // Configurar eventos de conexión
     this.io.on("connection", (socket: Socket) => {
-      console.log("Un usuario ha intentado conectar vía WebSockets:", socket.id);
-
-      // Evento de registro del usuario
-      socket.on("register", (token: string) => {
-        this.handleRegister(socket, token);
+      const userId = socket.data.userId;
+    
+      if (!userId) {
+        console.warn("Conexión rechazada: el userId no está disponible en el socket.");
+        socket.disconnect();
+        return;
+      }
+    
+      console.log(`Usuario ${userId} intentando conectar vía WebSocket con ID: ${socket.id}`);
+    
+      // Registrar al usuario
+      this.registerUser(socket, userId);
+    
+      // Manejar eventos del socket
+      socket.on("disconnect", (reason: string) => {
+        this.handleDisconnect(userId, reason);
       });
-
-      // Evento de desconexión
-      socket.on("disconnect", () => {
-        this.handleDisconnect(socket);
+    
+      socket.on("customEvent", (data: any) => {
+        console.log(`Evento personalizado recibido de usuario ${userId}:`, data);
       });
-    });
+    
+      // Confirmar al cliente que la conexión fue exitosa
+      socket.emit("connected", { success: true, userId });
+    });    
   }
 
-  // Manejar el registro de usuarios
-  private handleRegister(socket: Socket, token: string) {
-    try {
-      // Decodificar el token usando ACCESS_SECRET
-      const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.ACCESS_SECRET!) as jwt.JwtPayload;
-  
-      if (typeof decoded === "object" && "id" in decoded) {
-        const userId = decoded.id as number;
-  
-        // Verificar si el usuario ya estaba conectado y desconectar el socket previo
-        if (connectedUsers.has(userId)) {
-          const oldSocket = connectedUsers.get(userId);
-          oldSocket?.disconnect(true);
-          console.log(`Usuario ${userId} ya estaba conectado. Desconectando el socket anterior.`);
-        }
-  
-        // Registrar el nuevo socket
-        connectedUsers.set(userId, socket);
-        console.log(`Usuario ${userId} registrado en WebSockets.`);
-  
-        // Confirmar al cliente que el registro fue exitoso
-        socket.emit("registered", { success: true, userId });
-      } else {
-        throw new Error("El token no contiene un ID de usuario válido.");
-      }
-    } catch (error) {
-      console.error("Error en autenticación WebSockets:", (error as Error).message);
-      socket.emit("error", { message: "Autenticación fallida" });
-      socket.disconnect();
+  private registerUser(socket: Socket, userId: number): void {
+    // Desconectar cualquier socket previo
+    if (connectedUsers.has(userId)) {
+      const oldSocket = connectedUsers.get(userId);
+      oldSocket?.disconnect(true);
+      console.log(`Usuario ${userId} ya estaba conectado. Desconectando socket anterior.`);
     }
+  
+    // Registrar el nuevo socket
+    connectedUsers.set(userId, socket);
+    console.log(`Usuario ${userId} registrado en WebSocket con ID: ${socket.id}`);
   }
   
-
-  // Manejar la desconexión de usuarios
-  private handleDisconnect(socket: Socket) {
-    let disconnectedUserId: number | null = null;
-  
-    connectedUsers.forEach((value: Socket, key: number) => {
-      if (value === socket) {
-        disconnectedUserId = key;
-        connectedUsers.delete(key);
-      }
-    });
-  
-    if (disconnectedUserId !== null) {
-      console.log(`Usuario ${disconnectedUserId} desconectado.`);
+  // Manejar desconexión de usuarios
+  private handleDisconnect(userId: number, reason: string) {
+    if (connectedUsers.has(userId)) {
+      connectedUsers.delete(userId);
+      console.log(`Usuario ${userId} desconectado. Razón: ${reason}`);
     } else {
-      console.log("Socket desconectado pero no estaba asociado a ningún usuario registrado.");
+      console.log(`Desconexión de socket no registrado. Razón: ${reason}`);
     }
   }
-  
 
   // Notificar a un usuario específico
   notifyUser(userId: number, event: string, data: any) {
+    console.log("Usuarios conectados actualmente:", Array.from(connectedUsers.keys())); // DEPURAR
+  
     const socket = connectedUsers.get(userId);
     if (socket) {
       socket.emit(event, data);
       console.log(`Notificación enviada a usuario ${userId}:`, event, data);
     } else {
-      console.warn(`Usuario ${userId} no está conectado. Intento fallido de enviar:`, event, data);
-      // Opcional: Enviar a una cola de mensajes o guardar la notificación para reintento posterior
+      console.warn(`Usuario ${userId} no está conectado. No se pudo enviar:`, event, data);
     }
   }
   
@@ -101,13 +106,13 @@ class WebSocketService {
     }
   }
 
-  // Notificar un cambio en el character de un usuario
+  // Notificar un cambio en el personaje de un usuario
   characterRefresh(userId: number, characterData: any) {
     this.notifyUser(userId, "characterRefresh", characterData);
   }
 
-  // Constructor para enviar datos relacionados con el personaje y la actividad
-  characterRefreshBuilder(character: Character, activity: Activity | null): any {
+  // Construir los datos para la notificación de refresh
+  characterRefreshBuilder(character: any, activity: any | null): any {
     return {
       ...character?.wsr(),
       ...(activity ? activity.wsr() : { activity: null }),

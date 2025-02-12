@@ -11,7 +11,7 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
 
   const accessToken = localStorage.getItem('accessToken');
 
-  // Clona la solicitud y añade el header Authorization si hay un token
+  // Clonar la solicitud y añadir el header Authorization si hay un token
   let clonedRequest = req;
   if (accessToken) {
     clonedRequest = req.clone({
@@ -23,28 +23,28 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
 
   return next(clonedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Si obtenemos un 401 (token expirado), intentamos renovar el token
       if (error.status === 401 && localStorage.getItem('refreshToken')) {
+        console.warn('Access token expirado. Intentando renovar...');
+
+        // Intentar renovar el token
         return authService.refreshToken().pipe(
-          switchMap((response) => {
-            // Extraemos el accessToken del response
+          switchMap((response:any) => {
             const newAccessToken = response.accessToken;
 
-            // Actualiza el token en localStorage
+            // Actualizar el token en localStorage
             localStorage.setItem('accessToken', newAccessToken);
 
-            // Crea una nueva solicitud con el token actualizado
+            // Clonar la solicitud original con el nuevo token
             const refreshedRequest = req.clone({
               setHeaders: {
                 Authorization: `Bearer ${newAccessToken}`,
               },
             });
 
-            // Vuelve a intentar la solicitud con el nuevo token
+            // Reintentar la solicitud original con el token renovado
             return next(refreshedRequest);
           }),
           catchError((refreshError: HttpErrorResponse) => {
-            // Si el refresh token falla, cerramos la sesión y redirigimos
             console.error('Error al renovar el token:', refreshError);
             authService.logout();
             router.navigate(['/auth/login']);
@@ -53,7 +53,11 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
         );
       }
 
-      // Si no es un error 401, propagamos el error
+      // Otros errores (403, 500, etc.)
+      if (error.status !== 401) {
+        console.error('Error en la solicitud HTTP:', error);
+      }
+
       return throwError(() => error);
     })
   );

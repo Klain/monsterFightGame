@@ -15,9 +15,10 @@ import activitiesRoutes from "./routes/activityRoutes";
 import storeRoutes from "./routes/storeRoutes";
 import messageRoutes from "./routes/messageRoutes";
 
-
-// Cargar la documentación Swagger
+const PORT = process.env.PORT || 4000;
 const swaggerDocument = YAML.load("./src/swagger.yaml");
+
+// Inicializar la app de Express
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -27,31 +28,34 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-const PORT = process.env.PORT || 4000;
 
-// Inicializa el caché antes de arrancar el servidor
-(async () => {
-  try {
-    console.log("🔄 Inicializando caché...");
-    await DatabaseService.initializeCache();
-    console.log("✅ Caché inicializado correctamente.");
-  } catch (error) {
-    console.error("❌ Error al inicializar el caché:", error);
-    process.exit(1);
-  }
-})();
-
-// Inicializar el servicio de WebSocket
-webSocketService.initialize(io);
-
-// Middlewares
-app.use(cors());
-app.use(bodyParser.json());
+// Middleware para logs de solicitudes
 app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
-// Rutas
+// Inicialización del caché y servicios
+(async () => {
+  try {
+    console.log("🔄 Inicializando caché y base de datos...");
+    await DatabaseService.initializeCache();
+    console.log("✅ Caché inicializado correctamente.");
+
+    // Inicializar el servicio de WebSocket
+    webSocketService.initialize(io);
+    console.log("✅ Servicio de WebSocket inicializado correctamente.");
+  } catch (error) {
+    console.error("❌ Error durante la inicialización:", error);
+    process.exit(1); // Salir si la inicialización falla
+  }
+})();
+
+// Middlewares globales
+app.use(cors());
+app.use(bodyParser.json());
+
+// Rutas públicas
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api/auth", authRouter);
 app.use("/api/characters", characterRoutes);
@@ -60,15 +64,21 @@ app.use("/api/activities", activitiesRoutes);
 app.use("/api/store", storeRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Cargar rutas de debug solo en modo desarrollo
+// Rutas de desarrollo
 if (process.env.NODE_ENV === "development") {
-  //const debugRoutes = require("./routes/debugRoutes");
-  //app.use("/api/debug", debugRoutes);
+  // Aquí podrías cargar rutas específicas de debugging si es necesario
+  console.log("Modo desarrollo: rutas de debug activadas.");
 }
+
+// Manejo de errores global
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error("Error capturado:", err);
+  res.status(err.status || 500).json({ error: err.message || "Error interno del servidor" });
+});
 
 // Iniciar el servidor
 server.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
 
 export default app;

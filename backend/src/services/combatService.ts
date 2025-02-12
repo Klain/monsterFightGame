@@ -1,7 +1,6 @@
 import DatabaseService from "./databaseService";
 import { sendMessage } from "./messageService";
 import CharacterService from "./characterService";
-import { connectedUsers, sendRealTimeNotification } from "../sessionManager";
 import { Response } from "express";
 
 interface Character {
@@ -95,13 +94,6 @@ async function handleCombat(attacker_id: number, defender_id: number, res: Respo
     );
 
     await saveBattle(attacker_id, defender_id, winner.id, goldGained, xpGained);
-
-    // Notificar al jugador atacado
-    if (connectedUsers.has(defender.id)) {
-      sendRealTimeNotification(defender.id, `¡${attacker.name} te ha atacado!`);
-    } else {
-      await sendMessage(attacker_id, defender_id, "Has sido atacado", `El jugador ${attacker.name} te ha atacado.`);
-    }
 
     return res.json({
       message: `${winner.name} ha ganado la batalla.`,
