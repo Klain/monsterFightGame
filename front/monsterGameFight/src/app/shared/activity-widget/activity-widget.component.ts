@@ -1,18 +1,21 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+//front\monsterGameFight\src\app\shared\activity-widget\activity-widget.component .ts
+import { Component, Input, OnInit, OnDestroy} from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSliderModule } from '@angular/material/slider';
 import { CharacterService } from '../../core/services/character.service';
 import { Character, Activity } from '../../core/models/chacter.models';
-import { Observable, Subscription, interval, Subject } from 'rxjs';
+import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ActivityType } from '../../core/constants/activities';
+import { SecondsToTimerPipe } from '../../core/pipes/seconds-to-timer.pipe';
 
 @Component({
   selector: 'app-activity-widget',
   standalone: true,
-  imports: [CommonModule, MatProgressBarModule, MatButtonModule, MatSliderModule],
+  imports: [CommonModule, MatProgressBarModule, MatButtonModule, MatSliderModule,SecondsToTimerPipe,FormsModule ],
   templateUrl: './activity-widget.component.html',
   styleUrls: ['./activity-widget.component.css'],
 })
@@ -23,36 +26,49 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
   progress: number = 0;
   remainingTime: number = 0;
   isCompleted: boolean = false;
-  duration: number = 1; // Duración seleccionada por el slider
-  maxDuration: number = 0; // Duración máxima para el tipo de actividad
+  duration: number = 1; 
+  maxDuration: number = 0; 
+
+  character : Character|null=null;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private characterService: CharacterService) {}
+  constructor(
+    private characterService: CharacterService,
+    ) {}
 
   ngOnInit() {
-    // Escuchar cambios en el estado del personaje
     this.characterService.character$
       .pipe(takeUntil(this.destroy$))
       .subscribe((character: Character | null) => {
         if (character) {
-          this.maxDuration = character.maxActivityDuration[this.activityType] || 0;
-
-          if (character.activity) {
-            this.activity = character.activity;
-
-            // Verificar si la actividad en curso coincide con el tipo recibido
-            if (this.activity.type === this.activityType) {
-              this.startCountdown();
-            } else {
-              this.resetActivityState();
-            }
-          } else {
-            this.resetActivityState();
-          }
+          this.character = character;
+          this.refreshCharacterData();
         }
       });
   }
+
+  getMaxDuration():number{
+    return  this.character?.maxActivityDuration[this.activityType] || 0;
+  }
+
+  refreshCharacterData() {
+    if (this.character) {
+      this.maxDuration = this.character.maxActivityDuration[this.activityType] || 0;
+      this.activity = this.character.activity;
+  
+      if (this.activity) {
+        if (this.activity.type === this.activityType) {
+          this.startCountdown();
+        } else {
+          this.resetActivityState();
+        }
+      } else {
+        this.resetActivityState();
+      }
+    }
+  }
+  
 
   private startCountdown() {
     if (!this.activity) return;
@@ -95,26 +111,11 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
 
   startActivity() {
     if (this.activity) return; // No iniciar si ya hay una actividad en curso
-
-    this.characterService.startActivity(this.activityType, this.duration).subscribe({
-      next: () => {
-        console.log('Actividad iniciada.');
-      },
-      error: () => {
-        alert('Error al iniciar la actividad.');
-      },
-    });
+    this.characterService.startActivity(this.activityType, this.duration);
   }
 
   claimReward() {
-    this.characterService.claimActivityReward().subscribe({
-      next: () => {
-        this.resetActivityState();
-      },
-      error: () => {
-        alert('Error al reclamar la recompensa.');
-      },
-    });
+    this.characterService.claimActivityReward();
   }
 
   private resetActivityState() {

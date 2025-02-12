@@ -1,3 +1,4 @@
+//front\monsterGameFight\src\app\core\services\character.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
@@ -40,19 +41,19 @@ export class CharacterService {
     return this.characterSubject.value;
   }
 
-  upgradeAttribute(attribute: string): Observable<{ success: boolean }> {
-    return this.api.post<{ success: boolean }>('characters/attributes/upgrade-attribute', { attribute }).subscribe({
+  upgradeAttribute(attribute: string):void{
+    this.api.post<void>('characters/attributes/upgrade-attribute', { attribute }).subscribe({
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
     });
   }
 
-  startActivity(activityType: string, duration: number): Observable<void> {
-    return this.api.post<void>('activities/start', { activityType, duration }).subscribe({
+  startActivity(activityType: string, duration: number):void {
+    this.api.post('activities/start', { activityType, duration }).subscribe({
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
     });
   }
-  claimActivityReward(): Observable<Character> {
-    return this.api.post<Character>('activities/claim').subscribe({
+  claimActivityReward():void{
+    this.api.post('activities/claim').subscribe({
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
     });
   }

@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { getUserByUsername, createUser } from '../services/userServices';
 import CharacterService from "../services/characterService";
-import { registerSession, logoutUser } from "../sessionManager";
+import { registerSession, logoutUser, isSessionValid } from "../sessionManager";
 import "dotenv/config";
 import authMiddleware from "../middleware/authMiddleware";
 
@@ -49,15 +49,19 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET!, { expiresIn: "1h" });
+    // Generar tokens
+    const accessToken = jwt.sign({ id: user.id, username: user.username }, process.env.ACCESS_SECRET!, { expiresIn: "15m" });
+    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET!, { expiresIn: "7d" });
 
-    registerSession(user.id, token);
-    res.json({ token });
+    registerSession(user.id, refreshToken);
+
+    res.json({ accessToken, refreshToken });
   } catch (error) {
     console.error("Error en el inicio de sesión:", error);
     res.status(500).json({ error: "Error interno en el inicio de sesión." });
   }
 });
+
 
 // Ruta: Cerrar sesión
 router.post("/logout", authMiddleware, (req: Request, res: Response) => {
@@ -77,5 +81,36 @@ router.get("/check-session", authMiddleware, (req: Request, res: Response) => {
     user: userId, 
   });
 });
+
+router.post("/refresh-token", async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    res.status(400).json({ message: "Refresh token requerido." });
+    return;
+  }
+
+  try {
+    // Verifica el refresh token
+    const payload = jwt.verify(refreshToken, process.env.REFRESH_SECRET!) as jwt.JwtPayload;
+
+    // Opcional: Verifica que el refresh token esté en la sesión activa
+    const activeToken = await isSessionValid(payload.id, refreshToken);
+    if (!activeToken) {
+      res.status(401).json({ message: "Refresh token inválido o no activo." });
+      return;
+    }
+
+    // Genera un nuevo access token
+    const accessToken = jwt.sign({ id: payload.id }, process.env.ACCESS_SECRET!, { expiresIn: "15m" });
+
+    res.json({ accessToken });
+  } catch (err) {
+    console.error("Error al refrescar token:", err);
+    res.status(401).json({ message: "Refresh token inválido o expirado." });
+  }
+});
+
+
 
 export default router;

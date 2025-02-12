@@ -1,24 +1,21 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { ActivityService } from '../../core/services/activity.service';
-import { ActivityCardComponent } from '../activity-card/activity-card.component';
-import { ActivityType, validActivities } from '../../core/constants/activities';
+import { ActivityWidgetComponent } from '../activity-widget/activity-widget.component'; 
+import { validActivities, ActivityType } from '../../core/constants/activities';
 
 @Component({
   selector: 'app-activity-grid',
   standalone: true,
-  imports: [CommonModule, MatGridListModule, ActivityCardComponent],
+  imports: [CommonModule, ActivityWidgetComponent],
   templateUrl: './activity-grid.component.html',
   styleUrls: ['./activity-grid.component.css'],
 })
 export class ActivityGridComponent implements OnInit {
-  activities: ActivityType[] = [...validActivities]; // Todas las actividades disponibles
+  validActivityTypes: ActivityType[] = [];
 
-  constructor(private activityService: ActivityService) {}
+  constructor() {}
 
   ngOnInit() {
-    // Refresca el estado de la actividad al inicializar el componente
-    this.activityService.refreshCurrentActivity();
+    this.validActivityTypes = validActivities.filter(activity => activity !== "null");
   }
 }

@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CharacterService } from '../../core/services/character.service';
 import { Character } from '../../core/models/chacter.models';
-import { ActivityWidgetComponent } from '../../shared/activity-widget/activity-widget.component '; 
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { CharacterAttributesComponent } from '../../shared/character-attributes/character-attributes.component';
@@ -22,7 +21,6 @@ import { ActivityGridComponent } from '../../shared/activity-grid/activity-grid.
     MatCardModule,
     MatButtonModule,
     MatSnackBarModule,
-    ActivityWidgetComponent,
     CharacterAttributesComponent,
     ActivityGridComponent
   ],
@@ -38,7 +36,6 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.characterService.refreshCharacter();
   }
 
   showToast(message: string, type: 'success' | 'error' | 'info') {

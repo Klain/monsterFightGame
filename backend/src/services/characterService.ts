@@ -114,7 +114,7 @@ class CharacterService {
       character.currentMana = Math.min(character.totalMana, character.currentMana + (rewards.mana ?? 0));
   
       await DatabaseService.run(
-        `UPDATE characters SET currentXp = ?, currentGold = ?, currentHealth = ?, currentStamina = ?, currentMana = ? WHERE id = ?`,
+        `UPDATE characters SET current_xp = ?, current_gold = ?, current_health = ?, current_stamina = ?, current_mana = ? WHERE id = ?`,
         [character.currentXp, character.currentGold, character.currentHealth, character.currentStamina, character.currentMana, character.id]
       );
   
@@ -125,8 +125,6 @@ class CharacterService {
     }
   }
   
-
-
   static async getEquippedStats(id:number){
     return DatabaseService.getCharacterFromCache(id);
   }

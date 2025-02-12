@@ -67,31 +67,38 @@ class ActivityService {
       [character.id]
     );
 
-    const activity = Activity.parseDb(activityDb);
+    if(activityDb){
+      const activity = Activity.parseDb(activityDb);
   
-    if (!activity) {
+      if (!activity) {
+        return null;
+      }
+    
+      return activity;
+    }else{
       return null;
     }
-  
-    return activity;
+
   }
   
   static async claimActivityReward(character: Character) {
-    const activity = await DatabaseService.get<Activity>(
+    const activityDb : any = await DatabaseService.get(
       "SELECT * FROM activities WHERE character_id = ? AND completed = FALSE",
       [character.id]
     );
-    if (!activity) {
+    if(activityDb){
+      const activity = Activity.parseDb(activityDb);
+      const remainingTime = activity.getRemainingTime();
+      if (remainingTime > 0) {
+        throw new Error("La actividad aún no está completada.");
+      }
+      const rewards = this.calculateActivityReward(activity.type, activity.duration);
+      await CharacterService.updateCharacterRewards(character, rewards);
+      await DatabaseService.run("DELETE FROM activities WHERE character_id = ?", [character.id]);
+      return CharacterService.getCharacterById(character.id);
+    }else{
       throw new Error("No hay una actividad para reclamar.");
     }
-    const remainingTime = activity.getRemainingTime();
-    if (remainingTime > 0) {
-      throw new Error("La actividad aún no está completada.");
-    }
-    const rewards = this.calculateActivityReward(activity.type, activity.duration);
-    await CharacterService.updateCharacterRewards(character, rewards);
-    await DatabaseService.run("UPDATE activities SET completed = TRUE WHERE character_id = ?", [character.id]);
-    return CharacterService.getCharacterById(character.id);
   }
   
 

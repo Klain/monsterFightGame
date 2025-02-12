@@ -1,5 +1,6 @@
 <div class="activity-grid">
-  <div *ngFor="let activity of activities" class="activity-card-wrapper">
-    <app-activity-card [activity]="activity"></app-activity-card>
-  </div>
+  <app-activity-widget
+    *ngFor="let activityType of validActivityTypes"
+    [activityType]="activityType">
+  </app-activity-widget>
 </div>

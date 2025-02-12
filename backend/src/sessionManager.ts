@@ -12,10 +12,11 @@ const connectedUsers: Map<number, any> = new Map(); // El tipo del socket puede 
  * @param userId - ID del usuario que inicia sesión
  * @param token - Token JWT del usuario
  */
-export function registerSession(userId: number, token: string): void {
-  activeSessions.set(userId, token);
+ export function registerSession(userId: number, refreshToken: string): void {
+  activeSessions.set(userId, refreshToken);
   console.log(`Sesión iniciada para el usuario ${userId}`);
 }
+
 
 /**
  * Cierra la sesión de un usuario, eliminándolo de sesiones activas y desconectándolo.
@@ -40,27 +41,24 @@ export function logoutUser(userId: number): void {
  * @param token - Token JWT a verificar
  * @returns {boolean} - `true` si el token es válido y está activo; de lo contrario, `false`.
  */
- export async function isSessionValid(userId: number, token: string): Promise<boolean> {
+ export async function isSessionValid(userId: number, refreshToken: string): Promise<boolean> {
   try {
-    // Verifica si el token existe en las sesiones activas para el usuario
     const activeToken = activeSessions.get(userId);
-    if (!activeToken || activeToken !== token) {
-      return false; // El token no está activo o no coincide
+
+    // Verifica que el token coincida con el registrado
+    if (!activeToken || activeToken !== refreshToken) {
+      return false;
     }
 
-    // Verifica que el token sea válido y no esté expirado
-    jwt.verify(token, process.env.JWT_SECRET!);
-    return true; // El token es válido y está activo
+    // Verifica la validez del token
+    jwt.verify(refreshToken, process.env.REFRESH_SECRET!);
+    return true;
   } catch (error) {
-    // Verifica si el error es una instancia de `Error`
-    if (error instanceof Error) {
-      console.error(`Error verificando la sesión para el usuario ${userId}:`, error.message);
-    } else {
-      console.error(`Error desconocido verificando la sesión para el usuario ${userId}:`, error);
-    }
-    return false; // El token no es válido o ha expirado
+    console.error(`Error verificando el refresh token para el usuario ${userId}:`, error);
+    return false;
   }
 }
+
 
 
 /**

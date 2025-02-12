@@ -1,3 +1,4 @@
+//front\monsterGameFight\src\app\core\models\chacter.models.ts
 import { ActivityType } from "../constants/activities";
 
 export interface Character {

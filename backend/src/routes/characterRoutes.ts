@@ -64,9 +64,7 @@ router.get("/", authMiddleware,validateCharacterMiddleware , async (req: Request
   try {
     const character = req.locals.character;
     const activity  = await ActivityService.getActivityStatus(character);
-
-    res.json(webSocketService.characterRefreshBuilder(character,activity));
-    res.status(200);
+    res.status(200).json(webSocketService.characterRefreshBuilder(character,activity));
   } catch (error) {
     console.error("❌ Error al obtener personaje:", error);
     res.status(500).json({ error: "Error interno al recuperar el personaje." });

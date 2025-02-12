@@ -16,7 +16,7 @@ export class Activity {
   // Método para calcular el tiempo restante en minutos
   getRemainingTime(): number {
     const now = new Date();
-    const elapsed = Math.floor((now.getTime() - this.startTime.getTime()) / 60000);
+    const elapsed = Math.floor((now.getTime() - this.startTime.getTime()));
     return Math.max(this.duration - elapsed, 0);
   }
 

@@ -40,16 +40,8 @@ export class CharacterAttributesComponent implements OnInit {
   // Mejorar un atributo
   upgradeAttribute(attribute: string) {
     if (this.isLoading[attribute]) return;
-
     this.isLoading[attribute] = true;
-
-    this.characterService.upgradeAttribute(attribute).subscribe({
-      next: () => {
-        this.showToast(`¡Has mejorado ${this.formatLabel(attribute)}!`, 'success');
-      },
-      error: () => this.showToast('No tienes suficiente XP para mejorar este atributo.', 'error'),
-      complete: () => (this.isLoading[attribute] = false),
-    });
+    this.characterService.upgradeAttribute(attribute);
   }
 
   // Mostrar un mensaje tipo toast
