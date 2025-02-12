@@ -3,13 +3,15 @@ import { Character } from "../models/character.model";
 import { Activity } from "../models/activity.model";
 import CharacterService from "./characterService";
 import { ActivityReward } from "../models/activityReward.model";
+import { DEBUG_MODE } from "../constants/constants";
 
 class ActivityService {
 
   static async startActivity(character: Character, activity: string, duration: number) {
+    const startTime = new Date().toISOString();
     return DatabaseService.run(
-      "INSERT INTO activities (character_id, type, start_time, duration, completed) VALUES (?, ?, CURRENT_TIMESTAMP, ?, FALSE)",
-      [character.id, activity, duration]
+      "INSERT INTO activities (character_id, type, start_time, duration, completed) VALUES (?, ?, ?, ?, FALSE)",
+      [character.id, activity, startTime, duration]
     );
   }
 
@@ -55,22 +57,22 @@ class ActivityService {
   
 
   static calculateActivityReward(activityType: string, duration: number) {
-    let reward : ActivityReward = {};
+    let result : ActivityReward = {};
     switch (activityType) {
       case "explorar":
-        reward = { xp: duration * 5, gold: duration * 2 };
+        result = { xp: duration * 5, gold: duration * 2 , costStamina : duration , costHealth: Math.ceil(Math.random()*duration)};
         break;
       case "sanar":
-        reward = {health: duration * 5 }; 
+        result = {health: duration * 5 }; 
         break;
       case "descansar":
-        reward = {stamina: duration * 5 }; 
+        result = {stamina: duration * 5 }; 
         break;
       case "meditar":
-        reward = {mana:duration*5}; 
+        result = {mana : duration * 5}; 
         break;
     }
-    return reward;
+    return result;
   }
 }
 

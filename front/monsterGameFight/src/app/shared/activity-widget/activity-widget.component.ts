@@ -57,30 +57,30 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
       this.maxDuration = this.character.maxActivityDuration[this.activityType] || 0;
       this.activity = this.character.activity;
   
-      if (this.activity) {
-        if (this.activity.type === this.activityType) {
-          this.startCountdown();
-        } else {
-          this.resetActivityState();
-        }
+      if (this.activity && this.activity.type === this.activityType) {
+        this.startCountdown();
       } else {
         this.resetActivityState();
       }
+    } else {
+      this.resetActivityState();
     }
   }
+  
   
 
   private startCountdown() {
     if (!this.activity) return;
-
+  
     const now = new Date().getTime();
     const startTime = new Date(this.activity.startTime).getTime();
-    const elapsedMinutes = Math.floor((now - startTime) / 60000);
-    const totalDuration = this.activity.duration;
-    this.remainingTime = Math.max(totalDuration - elapsedMinutes, 0);
-
+    const elapsedSeconds = Math.floor((now - startTime) / 1000);
+    const totalSeconds = this.activity.duration;
+  
+    this.remainingTime = Math.max(totalSeconds - elapsedSeconds, 0);
+  
     this.updateProgress();
-
+  
     if (this.remainingTime > 0) {
       interval(1000)
         .pipe(takeUntil(this.destroy$))
@@ -96,26 +96,30 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
       this.completeActivity();
     }
   }
-
+  
   private updateProgress() {
     if (!this.activity) return;
-
-    const totalSeconds = this.activity.duration * 60;
-    const elapsedSeconds = totalSeconds - this.remainingTime * 60;
+  
+    const totalSeconds = this.activity.duration; 
+    const elapsedSeconds = totalSeconds - this.remainingTime;
+  
     this.progress = (elapsedSeconds / totalSeconds) * 100;
   }
-
+  
   private completeActivity() {
+    this.remainingTime = 0;
+    this.progress = 100;
     this.isCompleted = true;
   }
-
+  
   startActivity() {
-    if (this.activity) return; // No iniciar si ya hay una actividad en curso
+    if (this.activity) return;
     this.characterService.startActivity(this.activityType, this.duration);
   }
 
   claimReward() {
     this.characterService.claimActivityReward();
+    this.resetActivityState();
   }
 
   private resetActivityState() {

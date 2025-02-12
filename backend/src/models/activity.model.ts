@@ -1,5 +1,5 @@
 import { ActivityType } from "../constants/activities";
-
+import { DEBUG_MODE } from "../constants/constants";
 export class Activity {
   id: number = 0;
   userId: number = 0;
@@ -39,9 +39,9 @@ export class Activity {
     type: ActivityType;
   }): Activity {
     const startTime = typeof data.start_time === "string" ? new Date(data.start_time) : data.start_time;
+  
     return new Activity({
       id: data.id,
-      userId: data.character_id, // Mapeo del nombre en la DB
       characterId: data.character_id,
       type: data.type,
       startTime,
@@ -49,5 +49,7 @@ export class Activity {
       completed: data.completed,
     });
   }
+  
+  
   
 }

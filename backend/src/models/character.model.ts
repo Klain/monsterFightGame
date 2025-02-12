@@ -127,14 +127,21 @@
   }
   wsrActivitiesDuration(): any {
     const validActivities = ["null", "explorar", "sanar", "descansar", "meditar"] as const;
-    const maxActivityDuration = validActivities.reduce((acc: Record<string, number>, activity) => {
-      acc[activity] = this.currentStamina * 1; 
-      return acc;
-    }, {});
+    const maxActivityDuration = {
+      explorar: this.exploracionMaxDuration(),
+      sanar: this.sanarMaxDuration(),
+      descansar: this.descansarMaxDuration(),
+      meditar: this.meditarMaxDuration(),
+    }
   
     return {
       maxActivityDuration:maxActivityDuration,
     };
   }
+
+  exploracionMaxDuration(){ return this.currentStamina }
+  sanarMaxDuration(){ return (this.totalHealth-this.currentHealth)*1 }
+  descansarMaxDuration(){ return (this.totalStamina-this.currentStamina)*1 }
+  meditarMaxDuration(){ return (this.totalMana-this.currentMana)*1 }
   
 }

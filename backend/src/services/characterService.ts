@@ -89,7 +89,7 @@ class CharacterService {
   
       // Sincronizar con la base de datos
       await DatabaseService.run(
-        `UPDATE characters SET ${attribute} = ?, currentXp = ? WHERE id = ?`,
+        `UPDATE characters SET ${attribute} = ?, current_xp = ? WHERE id = ?`,
         [updatedValue, updatedXp, character.id]
       );
   
@@ -109,9 +109,9 @@ class CharacterService {
     try {
       character.currentXp += rewards.xp ?? 0;
       character.currentGold += rewards.gold ?? 0;
-      character.currentHealth = Math.min(character.totalHealth, character.currentHealth + (rewards.health ?? 0));
-      character.currentStamina = Math.min(character.totalStamina, character.currentStamina + (rewards.stamina ?? 0));
-      character.currentMana = Math.min(character.totalMana, character.currentMana + (rewards.mana ?? 0));
+      character.currentHealth = Math.ceil(Math.min(character.totalHealth, (character.currentHealth + (rewards.health ?? 0) - (rewards.costHealth ?? 0) )));
+      character.currentStamina = Math.ceil(Math.min(character.totalStamina, character.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0) ));
+      character.currentMana = Math.ceil(Math.min(character.totalMana, character.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0)));
   
       await DatabaseService.run(
         `UPDATE characters SET current_xp = ?, current_gold = ?, current_health = ?, current_stamina = ?, current_mana = ? WHERE id = ?`,

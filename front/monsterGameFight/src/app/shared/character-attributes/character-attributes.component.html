@@ -4,6 +4,9 @@
     <p><strong>Facción:</strong> {{ character.faction }} <strong>Clase:</strong> {{ character.class }}</p>
     <p><strong>Nivel:</strong> {{ character.level }}</p>
     <p><strong>Salud:</strong> {{ character.status.currentHealth }} / {{ character.status.totalHealth }}</p>
+    <p><strong>Energía:</strong> {{ character.status.currentStamina }} / {{ character.status.totalStamina }}</p>
+    <p><strong>Mana:</strong> {{ character.status.currentMana }} / {{ character.status.totalMana }}</p>
+
     <p><strong>Oro:</strong> {{ character.currencies.currentGold }}</p>
     <p><strong>XP Disponible:</strong> {{ character.currencies.currentXp }}</p>
     <p><strong>Puntos de Mejora:</strong> {{ character.currencies.upgradePoints }}</p>

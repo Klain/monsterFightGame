@@ -7,7 +7,7 @@ export const validateAttributeMiddleware = (
   res: Response,
   next: NextFunction
 ): void => {
-  const { attribute } = req.params;
+  const attribute = req.params.attribute || req.body.attribute;
 
   if (!isAttribute(attribute)) {
     res.status(400).json({ error: `El atributo '${attribute}' no es válido.` });
