@@ -2,6 +2,7 @@ import DatabaseService from "./databaseService";
 import { Character } from "../models/character.model";
 import { AttributeType } from "../constants/attributes";
 import { ActivityReward } from "../models/activityReward.model";
+import webSocketService from "./webSocketService";
 
 class CharacterService {
   // Crear un personaje para un usuario
@@ -68,13 +69,11 @@ class CharacterService {
       throw new Error("Error al crear personaje.");
     }
   }
-
   // Obtener un personaje por su ID de usuario
   static async getCharacterById(userId: number): Promise<Character|null> {
     const character = DatabaseService.getCharacterFromCache(userId);
     return character;
   }
-
   // Mejorar un atributo del personaje
   // Restringimos el tipo del atributo dinámico
   static async upgradeCharacterAttribute(
@@ -104,7 +103,6 @@ class CharacterService {
       throw new Error("No se pudo actualizar el personaje. Inténtalo nuevamente.");
     }
   }
-
   static async updateCharacterRewards(character: Character, rewards: ActivityReward): Promise<void> {
     try {
       character.currentXp += rewards.xp ?? 0;
@@ -124,9 +122,137 @@ class CharacterService {
       throw new Error("No se pudo actualizar las recompensas del personaje.");
     }
   }
-  
   static async getEquippedStats(id:number){
     return DatabaseService.getCharacterFromCache(id);
+  }
+  static async updateCharacterStatus(character: Character): Promise<void> {
+    try {
+      await DatabaseService.run(
+        `UPDATE characters 
+          SET current_health = ?, total_health = ?, 
+              current_stamina = ?, total_stamina = ?, 
+              current_mana = ?, total_mana = ? 
+          WHERE id = ?`,
+        [
+          character.currentHealth,
+          character.totalHealth,
+          character.currentStamina,
+          character.totalStamina,
+          character.currentMana,
+          character.totalMana,
+          character.id,
+        ]
+      );
+      webSocketService.characterRefresh(character.userId,{
+        ...character.wsrStatus(),
+      });
+
+      console.log(`✅ Estado actualizado para el personaje ${character.name}`);
+    } catch (error) {
+      console.error("❌ Error al actualizar el estado del personaje:", error);
+      throw new Error("Error al actualizar el estado del personaje.");
+    }
+  }
+  static async updateCharacterCurrencies(character: Character): Promise<void> {
+    try {
+      await DatabaseService.run(
+        `UPDATE characters 
+          SET current_gold = ?, total_gold = ?, 
+              current_xp = ?, total_xp = ? 
+          WHERE id = ?`,
+        [
+          character.currentGold,
+          character.totalGold,
+          character.currentXp,
+          character.totalXp,
+          character.id,
+        ]
+      );
+      webSocketService.characterRefresh(character.userId,{
+        ...character.wsrCurrencies(),
+      });
+
+      console.log(`✅ Monedas y experiencia actualizadas para el personaje ${character.name}`);
+    } catch (error) {
+      console.error("❌ Error al actualizar monedas/experiencia del personaje:", error);
+      throw new Error("Error al actualizar monedas y experiencia del personaje.");
+    }
+  }
+  static async applyCombatRewards(
+    winner: Character,
+    loser: Character,
+    xpGained: number,
+    goldGained: number,
+    lostGold: number
+  ): Promise<void> {
+    try {
+      // Aplicar recompensas al ganador
+      winner.currentXp += xpGained;
+      winner.totalXp += xpGained;
+      winner.currentGold += goldGained;
+      winner.totalGold += goldGained;
+
+      // Penalizar al perdedor
+      loser.currentGold = Math.max(0, loser.currentGold - lostGold);
+
+      // Actualizar ambos personajes en la base de datos
+      await this.updateCharacterCurrencies(winner);
+      await this.updateCharacterCurrencies(loser);
+
+      console.log(`✅ Recompensas aplicadas: ${winner.name} ganó ${xpGained} XP y ${goldGained} oro.`);
+      console.log(`✅ Penalizaciones aplicadas: ${loser.name} perdió ${lostGold} oro.`);
+    } catch (error) {
+      console.error("❌ Error al aplicar recompensas de combate:", error);
+      throw new Error("Error al aplicar recompensas de combate.");
+    }
+  }
+  static async getOpponentList(character: Character, range: number = 5): Promise<Character[]> {
+    try {
+      const minLevel = Math.max(1, character.level - range);
+      const maxLevel = character.level + range;
+      const results = await DatabaseService.all<Character>(
+        `SELECT * FROM characters 
+          WHERE id != ? AND level BETWEEN ? AND ? 
+          AND (last_fight IS NULL OR last_fight <= datetime('now', '-1 hour'))
+          ORDER BY RANDOM() LIMIT 30`,
+        [character.id, minLevel, maxLevel]
+      );
+      const shuffled = results.sort(() => 0.5 - Math.random()).slice(0, 5);
+      return shuffled.map((result) => new Character(result));
+    } catch (error) {
+      console.error("Error al obtener posibles oponentes:", error);
+      throw new Error("Error al buscar posibles oponentes.");
+    }
+  }
+  /**
+   * Genera un personaje "dummy" para usarse como oponente.
+   * @param referenceCharacter - El personaje de referencia (nivel parejo, facción, etc.).
+   * @returns Una instancia de Character con valores predeterminados.
+   */
+  static createDummy(referenceCharacter: Character): Character {
+    // Crear atributos con valores aleatorios basados en el nivel del personaje de referencia
+    const level = referenceCharacter.level;
+    const randomStat = () => Math.max(1, Math.floor(Math.random() * level + 5));
+
+    return new Character({
+      name: `Dummy Lv${level}`,
+      level: level,
+      faction: "Neutral",
+      strength: randomStat(),
+      endurance: randomStat(),
+      precision: randomStat(),
+      agility: randomStat(),
+      vigor: randomStat(),
+      spirit: randomStat(),
+      willpower: randomStat(),
+      arcane: randomStat(),
+      currentHealth: 100 + level * 5,
+      totalHealth: 100 + level * 5,
+      currentStamina: 100,
+      totalStamina: 100,
+      currentMana: 100,
+      totalMana: 100,
+    });
   }
 
 }

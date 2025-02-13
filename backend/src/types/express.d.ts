@@ -13,7 +13,11 @@ declare global {
         message?:{
           subject:string,
           body:string,
+        },
+        combat?:{
+          defender:Character
         }
+
       };
     }
   }

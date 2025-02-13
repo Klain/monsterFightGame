@@ -2,7 +2,6 @@
 import { Message } from "../models/message.model";
 import DatabaseService from "../services/databaseService";
 
-
 /**
  * Envía un mensaje de un jugador a otro.
  * @param message - objeto message del usuario que envía el mensaje.
@@ -28,7 +27,6 @@ async function sendMessage( message : Message ):Promise<Message>{
     throw new Error("Error interno al enviar mensaje.");
   }
 }
-
 /**
  * Obtiene los mensajes de un personaje específico.
  * @param character_id - ID del personaje que recibe los mensajes.
@@ -68,7 +66,6 @@ async function getCountMessages(character_id: number): Promise<number> {
     throw new Error("Error interno al obtener mensajes.");
   }
 }
-
 /**
  * Marca un mensaje como leído.
  * @param message - objeto message del usuario que envía el mensaje.

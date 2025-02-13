@@ -1,0 +1,55 @@
+.combat-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mode-row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.content-row {
+  text-align: center;
+}
+
+.mat-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actions button {
+  margin-right: 10px;
+}
+
+.log-container {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.opponents-list {
+  margin-top: 20px;
+}
+
+.opponent-card {
+  margin-bottom: 15px;
+}
+
+.opponent-card-content {
+  padding: 0.5rem 2rem 0.5rem 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.opponent-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+  

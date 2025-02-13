@@ -1,1 +1,92 @@
-<p>combat works!</p>
+<div class="combat-container">
+    <!-- Opciones de modo -->
+    <div class="mode-row">
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="mode === 'search'"
+        (click)="switchMode('search')"
+      >
+        Buscar Oponentes
+      </button>
+      <button
+        mat-raised-button
+        color="accent"
+        [disabled]="mode === 'actions'"
+        (click)="switchMode('actions')"
+      >
+        Acciones
+      </button>
+    </div>
+  
+    <!-- Contenido según el modo -->
+    <div *ngIf="mode === 'search'" class="content-row">
+      <p>Coste de buscar oponentes: {{ combatCost }} energía</p>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="searchOpponents(null)"
+        [disabled]="searching"
+      >
+        {{ searching ? 'Buscando...' : 'Iniciar Búsqueda' }}
+      </button>
+    </div>
+  
+    <div *ngIf="mode === 'actions'" class="content-row">
+      <p>Selecciona una acción:</p>
+      <button
+        *ngFor="let action of actions"
+        mat-raised-button
+        color="primary"
+        (click)="action.onClick(action.name)"
+      >
+        {{ action.name }}
+      </button>
+    </div>
+  
+    <!-- Resultados: Lista de oponentes -->
+    <div *ngIf="opponents.length > 0" class="opponents-list">
+      <h3>Oponentes encontrados</h3>
+      <div class="opponent-card" *ngFor="let opponent of opponents">
+        <mat-card class="opponent-card-content">
+          <mat-card-title>
+            {{ opponent.name }} (Nivel: {{ opponent.level }})
+          </mat-card-title>
+          <mat-card-actions class="opponent-actions">
+            <button *ngIf="!selectedAction || selectedAction === 'Asaltar'"
+              mat-raised-button
+              color="primary"
+              (click)="performAction('Asaltar', opponent.id)"
+            >
+              Asaltar
+            </button>
+            <button *ngIf="!selectedAction || selectedAction === 'Robar'"
+              mat-raised-button
+              color="accent"
+              (click)="performAction('Robar', opponent.id)"
+            >
+              Robar
+            </button>
+            <button *ngIf="!selectedAction || selectedAction === 'Espiar'"
+              mat-raised-button
+              color="warn"
+              (click)="performAction('Espiar', opponent.id)"
+            >
+              Espiar
+            </button>
+          </mat-card-actions>
+          
+        </mat-card>
+      </div>
+    </div>
+    
+  
+    <!-- Log de resultados -->
+    <div *ngIf="showLog" class="log-container">
+      <h3>Resultado</h3>
+      <pre *ngIf="combatLog">{{ combatLog.battle_log.join('\n') }}</pre>
+      <pre *ngIf="heistLog">{{ heistLog.log.join('\n') }}</pre>
+      <button mat-raised-button color="primary" (click)="resetResults()">Aceptar</button>
+    </div>
+  </div>
+  

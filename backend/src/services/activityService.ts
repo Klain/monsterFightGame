@@ -3,7 +3,6 @@ import { Character } from "../models/character.model";
 import { Activity } from "../models/activity.model";
 import CharacterService from "./characterService";
 import { ActivityReward } from "../models/activityReward.model";
-import { DEBUG_MODE } from "../constants/constants";
 
 class ActivityService {
 

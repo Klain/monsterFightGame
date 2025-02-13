@@ -1,5 +1,4 @@
 import { ActivityType } from "../constants/activities";
-import { DEBUG_MODE } from "../constants/constants";
 export class Activity {
   id: number = 0;
   userId: number = 0;

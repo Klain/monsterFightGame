@@ -44,11 +44,7 @@
   getHealthPercentage(): number {
     return (this.currentHealth / this.totalHealth) * 100;
   }
-
-  isDead(): boolean {
-    return this.currentHealth <= 0;
-  }
-
+  
   // Método para calcular el nivel basado en la experiencia total
   getLevelFromXp(): number {
     return Math.floor(this.totalXp / 1000);
@@ -57,6 +53,47 @@
   // Método para verificar si tiene suficiente oro
   hasEnoughGold(amount: number): boolean {
     return this.currentGold >= amount;
+  }
+
+  // Aplica daño al personaje
+  receiveDamage(damage: number): void {
+    this.currentHealth = Math.max(0, this.currentHealth - damage);
+  }
+
+  // Verifica si el personaje está muerto
+  isDead(): boolean {
+    return this.currentHealth <= 0;
+  }
+
+  // Calcula daño infligido a otro personaje
+  calculateDamage(target: Character): number {
+    // Probabilidad de evasión
+    const evasionChance = target.agility / (this.precision + target.agility);
+    if (Math.random() < evasionChance) {
+      return 0; // Golpe evadido
+    }
+
+    // Daño físico
+    let damage = Math.max(this.strength - target.endurance / 2, 1);
+
+    // Probabilidad de crítico
+    const critChance = this.precision / (this.precision + target.agility);
+    if (Math.random() < critChance) {
+      damage = Math.floor(damage * 1.5); // Crítico
+    }
+
+    return damage;
+  }
+
+  // Añade experiencia y oro al personaje
+  addRewards(xp: number, gold: number): void {
+    this.currentXp += xp;
+    this.currentGold += gold;
+  }
+
+  // Reduce el oro del personaje
+  deductGold(amount: number): void {
+    this.currentGold = Math.max(0, this.currentGold - amount);
   }
 
   wsr():any{
