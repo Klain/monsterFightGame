@@ -110,13 +110,20 @@ class WebSocketService {
   characterRefresh(userId: number, characterData: any) {
     this.notifyUser(userId, "characterRefresh", characterData);
   }
-
   // Construir los datos para la notificación de refresh
   characterRefreshBuilder(character: any, activity: any | null): any {
     return {
       ...character?.wsr(),
       ...(activity ? activity.wsr() : { activity: null }),
     };
+  }
+
+  // Notificar un cambio en el personaje de un usuario
+  characterNewMessageSend(userId: number, characterData: any) {
+    this.notifyUser(userId, "characterNewMessageSend", characterData);
+  }
+  characterNewMessageRecived(userId: number, characterData: any) {
+    this.notifyUser(userId, "characterNewMessageRecived", characterData);
   }
 }
 

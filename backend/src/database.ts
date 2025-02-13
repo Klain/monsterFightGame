@@ -117,7 +117,9 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       sender_id INTEGER NOT NULL,
+      sender_name TEXT NOT NULL,
       receiver_id INTEGER NOT NULL,
+      receiver_name TEXT NOT NULL,
       subject TEXT NOT NULL,
       body TEXT NOT NULL,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

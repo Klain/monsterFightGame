@@ -1,0 +1,41 @@
+.messages-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+  }
+  
+  mat-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  
+  .messages-container {
+    padding: 16px;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .form-row {
+    margin-bottom: 16px;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  .submit-button {
+    min-width: 120px;
+  }
+  

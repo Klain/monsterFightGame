@@ -53,6 +53,14 @@ export interface Activity {
 
 export interface Activities extends Record<ActivityType, number> {}
 
+export interface Message {
+  sender: string,
+  receiver: string,
+  subject: string,
+  body: string,
+  timestamp: Date,
+}
+
 
 
 

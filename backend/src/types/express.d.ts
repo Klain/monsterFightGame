@@ -10,6 +10,10 @@ declare global {
         character?: Character;
         activityType?: string;
         maxDuration? : number;
+        message?:{
+          subject:string,
+          body:string,
+        }
       };
     }
   }

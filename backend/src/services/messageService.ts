@@ -1,36 +1,28 @@
 // backend/src/services/messageService.js
+import { Message } from "../models/message.model";
 import DatabaseService from "../services/databaseService";
 
-interface Message {
-  id: number;
-  sender_id: number;
-  receiver_id: number;
-  subject: string;
-  body: string;
-  timestamp: string; // Puede ser una fecha ISO
-  read: boolean;
-}
 
 /**
  * Envía un mensaje de un jugador a otro.
- * @param sender_id - ID del usuario que envía el mensaje.
- * @param receiver_id - ID del usuario que recibe el mensaje.
- * @param subject - Asunto del mensaje.
- * @param body - Cuerpo del mensaje.
+ * @param message - objeto message del usuario que envía el mensaje.
  */
-async function sendMessage(
-  sender_id: number,
-  receiver_id: number,
-  subject: string,
-  body: string
-): Promise<{ message: string }> {
+async function sendMessage( message : Message ):Promise<Message>{
   try {
-    await DatabaseService.run(
-      `INSERT INTO messages (sender_id, receiver_id, subject, body) VALUES (?, ?, ?, ?)`,
-      [sender_id, receiver_id, subject, body]
+    const result = await DatabaseService.run(
+      `INSERT INTO messages (sender_id, receiver_id, sender_name, receiver_name, subject, body, timestamp) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [message.sender_id, message.receiver_id, message.sender_name, message.receiver_name, message.subject, message.body, message.timestamp]
     );
-
-    return { message: "Mensaje enviado con éxito." };
+    const insertedMessage = await DatabaseService.get<Partial<Message>>(
+      `SELECT * FROM messages WHERE id = ?`,
+      [result.lastID]
+    );
+    if(insertedMessage){
+      return Message.parseDb(insertedMessage);
+    }else{
+      throw new Error("No se encuentra el mensaje recien insertado.");
+    }
   } catch (error) {
     console.error("Error al enviar mensaje:", error);
     throw new Error("Error interno al enviar mensaje.");
@@ -38,45 +30,66 @@ async function sendMessage(
 }
 
 /**
- * Obtiene los mensajes de un usuario específico.
- * @param user_id - ID del usuario que recibe los mensajes.
+ * Obtiene los mensajes de un personaje específico.
+ * @param character_id - ID del personaje que recibe los mensajes.
+ * @param page - ID del personaje que recibe los mensajes.
+ * @param limit - ID del personaje que recibe los mensajes.
+
  */
-async function getMessages(user_id: number): Promise<Message[]> {
+ async function getMessages(character_id: number, page: number = 1, limit: number = 20, recived:boolean=true): Promise<Message[]> {
   try {
+    const offset = (page - 1) * limit; 
+    const query = recived?
+     `SELECT * FROM messages WHERE receiver_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?`
+    :`SELECT * FROM messages WHERE sender_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+    
     const messages = await DatabaseService.all<Message>(
-      `SELECT * FROM messages WHERE receiver_id = ? ORDER BY timestamp DESC`,
-      [user_id]
+      query,
+      [character_id, limit, offset]
     );
 
     return messages;
   } catch (error) {
-    console.error("Error al obtener mensajes:", error);
+    console.error("❌ Error al obtener mensajes:", error);
+    throw new Error("Error interno al obtener mensajes.");
+  }
+}
+
+async function getCountMessages(character_id: number): Promise<number> {
+  try {
+    const totalMessages = await DatabaseService.get<number>(
+      `SELECT COUNT(*) as total FROM messages WHERE receiver_id = ?`,
+      [character_id]
+    );
+
+    return totalMessages || 0;
+  } catch (error) {
+    console.error("❌ Error al obtener el numero de mensajes:", error);
     throw new Error("Error interno al obtener mensajes.");
   }
 }
 
 /**
  * Marca un mensaje como leído.
- * @param message_id - ID del mensaje a marcar como leído.
+ * @param message - objeto message del usuario que envía el mensaje.
  */
-async function markMessageAsRead(message_id: number): Promise<{ message: string } | { error: string }> {
+async function markMessageAsRead( message : Message): Promise<{ message: string } | { error: string }> {
   try {
-    const message = await DatabaseService.get<Message>(
-      `SELECT * FROM messages WHERE id = ?`,
-      [message_id]
-    );
-
-    if (!message) {
-      return { error: "Mensaje no encontrado." };
-    }
-
-    await DatabaseService.run(`UPDATE messages SET read = TRUE WHERE id = ?`, [message_id]);
-
+    await DatabaseService.run(`UPDATE messages SET read = TRUE WHERE id = ?`, [message.id]);
     return { message: "Mensaje marcado como leído." };
+
   } catch (error) {
     console.error("Error al marcar mensaje como leído:", error);
     throw new Error("Error interno al marcar mensaje como leído.");
   }
 }
 
-export { sendMessage, getMessages, markMessageAsRead };
+async function getMessageById(message_id:number):Promise<Message>{
+  const message = await DatabaseService.get<any>(
+    `SELECT * FROM messages WHERE id = ?`,
+    [message_id]
+  );
+  return Message.parseDb(message);
+}
+
+export { sendMessage, getMessages, markMessageAsRead,getMessageById,getCountMessages };
