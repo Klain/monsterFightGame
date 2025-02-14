@@ -6,7 +6,13 @@ class ServerConfig {
 
 
     //Assault
-    static assaultSearchCost = 10;
+    static assault = {
+        searchCost: 10,
+        maxTurns:10,
+        attackEnergyCost:1,
+        defendEnergyCost:1,
+        winnerXpBonus:1.2,
+    };
 
 
      // 1. Configuración general

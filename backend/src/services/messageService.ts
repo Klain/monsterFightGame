@@ -81,6 +81,29 @@ async function markMessageAsRead( message : Message): Promise<{ message: string 
   }
 }
 
+/**
+ * Elimina un mensaje específico por su ID.
+ * @param message_id - ID del mensaje que se desea eliminar.
+ */
+ async function deleteMessage(message_id: number): Promise<{ message: string }> {
+  try {
+    const result = await DatabaseService.run(
+      `DELETE FROM messages WHERE id = ?`,
+      [message_id]
+    );
+
+    if (result.changes === 0) {
+      return { message: "El mensaje no existe o ya fue eliminado." };
+    }
+
+    return { message: "Mensaje eliminado exitosamente." };
+  } catch (error) {
+    console.error("Error al eliminar el mensaje:", error);
+    throw new Error("Error interno al eliminar el mensaje.");
+  }
+}
+
+
 async function getMessageById(message_id:number):Promise<Message>{
   const message = await DatabaseService.get<any>(
     `SELECT * FROM messages WHERE id = ?`,
@@ -89,4 +112,4 @@ async function getMessageById(message_id:number):Promise<Message>{
   return Message.parseDb(message);
 }
 
-export { sendMessage, getMessages, markMessageAsRead,getMessageById,getCountMessages };
+export { sendMessage, getMessages, markMessageAsRead,getMessageById,getCountMessages,deleteMessage };

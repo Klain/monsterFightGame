@@ -142,33 +142,33 @@
   wsrCurrencies():any{
     return {
       currencies:{
-        currentXp: this.currentXp,
-        totalXp: this.totalXp,
-        currentGold: this.currentGold,
-        totalGold: this.totalGold,
-        upgradePoints: this.upgradePoints,
+        currentXp: Math.floor(this.currentXp),
+        totalXp: Math.floor(this.totalXp),
+        currentGold: Math.floor(this.currentGold),
+        totalGold: Math.floor(this.totalGold),
+        upgradePoints: Math.floor(this.upgradePoints),
       }
     }
   }
   wsrStatus():any{
     return {
       status:{
-        currentHealth: this.currentHealth,
-        totalHealth: this.totalHealth,
-        currentStamina: this.currentStamina,
-        totalStamina: this.totalStamina,
-        currentMana: this.currentMana,
-        totalMana: this.totalMana,
+        currentHealth: Math.floor(this.currentHealth),
+        totalHealth:Math.floor( this.totalHealth),
+        currentStamina: Math.floor(this.currentStamina),
+        totalStamina: Math.floor(this.totalStamina),
+        currentMana: Math.floor(this.currentMana),
+        totalMana: Math.floor(this.totalMana),
       }
     }
   }
   wsrActivitiesDuration(): any {
     const maxActivityDuration = [
       0,
-      this.exploracionMaxDuration(),
-      this.sanarMaxDuration(),
-      this.descansarMaxDuration(),
-      this.meditarMaxDuration(),
+      Math.floor(this.exploracionMaxDuration()),
+      Math.floor(this.sanarMaxDuration()),
+      Math.floor(this.descansarMaxDuration()),
+      Math.floor(this.meditarMaxDuration()),
      ];
   
     return {

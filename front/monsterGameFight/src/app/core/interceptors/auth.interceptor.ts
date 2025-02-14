@@ -28,32 +28,29 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
 
         // Intentar renovar el token
         return authService.refreshToken().pipe(
-          switchMap((response:any) => {
+          switchMap((response: any) => {
             const newAccessToken = response.accessToken;
-
-            // Actualizar el token en localStorage
             localStorage.setItem('accessToken', newAccessToken);
-
-            // Clonar la solicitud original con el nuevo token
             const refreshedRequest = req.clone({
               setHeaders: {
                 Authorization: `Bearer ${newAccessToken}`,
               },
             });
-
-            // Reintentar la solicitud original con el token renovado
             return next(refreshedRequest);
           }),
           catchError((refreshError: HttpErrorResponse) => {
-            console.error('Error al renovar el token:', refreshError);
-            authService.logout();
-            router.navigate(['/auth/login']);
+            if (refreshError.error?.error === 'invalid_refresh_token') {
+              console.warn('El refresh token ha expirado. Cerrando sesión.');
+              authService.logout();
+              router.navigate(['/auth/login']);
+            } else {
+              console.error('Error al renovar el token:', refreshError);
+            }
             return throwError(() => refreshError);
           })
         );
       }
 
-      // Otros errores (403, 500, etc.)
       if (error.status !== 401) {
         console.error('Error en la solicitud HTTP:', error);
       }

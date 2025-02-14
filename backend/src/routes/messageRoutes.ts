@@ -5,7 +5,7 @@ import { validateMessageMiddleware } from "../middleware/validateMessageMiddlewa
 import { Character } from "../models/character.model";
 import { Message } from "../models/message.model";
 import CharacterService from "../services/characterService";
-import { sendMessage, getMessages, markMessageAsRead, getMessageById, getCountMessages } from "../services/messageService";
+import { sendMessage, getMessages, markMessageAsRead, getMessageById, getCountMessages,deleteMessage } from "../services/messageService";
 import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
@@ -133,6 +133,39 @@ router.post("/read/:message_id", authMiddleware,validateCharacterMiddleware, asy
   } catch (error) {
     console.error("Error al marcar mensaje como leído:", error);
     res.status(500).json({ error: "Error interno al marcar mensaje como leído." });
+  }
+});
+
+// Ruta: Eliminar un mensaje
+router.delete("/:message_id", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { message_id } = req.params;
+
+    // Verificar que el ID del mensaje sea válido
+    if (!message_id || isNaN(Number(message_id))) {
+      res.status(400).json({ error: "El ID del mensaje es obligatorio y debe ser un número válido." });
+      return;
+    }
+
+    // Verificar que el mensaje existe y pertenece al personaje actual
+    const character: Character = req.locals.character;
+    const message = await getMessageById(Number(message_id));
+    if (!message) {
+      res.status(404).json({ error: "Mensaje no encontrado." });
+      return;
+    }
+
+    if (message.receiver_id !== character.id && message.sender_id !== character.id) {
+      res.status(403).json({ error: "No tienes permiso para eliminar este mensaje." });
+      return;
+    }
+
+    // Eliminar el mensaje
+    const result = await deleteMessage(Number(message_id));
+    res.json(result);
+  } catch (error) {
+    console.error("Error al eliminar mensaje:", error);
+    res.status(500).json({ error: "Error interno al eliminar mensaje." });
   }
 });
 

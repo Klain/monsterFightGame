@@ -3,6 +3,7 @@ import { Character } from "../models/character.model";
 import { AttributeType } from "../constants/attributes";
 import { ActivityReward } from "../models/activityReward.model";
 import webSocketService from "./webSocketService";
+import ServerConfig from "../constants/serverConfig";
 
 class CharacterService {
   // Crear un personaje para un usuario
@@ -182,25 +183,27 @@ class CharacterService {
     winner: Character,
     loser: Character,
     xpGained: number,
-    goldGained: number,
-    lostGold: number
+    goldLooted: number,
+    isDraw:boolean=false,
   ): Promise<void> {
     try {
-      // Aplicar recompensas al ganador
-      winner.currentXp += xpGained;
-      winner.totalXp += xpGained;
-      winner.currentGold += goldGained;
-      winner.totalGold += goldGained;
+      winner.currentXp += xpGained * (!isDraw?ServerConfig.assault.winnerXpBonus:1);
+      winner.totalXp += xpGained * (!isDraw?ServerConfig.assault.winnerXpBonus:1);
+      loser.currentXp += xpGained;
+      loser.totalXp += xpGained;
+      if(!isDraw){
+        // Aplicar recompensas al ganador
+        winner.currentGold += goldLooted;
+        winner.totalGold += goldLooted;
+        // Penalizar al perdedor
+        loser.currentGold = Math.max(0, loser.currentGold - goldLooted);
+      }
+        // Actualizar ambos personajes en la base de datos
+        await this.updateCharacterCurrencies(winner);
+        await this.updateCharacterCurrencies(loser);
 
-      // Penalizar al perdedor
-      loser.currentGold = Math.max(0, loser.currentGold - lostGold);
-
-      // Actualizar ambos personajes en la base de datos
-      await this.updateCharacterCurrencies(winner);
-      await this.updateCharacterCurrencies(loser);
-
-      console.log(`✅ Recompensas aplicadas: ${winner.name} ganó ${xpGained} XP y ${goldGained} oro.`);
-      console.log(`✅ Penalizaciones aplicadas: ${loser.name} perdió ${lostGold} oro.`);
+        console.log(`✅ Recompensas aplicadas: ${winner.name} ganó ${xpGained} XP y ${goldLooted} oro.`);
+        console.log(`✅ Penalizaciones aplicadas: ${loser.name} perdió ${goldLooted} oro.`);
     } catch (error) {
       console.error("❌ Error al aplicar recompensas de combate:", error);
       throw new Error("Error al aplicar recompensas de combate.");

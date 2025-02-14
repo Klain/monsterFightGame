@@ -6,6 +6,7 @@ import CombatService from "../services/combatService";
 import ServerConfig from "../constants/serverConfig";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateDefenderMiddleware } from "../middleware/validateDefenderMiddleware";
+import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const router = express.Router();
 router.get("/searchOpponent", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const character : Character = req.locals.character;
-    if(character.currentStamina<ServerConfig.assaultSearchCost){
+    if(character.currentStamina<ServerConfig.assault.searchCost){
       res.status(404).json({ error: "No tienes suficiente energía." });
       return;
     }
@@ -24,6 +25,9 @@ router.get("/searchOpponent", authMiddleware, validateCharacterMiddleware, async
       return;
     }
 
+    character.currentStamina-=ServerConfig.assault.searchCost;
+    webSocketService.characterRefresh(character.userId,{...character.wsrStatus()});
+    
     res.json({
       message: "Oponentes encontrados.",
       opponents: opponents.map((opponent) => ({

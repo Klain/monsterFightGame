@@ -11,11 +11,11 @@ export class MessageService {
   constructor(private api: ApiService) {}
 
   getMessagesInbox(page: number = 1, limit: number = 20): Observable<any> {
-    return this.api.get(`${this.baseEndpoint}?page=${page}&limit=${limit}&inbox={true}`);
+    return this.api.get(`${this.baseEndpoint}/inbox?page=${page}&limit=${limit}&inbox={true}`);
   }
 
   getMessagesOutbox(page: number = 1, limit: number = 20): Observable<any> {
-    return this.api.get(`${this.baseEndpoint}?page=${page}&limit=${limit}&inbox={false}`);
+    return this.api.get(`${this.baseEndpoint}/outbox?page=${page}&limit=${limit}&inbox={false}`);
   }
 
   sendMessage(receiverId: number, subject: string, body: string): Observable<any> {
@@ -28,5 +28,9 @@ export class MessageService {
 
   markMessageAsRead(messageId: number): Observable<any> {
     return this.api.post(`${this.baseEndpoint}/read/${messageId}`);
+  }
+
+  deleteMessage(messageId: number): Observable<any> {
+    return this.api.delete(`${this.baseEndpoint}/${messageId}`);
   }
 }

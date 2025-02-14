@@ -55,19 +55,22 @@ export class AuthService {
       this.logout();
       return throwError(() => new Error('No hay refresh token.'));
     }
-
+  
     return this.api.post<{ accessToken: string }>('auth/refresh-token', { refreshToken }).pipe(
       tap((response: any) => {
         this.saveTokens(response.accessToken, refreshToken);
         this.updateAuthState(true);
       }),
       catchError((error: any) => {
-        console.error('Error al renovar el token:', error);
-        this.logout();
+        if (error.error?.error === 'invalid_refresh_token') {
+          console.warn('El refresh token ha expirado o no es válido.');
+          this.logout();
+        }
         return throwError(() => error);
       })
     );
   }
+  
 
   // Comprobar si el usuario está autenticado
   isAuthenticated(): boolean {

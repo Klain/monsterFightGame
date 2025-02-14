@@ -98,6 +98,23 @@ export class MessagesComponent implements OnInit {
     });
   }
 
+  deleteMessage(messageId: number, type: 'received' | 'sent'): void {
+    this.messageService.deleteMessage(messageId).subscribe(
+      (response) => {
+        console.log(response.message); // Mensaje de éxito
+        if (type === 'received') {
+          this.loadReceivedMessages();
+        } else if (type === 'sent') {
+          this.loadSentMessages();
+        }
+      },
+      (error) => {
+        console.error('Error al eliminar el mensaje:', error);
+      }
+    );
+  }
+
+
   toggleMessage(message: any): void {
     message.showBody = !message.showBody;
   }

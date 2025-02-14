@@ -1,4 +1,3 @@
-//front\monsterGameFight\src\app\core\services\api.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -17,5 +16,9 @@ export class ApiService {
 
   post<T>(endpoint: string, body: any = {}): Observable<T> {
     return this.http.post<T>(`${Constants.apiUrl}/${endpoint}`, body);
+  }
+
+  delete<T>(endpoint: string): Observable<T> {
+    return this.http.delete<T>(`${Constants.apiUrl}/${endpoint}`);
   }
 }

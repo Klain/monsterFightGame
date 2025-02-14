@@ -19,26 +19,12 @@
             <button mat-button color="primary" (click)="markAsRead(message.id)" [disabled]="message.read">
               {{ message.read ? 'Leído' : 'Marcar como leído' }}
             </button>
+            <button mat-button color="warn" (click)="deleteMessage(message.id, 'received')">Eliminar</button>
             <button mat-button color="accent" (click)="startReply(message)">Responder</button>
-
-            <!-- Formulario de respuesta -->
-            <div *ngIf="message.replying" class="reply-form">
-              <form [formGroup]="replyForm" (ngSubmit)="sendReply(message)">
-                <mat-form-field appearance="fill">
-                  <mat-label>Asunto</mat-label>
-                  <input matInput formControlName="subject" />
-                </mat-form-field>
-                <mat-form-field appearance="fill">
-                  <mat-label>Mensaje</mat-label>
-                  <textarea matInput formControlName="body"></textarea>
-                </mat-form-field>
-                <button mat-raised-button color="primary" type="submit">Enviar Respuesta</button>
-                <button mat-button type="button" (click)="cancelReply(message)">Cancelar</button>
-              </form>
-            </div>
           </div>
         </mat-list-item>
       </mat-list>
+      
       <div class="pagination">
         <button mat-stroked-button (click)="goToPreviousPage('received')">Anterior</button>
         <span>Página {{ pageReceived }} de {{ totalPagesReceived }}</span>
@@ -60,9 +46,11 @@
           <small>{{ message.timestamp | date: 'short' }}</small>
           <div *ngIf="message.showBody" class="message-body">
             <p>{{ message.body }}</p>
+            <button mat-button color="warn" (click)="deleteMessage(message.id, 'sent')">Eliminar</button>
           </div>
         </mat-list-item>
       </mat-list>
+      
       <div class="pagination">
         <button mat-stroked-button (click)="goToPreviousPage('sent')">Anterior</button>
         <span>Página {{ pageSent }} de {{ totalPagesSent }}</span>
