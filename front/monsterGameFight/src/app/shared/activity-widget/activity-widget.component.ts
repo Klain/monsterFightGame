@@ -9,7 +9,7 @@ import { CharacterService } from '../../core/services/character.service';
 import { Character, Activity } from '../../core/models/chacter.models';
 import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ActivityType } from '../../core/constants/activities';
+import { ActivityType,getActivityName } from '../../core/enums/activity.enum';
 import { SecondsToTimerPipe } from '../../core/pipes/seconds-to-timer.pipe';
 
 @Component({
@@ -31,6 +31,7 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
 
   character : Character|null=null;
 
+  public getActivityName = getActivityName;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -46,10 +47,6 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
           this.refreshCharacterData();
         }
       });
-  }
-
-  getMaxDuration():number{
-    return  this.character?.maxActivityDuration[this.activityType] || 0;
   }
 
   refreshCharacterData() {

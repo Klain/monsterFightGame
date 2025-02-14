@@ -1,6 +1,6 @@
 // backend\src\middleware\validateActivityMiddleware.ts
 import { Request, Response, NextFunction } from "express";
-import { ActivityType, isActivity } from "../constants/activities";
+import { isActivity } from "../validators/activity-validator";
 
 export const validateActivityMiddleware = (
   req: Request,
@@ -8,13 +8,12 @@ export const validateActivityMiddleware = (
   next: NextFunction
 ): void => {
   // Obtener el activityType desde req.body o req.params según el método
-  const activityType: string = req.body?.activityType || req.params?.activityType;
+  const activityType: number = +(req.body?.activityType || req.params?.activityType);
 
   if (!isActivity(activityType)) {
     res.status(400).json({ error: `La actividad '${activityType}' no es válida.` });
     return;
   }
-
-  req.locals.activityType = activityType as ActivityType;
+  req.locals.activityType = activityType;
   next();
 };

@@ -66,7 +66,7 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS activities (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       character_id INTEGER NOT NULL,
-      type TEXT NOT NULL,
+      type INTEGER NOT NULL,
       start_time TIMESTAMP NOT NULL,
       duration INTEGER NOT NULL,
       completed BOOLEAN DEFAULT FALSE,

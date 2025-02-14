@@ -163,13 +163,13 @@
     }
   }
   wsrActivitiesDuration(): any {
-    const validActivities = ["null", "explorar", "sanar", "descansar", "meditar"] as const;
-    const maxActivityDuration = {
-      explorar: this.exploracionMaxDuration(),
-      sanar: this.sanarMaxDuration(),
-      descansar: this.descansarMaxDuration(),
-      meditar: this.meditarMaxDuration(),
-    }
+    const maxActivityDuration = [
+      0,
+      this.exploracionMaxDuration(),
+      this.sanarMaxDuration(),
+      this.descansarMaxDuration(),
+      this.meditarMaxDuration(),
+     ];
   
     return {
       maxActivityDuration:maxActivityDuration,

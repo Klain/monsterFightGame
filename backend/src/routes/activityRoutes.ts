@@ -4,6 +4,7 @@ import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateActivityMiddleware } from "../middleware/validateActivityMiddleware";
 import webSocketService from "../services/webSocketService";
+import { ActivityType } from "../constants/enums";
 
 const router = express.Router();
 
@@ -26,11 +27,13 @@ router.post(
       }
 
       let maxDuration = 1;
-      if (activityType === "explorar") {
+      if (activityType === ActivityType.EXPLORE) {
         maxDuration = character.currentStamina;
-      } else if (activityType === "sanar") {
+      } else if (activityType === ActivityType.HEAL) {
         maxDuration = character.currentHealth < character.totalHealth ? 60 : 0;
-      } else if (activityType === "meditar") {
+      } else if (activityType === ActivityType.REST) {
+        maxDuration = character.currentStamina < character.totalStamina ? 60 : 0;
+      } else if (activityType === ActivityType.MEDITATE) {
         maxDuration = character.currentMana < character.totalMana ? 60 : 0;
       }
 

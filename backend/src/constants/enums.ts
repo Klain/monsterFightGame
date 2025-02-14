@@ -1,31 +1,32 @@
-//back-app\src\config\enums.ts
-
+//backend\src\constants\enums.ts
 export enum ActivityType {
-    NONE=0,
-    EXPLORE=1,
-    VOODOO=2,
-    TAVERN=3,
-    SANCTUARY=4,
-    ENCHANTING=5
+    NONE,
+    EXPLORE,
+    HEAL,
+    REST,
+    MEDITATE,
+    ENCHANTING,
 }
 export enum AttributeType {
-    NONE = 0,
-    STRENGTH = 1,
-    ENDURANCE = 2,
-    CONSTITUTION = 3,
-    PRECISION = 4,
-    AGILITY = 5,
-    VIGOR = 6,
-    SPIRIT = 7,
-    WILLPOWER = 8,
-    ARCANE = 9
+    NONE,
+    STRENGTH,
+    ENDURANCE,
+    CONSTITUTION,
+    PRECISION,
+    AGILITY,
+    VIGOR,
+    SPIRIT,
+    WILLPOWER,
+    ARCANE,
 }
 export enum CharacterClass {
-    ADVENTURER=0,
-    CORSAIR=1,
-    TREASURE_HUNTER=2,
-    ARCHEOMAGE=3
+    ADVENTURER,
+    CORSAIR,
+    TREASURE_HUNTER,
+    ARCHEOMAGE,
 }
+
+
 
 export enum Profession {
     NONE = 0,
@@ -49,14 +50,12 @@ export enum Profession {
     //INSCRIPTION, , , , , , , , LOCKPICKING, POISONS, 
 
 }
-
 export enum ItemType {
     NONE = 0,          // Representa la ausencia de un tipo
     TRADEGOODS = 1,  // Ítems TRADEGOODSs (monedas, materiales de crafting)
     CONSUMABLE = 2,    // Ítems consumibles (pociones, comida, pergaminos)
     EQUIPMENT = 3,     // Objetos Equipables (armas, armaduras, etc.)    
 }
-
 export enum TradeGoodsType {
 
 }

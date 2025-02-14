@@ -3,10 +3,11 @@ import { Character } from "../models/character.model";
 import { Activity } from "../models/activity.model";
 import CharacterService from "./characterService";
 import { ActivityReward } from "../models/activityReward.model";
+import { ActivityType } from "../constants/enums";
 
 class ActivityService {
 
-  static async startActivity(character: Character, activity: string, duration: number) {
+  static async startActivity(character: Character, activity: ActivityType, duration: number) {
     const startTime = new Date().toISOString();
     return DatabaseService.run(
       "INSERT INTO activities (character_id, type, start_time, duration, completed) VALUES (?, ?, ?, ?, FALSE)",
@@ -55,19 +56,19 @@ class ActivityService {
   }
   
 
-  static calculateActivityReward(activityType: string, duration: number) {
+  static calculateActivityReward(activityType: ActivityType, duration: number) {
     let result : ActivityReward = {};
     switch (activityType) {
-      case "explorar":
+      case ActivityType.EXPLORE:
         result = { xp: duration * 5, gold: duration * 2 , costStamina : duration , costHealth: Math.ceil(Math.random()*duration)};
         break;
-      case "sanar":
+      case ActivityType.HEAL:
         result = {health: duration * 5 }; 
         break;
-      case "descansar":
+      case ActivityType.REST:
         result = {stamina: duration * 5 }; 
         break;
-      case "meditar":
+      case ActivityType.MEDITATE:
         result = {mana : duration * 5}; 
         break;
     }

@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { Attributes, Character } from '../models/chacter.models';
 import { WebSocketService } from './websocket.service';
+import { ActivityType } from '../enums/activity.enum';
 
 @Injectable({
   providedIn: 'root',
@@ -47,7 +48,7 @@ export class CharacterService {
     });
   }
 
-  startActivity(activityType: string, duration: number):void {
+  startActivity(activityType: ActivityType, duration: number):void {
     this.api.post('activities/start', { activityType, duration }).subscribe({
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
     });

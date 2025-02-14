@@ -1,5 +1,5 @@
 //front\monsterGameFight\src\app\core\models\chacter.models.ts
-import { ActivityType } from "../constants/activities";
+import { ActivityType } from "../enums/activity.enum"; 
 
 export interface Character {
   name: string;
@@ -11,7 +11,7 @@ export interface Character {
   status:Status;
   currencies:Currencies;
   activity: Activity | null;
-  maxActivityDuration:Activities;
+  maxActivityDuration : Array<number>;
   lastFight?: Date;
 }
 
@@ -50,9 +50,6 @@ export interface Activity {
     startTime: Date;
     duration: number; 
 }
-
-export interface Activities extends Record<ActivityType, number> {}
-
 export interface Message {
   sender: string,
   receiver: string,

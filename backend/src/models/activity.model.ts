@@ -1,11 +1,11 @@
-import { ActivityType } from "../constants/activities";
+import { ActivityType } from "../constants/enums"; 
 export class Activity {
   id: number = 0;
   userId: number = 0;
   characterId: number = 0;
-  type: ActivityType = "explorar"; // Cambiado a tipo fuerte
+  type: ActivityType = 0;
   startTime: Date = new Date();
-  duration: number = 0; // En minutos
+  duration: number = 0; 
   completed: boolean = false;
 
   constructor(data: Partial<Activity>) {
@@ -35,7 +35,7 @@ export class Activity {
     duration: number;
     id: number;
     start_time: string | Date;
-    type: ActivityType;
+    type: number;
   }): Activity {
     const startTime = typeof data.start_time === "string" ? new Date(data.start_time) : data.start_time;
   
