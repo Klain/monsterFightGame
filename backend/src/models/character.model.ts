@@ -1,3 +1,6 @@
+import { StatusEffect } from "../constants/enums";
+import { CharacterStatus } from "./characterStatus.model";
+
  //backend\src\models\character.ts
  export class Character {
   id: number = 0;
@@ -23,6 +26,9 @@
   totalStamina: number = 100;
   currentMana: number = 100;
   totalMana: number = 100;
+
+  statuses: CharacterStatus[] = [];
+  
 
   characterId: number = 0;
   currentXp: number = 0;
@@ -94,6 +100,31 @@
   // Reduce el oro del personaje
   deductGold(amount: number): void {
     this.currentGold = Math.max(0, this.currentGold - amount);
+  }
+
+  // Método para añadir un estado
+  addStatus(status: CharacterStatus): void {
+    this.statuses.push(status);
+  }
+
+  // Método para eliminar un estado
+  removeStatus(effect: StatusEffect): void {
+    this.statuses = this.statuses.filter(status => status.type !== effect);
+  }
+
+  // Método para reducir la duración de los estados
+  reduceStatusDurations(): void {
+    this.statuses = this.statuses
+      .map(status => ({
+        ...status,
+        duration: status.duration - 1,
+      }))
+      .filter(status => status.duration > 0); // Eliminar estados con duración 0
+  }
+
+  // Método para comprobar si un estado está activo
+  hasStatus(effect: StatusEffect): boolean {
+    return this.statuses.some(status => status.type === effect);
   }
 
   wsr():any{

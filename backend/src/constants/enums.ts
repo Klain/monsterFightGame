@@ -204,6 +204,21 @@ export class WeaponTypeValues {
     get energyCost(): number { return this._energyCost; }
     get manaCost(): number { return this._manaCost; }
 }
+
+export enum StatusEffect {
+    NONE=0,
+    // Buffs
+    STRENGTH_BOOST = "strengthBoost",
+    ENDURANCE_BOOST = "enduranceBoost",
+    HEALTH_REGEN = "healthRegen",
+    MANA_REGEN = "manaRegen",
+    CRIT_CHANCE = "critChance",
+    // Debuffs
+    POISON = "poison",
+    BLEEDING = "bleeding",
+    WEAKNESS = "weakness",
+    PRECISION_REDUCTION = "precisionReduction",
+}
 //old
 export enum WeaponFamily {
     FIST=1,
@@ -239,3 +254,5 @@ export enum Effects {
     WILLPOWER = 8,
     ARCANE = 9,
 }
+
+  

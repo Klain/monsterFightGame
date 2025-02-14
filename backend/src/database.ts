@@ -93,12 +93,16 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
-      type TEXT CHECK(type IN ('weapon', 'armor', 'accessory')) NOT NULL,
-      attack_bonus INTEGER DEFAULT 0,
-      defense_bonus INTEGER DEFAULT 0,
+      itemType INTEGER NOT NULL, -- Se guarda el índice del enum ItemType
+      equipType INTEGER DEFAULT NULL, -- Índice del enum EquipType
+      equipPositionType INTEGER DEFAULT NULL, -- Índice del enum EquipPositionType
+      weaponFamily INTEGER DEFAULT NULL, -- Índice del enum WeaponFamily
+      armorMaterialType INTEGER DEFAULT NULL, -- Índice del enum ArmorMaterialType
+      rarity INTEGER NOT NULL, -- Índice del enum Rarity
+      levelRequired INTEGER DEFAULT 1,
       price INTEGER NOT NULL,
-      rarity TEXT CHECK(rarity IN ('common', 'rare', 'legendary')) NOT NULL,
-      level_required INTEGER DEFAULT 1
+      bonuses TEXT DEFAULT '{}', -- JSON para bonificaciones
+      effects TEXT DEFAULT '[]' -- JSON para efectos
     )
   `);
 
