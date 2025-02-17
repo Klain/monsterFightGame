@@ -8,7 +8,17 @@ export enum ActivityType {
     ENCHANTING,
 }
 export enum AttributeType {
-    NONE,
+    STRENGTH,
+    ENDURANCE,
+    CONSTITUTION,
+    PRECISION,
+    AGILITY,
+    VIGOR,
+    SPIRIT,
+    WILLPOWER,
+    ARCANE,
+}
+export enum EffectType {
     STRENGTH,
     ENDURANCE,
     CONSTITUTION,
@@ -25,8 +35,6 @@ export enum CharacterClass {
     TREASURE_HUNTER,
     ARCHEOMAGE,
 }
-
-
 
 export enum Profession {
     NONE = 0,
@@ -55,9 +63,6 @@ export enum ItemType {
     TRADEGOODS = 1,  // Ítems TRADEGOODSs (monedas, materiales de crafting)
     CONSUMABLE = 2,    // Ítems consumibles (pociones, comida, pergaminos)
     EQUIPMENT = 3,     // Objetos Equipables (armas, armaduras, etc.)    
-}
-export enum TradeGoodsType {
-
 }
 export enum EquipType{
     NONE = 0,
@@ -204,7 +209,6 @@ export class WeaponTypeValues {
     get energyCost(): number { return this._energyCost; }
     get manaCost(): number { return this._manaCost; }
 }
-
 export enum StatusEffect {
     NONE=0,
     // Buffs
@@ -221,19 +225,19 @@ export enum StatusEffect {
 }
 //old
 export enum WeaponFamily {
-    FIST=1,
-    DAGGER=2,
-    SWORD=3,
-    AXE=4,
-    MACE=5,
-    LANCE=6,
-    THROWING=7,
-    BOW=8,
-    CROSSBOW=9,
-    GUNPOWDER=10,
-    RELIC=11,
-    FOCUS=12,
-    GRIMOIRE=13
+    FIST,
+    DAGGER,
+    SWORD,
+    AXE,
+    MACE,
+    LANCE,
+    THROWING,
+    BOW,
+    CROSSBOW,
+    GUNPOWDER,
+    RELIC,
+    FOCUS,
+    GRIMOIRE
 }
 export enum ArmorMaterialType {
     NONE = 0,
@@ -242,17 +246,6 @@ export enum ArmorMaterialType {
     MAIL = 3,
     PLATE = 4,
 }
-export enum Effects {
-    NONE = 0,
-    STRENGTH = 1,
-    ENDURANCE = 2,
-    CONSTITUTION = 3,
-    PRECISION = 4,
-    AGILITY = 5,
-    VIGOR = 6,
-    SPIRIT = 7,
-    WILLPOWER = 8,
-    ARCANE = 9,
-}
+
 
   

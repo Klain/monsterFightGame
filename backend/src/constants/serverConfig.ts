@@ -1,10 +1,19 @@
 import { Character } from "../models/character.model";
-import { CharacterClass, Rarity, WeaponType, WeaponTypeValues } from "./enums";
+import { ActivityType, AttributeType, CharacterClass, EffectType, Rarity, WeaponType, WeaponTypeValues } from "./enums";
 
 class ServerConfig {
-    static DEBUG_MODE = true;
+    //Server
+    public static readonly gameLifeTime: number = 0; //Tiempo total juego
+    public static readonly levelMax: number = 100; //Niveles maximos
 
-
+    //Character
+    public static readonly startAttributeValue: number = 5; //Valor atributo base
+    public static readonly maxAttributeValue: number = 100; //Valor atributo maximo
+    //Equipment
+    public static readonly weaponValue = (level:number)=>{return level*100};
+    public static readonly effectValue = (level:number,effects?:Array<EffectType>)=>{
+        return level*(effects && effects.length>1?2:4)
+     };
     //Assault
     static assault = {
         searchCost: 10,
@@ -14,7 +23,7 @@ class ServerConfig {
         winnerXpBonus:1.2,
     };
 
-
+/*
      // 1. Configuración general
      public static readonly actionTime: number = 2000;
      public static readonly actionLevel = (level: number): number => (level * (level + 1));
@@ -231,8 +240,8 @@ class ServerConfig {
  
      // 15. Comercio
      public static readonly globalShopItemCount: number = 10;
-     /*public static readonly calculatePrice = (itemInstance: ItemInstance): number => ( 10
-     );*/
+     //public static readonly calculatePrice = (itemInstance: ItemInstance): number => ( 10
+     //);
      public static readonly playerShopRotationInterval: number = 72000000;
      public static readonly playerShopItemCount: number = 10;
     
@@ -251,7 +260,7 @@ class ServerConfig {
      return `${gold.toString().padStart(2, '0')}g ${silver.toString().padStart(2, '0')}s ${copper.toString().padStart(2, '0')}c`;
      };
  
-
+*/
 }
 export default ServerConfig
 

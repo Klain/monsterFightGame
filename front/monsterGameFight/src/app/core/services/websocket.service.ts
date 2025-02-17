@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
 import { Constants } from '../constants/config';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',

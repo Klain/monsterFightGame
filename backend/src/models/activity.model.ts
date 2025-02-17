@@ -48,7 +48,4 @@ export class Activity {
       completed: data.completed,
     });
   }
-  
-  
-  
 }

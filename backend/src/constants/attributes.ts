@@ -14,6 +14,6 @@ export const validAttributes = [
   export type AttributeType = typeof validAttributes[number];
   
     export function isAttribute(value: string): value is AttributeType {
-    return validAttributes.includes(value as AttributeType);
-  }
+      return validAttributes.includes(value as AttributeType);
+    }
   

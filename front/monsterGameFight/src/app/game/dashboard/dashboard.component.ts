@@ -7,8 +7,8 @@ import { CharacterService } from '../../core/services/character.service';
 import { Character } from '../../core/models/chacter.models';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
-import { CharacterAttributesComponent } from '../../shared/character-attributes/character-attributes.component';
 import { ActivityGridComponent } from '../../shared/activity-grid/activity-grid.component';
+import { CharacterAttributesComponent } from '../../shared/character-attributes/character-attributes.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,8 +21,9 @@ import { ActivityGridComponent } from '../../shared/activity-grid/activity-grid.
     MatCardModule,
     MatButtonModule,
     MatSnackBarModule,
+    ActivityGridComponent,
     CharacterAttributesComponent,
-    ActivityGridComponent
+
   ],
 })
 export class DashboardComponent implements OnInit {

@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import http from "http";
 import { Server } from "socket.io";
+import { initializeDatabase } from "./database";
 import bodyParser from "body-parser";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
@@ -10,9 +11,10 @@ import webSocketService from "./services/webSocketService";
 import DatabaseService from "./services/databaseService";
 import authRouter from "./routes/authRoutes";
 import characterRoutes from "./routes/characterRoutes";
+import inventoryRoutes from "./routes/inventoryRoutes";
 import combatRoutes from "./routes/combatRoutes";
 import activitiesRoutes from "./routes/activityRoutes";
-import storeRoutes from "./routes/storeRoutes";
+import shopRoutes from "./routes/shopRoutes";
 import messageRoutes from "./routes/messageRoutes";
 
 const PORT = process.env.PORT || 4000;
@@ -38,6 +40,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Inicialización del caché y servicios
 (async () => {
   try {
+    console.log("🔄 Inicializando base de datos...");
+    await initializeDatabase(); 
+
     console.log("🔄 Inicializando caché y base de datos...");
     await DatabaseService.initializeCache();
     console.log("✅ Caché inicializado correctamente.");
@@ -59,9 +64,10 @@ app.use(bodyParser.json());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api/auth", authRouter);
 app.use("/api/characters", characterRoutes);
+app.use("/api/inventory", inventoryRoutes);
 app.use("/api/combat", combatRoutes);
 app.use("/api/activities", activitiesRoutes);
-app.use("/api/store", storeRoutes);
+app.use("/api/shop", shopRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Rutas de desarrollo
