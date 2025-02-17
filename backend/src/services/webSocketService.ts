@@ -2,6 +2,7 @@
 import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import { Inventory } from "../models/inventory.model";
 
 // Map para rastrear usuarios conectados
 const connectedUsers = new Map<number, Socket>();
@@ -111,10 +112,11 @@ class WebSocketService {
     this.notifyUser(userId, "characterRefresh", characterData);
   }
   // Construir los datos para la notificación de refresh
-  characterRefreshBuilder(character: any, activity: any | null): any {
+  characterRefreshBuilder(character: any, activity: any | null, inventory?:Inventory | null): any {
     return {
       ...character?.wsr(),
       ...(activity ? activity.wsr() : { activity: null }),
+      ...(inventory?inventory.wsr():{inventory:{}}),
     };
   }
 

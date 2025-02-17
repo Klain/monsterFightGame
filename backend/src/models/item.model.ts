@@ -16,6 +16,12 @@ export class Item {
     Object.assign(this, data);
   }
 
+  wsr(){
+    return {
+      ...this
+    }
+  }
+
   canBeUsedBy(characterLevel: number): boolean {
     return characterLevel >= this.levelRequired;
   }

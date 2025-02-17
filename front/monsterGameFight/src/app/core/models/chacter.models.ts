@@ -8,8 +8,8 @@ export interface Character {
   attributesUpgradeCost: Attributes;
   status: Status;
   currencies: Currencies;
-  inventory: Item[]; // Agregamos el inventario al personaje
-  shop: Item[]; // Agregamos la tienda al personaje
+  inventory: Item[]; 
+  shop: Item[];
   activity: Activity | null;
   maxActivityDuration: number[];
   lastFight?: Date;
@@ -69,4 +69,5 @@ export interface Item {
   bonuses: Record<string, number>; // { "STRENGTH": 10, "AGILITY": 5, ... }
   equipped?: boolean;
   stock?: number; // Número de veces que lo tiene en inventario
+  imageUrl:string;
 }

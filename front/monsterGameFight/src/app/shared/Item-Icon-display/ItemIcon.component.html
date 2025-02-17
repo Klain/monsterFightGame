@@ -1,0 +1,45 @@
+<mat-card 
+  class="item-container container" 
+  [style.width]="width" 
+  [style.height]="height" 
+  (click)="onLeftClick($event)" 
+  (contextmenu)="onRightClick($event)">
+  icono
+  <!-- Fondo del ícono -->
+  <img *ngIf="backgroundImage" [src]="backgroundImage" class="background-image" />
+  <img *ngIf="itemIcon" [src]="itemIcon" class="item-icon" />
+  <img *ngIf="frameIcon" [src]="frameIcon" class="frame-icon" />
+
+  <!-- Información en las esquinas -->
+  <div *ngIf="topLeft && topLeft(item) !== ''" class="top-left textPrimaryFondoOscuro"> {{ topLeft(item) }} </div>
+  <div *ngIf="topRight && topRight(item) !== ''" class="top-right textPrimaryFondoOscuro"> {{ topRight(item) }} </div>
+  <div *ngIf="bottomLeft && bottomLeft(item) !== ''" class="bottom-left textPrimaryFondoOscuro"> {{ bottomLeft(item) }} </div>
+  <div *ngIf="bottomRight && bottomRight(item) !== ''" class="bottom-right textPrimaryFondoOscuro"> {{ bottomRight(item) }} </div>
+
+  <!-- Tooltip personalizado restaurado 
+  <app-custom-tooltip #tooltip>
+    <div *ngIf="item && item._definition" class="itemOverlay d-flex">
+      <div class="d-flex flex-column">
+        <p>{{ dbItem?.name || 'Sin nombre' + " - " + ItemType[item.type]}}</p>
+        <p>{{ dbItem?.description || 'Sin descripción' }}</p>
+      </div>
+      <div class="d-flex flex-column">
+        <p>Cantidad: {{ item.quantity || 0 }}</p>
+        <p>Nivel de Forjado: {{ item.rarity || 0 }}</p>
+        <p>Conductividad Arcana: {{ item.rarity || 0 }}</p>
+        <p>Núcleos Arcanos: {{ item.rarity || 0 }}</p>
+        <p>Precio Venta: {{ ServerConfig.formatMoney(item.price)  || 'Sin valor' }}</p>
+      </div>
+      <div class="d-flex flex-column">
+        <span *ngIf="getEquipItem()">
+          <span *ngFor="let effect of item.effects">
+            <p *ngIf="effect.effectId">
+              {{ Effects[effect.effectId] + ' : ' + effect.effectLevel }}
+            </p>
+          </span>
+        </span>
+      </div>
+    </div>
+  </app-custom-tooltip>-->
+
+</mat-card>

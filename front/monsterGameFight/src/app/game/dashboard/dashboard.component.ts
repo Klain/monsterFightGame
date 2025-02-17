@@ -23,7 +23,6 @@ import { CharacterAttributesComponent } from '../../shared/character-attributes/
     MatSnackBarModule,
     ActivityGridComponent,
     CharacterAttributesComponent,
-
   ],
 })
 export class DashboardComponent implements OnInit {

@@ -1,0 +1,18 @@
+<!-- Tooltip Overlay para oscurecer el fondo -->
+<div 
+  class="mat-tooltip-overlay" 
+  *ngIf="visible" 
+  (click)="hide()">
+</div>
+
+<!-- Tooltip personalizado -->
+<mat-card 
+  class="mat-custom-tooltip" 
+  [class.visible]="visible" 
+  [style.top.px]="position.y" 
+  [style.left.px]="position.x"
+  (click)="stopPropagation($event)">
+  
+  <ng-content></ng-content>
+
+</mat-card>

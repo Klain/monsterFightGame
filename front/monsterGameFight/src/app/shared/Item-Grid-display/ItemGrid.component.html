@@ -1,0 +1,26 @@
+<!-- src\app\components\common\Item-Grid-display\ItemGrid.component.html -->
+<mat-grid-list 
+  class="grid-container"
+  [cols]="cols" 
+  [rowHeight]="height + 'px'">
+  
+  <mat-grid-tile *ngFor="let item of itemList; let index = index">
+    <div class="gridItemContainer"
+         [style.--grid-width]="width + 'px'"
+         [style.--grid-height]="height + 'px'">
+      
+      <ItemIcon
+        [item]="item ?? undefined"
+        [leftClick]="action1" 
+        [rightClick]="action2"
+        [topLeft]="topLeft" 
+        [topRight]="topRight"
+        [bottomLeft]="bottomLeft" 
+        [bottomRight]="bottomRight"
+        [index]="index">
+      </ItemIcon>
+
+    </div>
+  </mat-grid-tile>
+
+</mat-grid-list>

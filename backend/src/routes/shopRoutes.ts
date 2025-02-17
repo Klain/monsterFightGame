@@ -4,6 +4,8 @@ import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import webSocketService from "../services/webSocketService";
 import InventoryService from "../services/inventoryService";
+import { Item } from "../models/item.model";
+import { Character } from "../models/character.model";
 
 const router = express.Router();
 
@@ -12,8 +14,9 @@ const router = express.Router();
  */
 router.get("/",authMiddleware,validateCharacterMiddleware,async (req: Request, res: Response) => {
   try {
+    const character : Character = req.locals.character!;
     const shopItems = await ShopService.getShopItems();
-    res.status(200).json(shopItems);
+    res.status(200).json(shopItems.filter((item:Item)=>item.levelRequired>=character.level-5 && item.levelRequired<=character.level+5));
   } catch (error) {
     console.error("❌ Error al obtener tienda:", error);
     res.status(500).json({ error: "Error al obtener la tienda." });

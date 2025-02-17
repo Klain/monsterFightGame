@@ -1,0 +1,80 @@
+{
+    "comun":{
+        "vacio":"",
+        "nombre":"Nombre",
+        "descripcion":"Descripción",
+        "categoria":"Categoria",
+        "comunidad":"Comunidad Autonoma",
+        "provincia":"Provincia",
+        "municipio":"Municipio",
+        "crear":"Crear",
+        "editar":"Editar",
+        "consultar":"Consultar",
+        "guardar":"Guardar",
+        "eliminar":"Eliminar",
+        "limpiar":"Limpiar",
+        "volver":"Volver",
+        "nuevo":"Nuevo",
+        "acciones":"Acciones"
+    },
+    
+    "dinamicList": {
+        "parametrosCargarError":"Eror al obtener los parametros.",
+        "parametrosCargarExito":"Los parametros fueron obtenidos con exito.",
+        "columnasCargarError":"Error al obtener las columnas.",
+        "columnasCargarExito":"Las columnas fueron obtenidas con exito.",
+        "filasCargarError":"Error al obtener las filas.",
+        "filasCargarExito":"Las filas fueron obtenidas con exito"
+    },
+    "ActivityCategory":{
+        "nombreRequerido":"Es necesario rellenar el Nombre",
+        "guardarError":"Error al guardar los datos: ",
+        "guardarExito":"Los datos se guardaron con exito",
+        "idRequerido":"Error al obtener el id: ",
+        "borrarError":"Error al eliminar los datos: ",
+        "borrarExito":"Los datos se eliminaron con exito.",
+        "crearError":"Error al crear la Categoria: ",
+        "crearExito":"La categoria fue creada con exito.",
+        "getError":"Error al obtener los datos."
+    },
+    "ActivityCategoryList":{
+        "getError":"Error al obtener los datos.",
+        "borrarError":"Error al eliminar los datos: ",
+        "borrarExito":"Los datos se eliminaron con exito."
+
+    },
+    "ActivitySubcategory":{
+        "formularioIncompleto":"Es necesario rellenar el Nombre y Categoria",
+        "guardarError":"Error al guardar los datos: ",
+        "guardarExito":"Los datos se guardaron con exito",
+        "idRequerido":"Error al obtener el id: ",
+        "borrarError":"Error al eliminar los datos: ",
+        "borrarExito":"Los datos se eliminaron con exito.",
+        "crearError":"Error al crear la Categoria: ",
+        "crearExito":"La categoria fue creada con exito.",
+        "getError":"Error al obtener los datos."
+
+    },
+    "ActivitySubcategoryList":{
+        "getError":"Error al obtener los datos.",
+        "borrarError":"Error al eliminar los datos: ",
+        "borrarExito":"Los datos se eliminaron con exito."
+    },
+    "Location":{
+        "formularioIncompleto":"Es necesario rellenar el Nombre y Categoria",
+        "guardarError":"Error al guardar los datos: ",
+        "guardarExito":"Los datos se guardaron con exito",
+        "idRequerido":"Error al obtener el id: ",
+        "borrarError":"Error al eliminar los datos: ",
+        "borrarExito":"Los datos se eliminaron con exito.",
+        "crearError":"Error al crear la Categoria: ",
+        "crearExito":"La categoria fue creada con exito.",
+        "getError":"Error al obtener los datos."
+    },
+    "LocationList":{
+        "getError":"Error al obtener los datos.",
+        "borrarError":"Error al eliminar los datos: ",
+        "borrarExito":"Los datos se eliminaron con exito."
+    }
+    
+}

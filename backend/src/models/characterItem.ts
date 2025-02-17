@@ -1,3 +1,5 @@
+import DatabaseService from "../services/databaseService";
+
 export class CharacterItem {
   id: number = 0;
   characterId: number = 0;
@@ -8,6 +10,24 @@ export class CharacterItem {
   constructor(data: Partial<CharacterItem>) {
     Object.assign(this, data);
   }
+
+  wsr(){
+    const databaseItem = DatabaseService.getItemFromCache(this.itemId);
+    if(databaseItem){
+      return {
+        [this.id]: {
+          ...databaseItem.wsr(),
+          characterId: this.characterId,
+          equipped: this.equipped,
+          stock: this.stock
+        }
+      };
+      
+    }else{
+      return {};
+    }
+  }
+  
 
   /**
    * Convierte datos de la BD en una instancia de `CharacterItem`

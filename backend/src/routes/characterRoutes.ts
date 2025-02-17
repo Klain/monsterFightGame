@@ -6,8 +6,9 @@ import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateAttributeMiddleware } from "../middleware/validateAttributeMiddleware";
 import webSocketService from "../services/webSocketService";
-import { SocketAddress } from "net";
 import ActivityService from "../services/activityService";
+import InventoryService from "../services/inventoryService";
+import { Inventory } from "../models/inventory.model";
 
 const router = express.Router();
 
@@ -64,7 +65,9 @@ router.get("/", authMiddleware,validateCharacterMiddleware , async (req: Request
   try {
     const character = req.locals.character;
     const activity  = await ActivityService.getActivityStatus(character);
-    res.status(200).json(webSocketService.characterRefreshBuilder(character,activity));
+    const inventory = new Inventory(InventoryService.getInventory(character.id));
+
+    res.status(200).json(webSocketService.characterRefreshBuilder(character,activity,inventory));
   } catch (error) {
     console.error("❌ Error al obtener personaje:", error);
     res.status(500).json({ error: "Error interno al recuperar el personaje." });
