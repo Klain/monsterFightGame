@@ -6,7 +6,7 @@ import { validateItemMiddleware } from "../middleware/validateItemMiddleware";
 
 import webSocketService from "../services/webSocketService";
 import InventoryService from "../services/inventoryService";
-import { Item } from "../models/item.model";
+import { ItemDefinition } from "../models/itemDefinition.model";
 import { Character } from "../models/character.model";
 import { Inventory } from "../models/inventory.model";
 
@@ -18,7 +18,7 @@ const router = express.Router();
 router.get("/",authMiddleware,validateCharacterMiddleware,async (req: Request, res: Response) => {
   try {
     const character : Character = req.locals.character!;
-    const shopItems = ShopService.getShopItems().filter((item:Item)=>item.levelRequired>=character.level-5 && item.levelRequired<=character.level+5)
+    const shopItems = ShopService.getShopItems().filter((item:ItemDefinition)=>item.levelRequired>=character.level-5 && item.levelRequired<=character.level+5)
     res.status(200).json(shopItems.map(item => ({
       ...item,
       priceBuy: item.price,
@@ -36,7 +36,7 @@ router.get("/",authMiddleware,validateCharacterMiddleware,async (req: Request, r
 router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMiddleware, async (req: Request, res: Response) => {
   try {
     const character : Character = req.locals.character!;
-    const item : Item = req.locals.item!;
+    const item : ItemDefinition = req.locals.item!;
 
     if(character.currentGold >= item.price ){
       await ShopService.buyItem(character, item);

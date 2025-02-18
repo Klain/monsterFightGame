@@ -5,7 +5,7 @@ import { generateAccessory } from "./accessory.generator.utils";
 import { generateConsumable } from "./consumable.generator.utils";
 import { generateTradeGood } from "./tradeable.generator.utils";
 import ItemDatabaseService from "../../services/ItemDatabaseService";
-import { Item } from "../../models/item.model";
+import { ItemDefinition } from "../../models/itemDefinition.model";
 
 
 class ItemGenerationManager {
@@ -84,7 +84,7 @@ class ItemGenerationManager {
    * Genera los ítems que faltan para alcanzar la cantidad objetivo.
    * @param missingCounts - Cantidades que faltan por tipo.
    */
-  private static async generateMissingItems(missingCounts: Record<string, number>): Promise<Item[]> {
+  private static async generateMissingItems(missingCounts: Record<string, number>): Promise<ItemDefinition[]> {
     // Llama a los generadores específicos según el tipo y cantidad
     return [];
   }
@@ -93,7 +93,7 @@ class ItemGenerationManager {
    * Almacena los ítems generados en la base de datos.
    * @param items - Lista de ítems generados.
    */
-  private static async storeItemsInDatabase(items: Item[]): Promise<void> {
+  private static async storeItemsInDatabase(items: ItemDefinition[]): Promise<void> {
     // Inserta los ítems generados en la base de datos usando el servicio de ítems
   }
 

@@ -1,4 +1,4 @@
-import DatabaseService from "./databaseService";
+import CacheDataService from "./CacheDataService";
 import { Character } from "../models/character.model";
 import { Activity } from "../models/activity.model";
 import CharacterService from "./characterService";
@@ -9,14 +9,14 @@ class ActivityService {
 
   static async startActivity(character: Character, activity: ActivityType, duration: number) {
     const startTime = new Date().toISOString();
-    return DatabaseService.run(
+    return CacheDataService.run(
       "INSERT INTO activities (character_id, type, start_time, duration, completed) VALUES (?, ?, ?, ?, FALSE)",
       [character.id, activity, startTime, duration]
     );
   }
 
   static async getActivityStatus(character: Character): Promise<Activity | null> {
-    const activityDb = await DatabaseService.get<any>(
+    const activityDb = await CacheDataService.get<any>(
       "SELECT * FROM activities WHERE character_id = ? AND completed = FALSE",
       [character.id]
     );
@@ -36,7 +36,7 @@ class ActivityService {
   }
   
   static async claimActivityReward(character: Character) {
-    const activityDb : any = await DatabaseService.get(
+    const activityDb : any = await CacheDataService.get(
       "SELECT * FROM activities WHERE character_id = ? AND completed = FALSE",
       [character.id]
     );
@@ -48,7 +48,7 @@ class ActivityService {
       }
       const rewards = this.calculateActivityReward(activity.type, activity.duration);
       await CharacterService.updateCharacterRewards(character, rewards);
-      await DatabaseService.run("DELETE FROM activities WHERE character_id = ?", [character.id]);
+      await CacheDataService.run("DELETE FROM activities WHERE character_id = ?", [character.id]);
       return CharacterService.getCharacterById(character.id);
     }else{
       throw new Error("No hay una actividad para reclamar.");

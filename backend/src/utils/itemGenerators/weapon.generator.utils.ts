@@ -1,10 +1,10 @@
 //backend\src\utils\itemGenerators\weapon.generator.utils.ts
-import { Item } from "../../models/item.model";
+import { ItemDefinition } from "../../models/itemDefinition.model";
 import { Rarity, ItemType, EquipType, EquipPositionType, WeaponFamily, WeaponType } from "../../constants/enums";
 import { calculatePrice, generateWeaponName, rollRarity, rollWeaponFamily, rollWeaponType } from "./common.generator.utils";
 
 // Generador Procedural de Armas
-export function generateWeapon(level: number): Item {
+export function generateWeapon(level: number): ItemDefinition {
     // Determinar la rareza basada en probabilidades
     const rarity = rollRarity([
       { rarity: Rarity.COMMON, chance: 70 },
@@ -23,7 +23,7 @@ export function generateWeapon(level: number): Item {
     const bonuses = calculateBonuses(level, weaponFamily);
   
     // Construir el arma
-    return new Item({
+    return new ItemDefinition({
       id: Date.now(), // ID único basado en la hora
       name: generateWeaponName(rarity, weaponFamily), // Nombre dinámico
       itemType: ItemType.EQUIPMENT,

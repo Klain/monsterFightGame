@@ -1,9 +1,9 @@
-import { Item } from "../../models/item.model";
+import { ItemDefinition } from "../../models/itemDefinition.model";
 import { Rarity, ItemType, EquipType, EquipPositionType, ArmorMaterialType } from "../../constants/enums";
 import { rollRarity, calculatePrice, positionNames, materialNames, rarityPrefixes, rollArmorMaterial, rollArmorPosition } from "./common.generator.utils";
 
 // Generador Procedural de Armaduras
-export function generateArmor(level: number): Item {
+export function generateArmor(level: number): ItemDefinition {
   const rarity = rollRarity([
     { rarity: Rarity.COMMON, chance: 70 },
     { rarity: Rarity.UNCOMMON, chance: 20 },
@@ -14,7 +14,7 @@ export function generateArmor(level: number): Item {
   const position = rollArmorPosition();
   const bonuses = calculateArmorBonuses(level, material);
   // Construir la armadura
-  return new Item({
+  return new ItemDefinition({
     id: Date.now(),
     name: generateArmorName(rarity, material, position), 
     itemType: ItemType.EQUIPMENT,

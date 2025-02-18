@@ -8,7 +8,7 @@ import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import webSocketService from "./services/webSocketService";
-import DatabaseService from "./services/databaseService";
+import CacheDataService from "./services/CacheDataService";
 import authRouter from "./routes/authRoutes";
 import characterRoutes from "./routes/characterRoutes";
 import inventoryRoutes from "./routes/inventoryRoutes";
@@ -44,7 +44,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     await initializeDatabase(); 
 
     console.log("🔄 Inicializando caché y base de datos...");
-    await DatabaseService.initializeCache();
+    await CacheDataService.initializeCache();
     console.log("✅ Caché inicializado correctamente.");
 
     // Inicializar el servicio de WebSocket

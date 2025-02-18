@@ -1,5 +1,6 @@
 import { StatusEffect } from "../constants/enums";
 import { CharacterStatus } from "./characterStatus.model";
+import { Inventory } from "./inventory.model";
 
  //backend\src\models\character.ts
  export class Character {
@@ -28,7 +29,7 @@ import { CharacterStatus } from "./characterStatus.model";
   totalMana: number = 100;
 
   statuses: CharacterStatus[] = [];
-  
+  inventory:Inventory = new Inventory();
 
   characterId: number = 0;
   currentXp: number = 0;

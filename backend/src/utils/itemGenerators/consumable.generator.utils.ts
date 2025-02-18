@@ -1,9 +1,9 @@
-import { Item } from "../../models/item.model"; 
+import { ItemDefinition } from "../../models/itemDefinition.model"; 
 import { Rarity, ItemType } from "../../constants/enums";
 import { rollRarity, calculatePrice, rarityPrefixes } from "./common.generator.utils";
 
 // Generador Procedural de Consumibles
-export function generateConsumable(level: number): Item {
+export function generateConsumable(level: number): ItemDefinition {
   const rarity = rollRarity([
     { rarity: Rarity.COMMON, chance: 70 },
     { rarity: Rarity.UNCOMMON, chance: 20 },
@@ -15,7 +15,7 @@ export function generateConsumable(level: number): Item {
   const effectValue = calculateEffectValue(level, rarity, effect);
   const duration = effect.isTemporary ? Math.floor(Math.random() * 5 + 1) : undefined; // Efecto temporal (opcional)
 
-  return new Item({
+  return new ItemDefinition({
     id: Date.now(),
     name: generateConsumableName(rarity, effect),
     itemType: ItemType.CONSUMABLE,

@@ -1,9 +1,9 @@
-import { Item } from "../../models/item.model";
+import { ItemDefinition } from "../../models/itemDefinition.model";
 import { Rarity, ItemType, EquipType, EquipPositionType } from "../../constants/enums";
 import { rollRarity, calculatePrice, positionNames, rarityPrefixes } from "./common.generator.utils";
 
 // Generador Procedural de Accesorios
-export function generateAccessory(level: number): Item {
+export function generateAccessory(level: number): ItemDefinition {
   const rarity = rollRarity([
     { rarity: Rarity.COMMON, chance: 70 },
     { rarity: Rarity.UNCOMMON, chance: 20 },
@@ -15,7 +15,7 @@ export function generateAccessory(level: number): Item {
   const effects = generateAccessoryEffects(rarity);
 
   // Construir el accesorio
-  return new Item({
+  return new ItemDefinition({
     id: Date.now(),
     name: generateAccessoryName(rarity, position),
     itemType: ItemType.EQUIPMENT,

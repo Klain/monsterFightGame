@@ -2,7 +2,7 @@
 import { User } from "../models/user.model";
 import { Character } from "../models/character";
 import { ActivityType } from "../constants/enums";
-import { Item } from "../models/item.model";
+import { ItemDefinition } from "../models/itemDefinition.model";
 
 declare global {
   namespace Express {
@@ -19,7 +19,7 @@ declare global {
         combat?:{
           defender:Character
         },
-        item?:Item
+        item?:ItemDefinition
 
       };
     }

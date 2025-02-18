@@ -15,117 +15,118 @@ const db = new sqlite3.Database(dbPath, (err) => {
 function runTables(): Promise<void> {
   console.log("🛠 Creando tablas...");
   return new Promise((resolve, reject) => {
-  db.serialize(() => {
-    db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
-      )
-    `);
-  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS characters (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        faction TEXT NOT NULL,
-        class INTEGER DEFAULT 1,
-        level INTEGER DEFAULT 1,
-        strength INTEGER DEFAULT 1,
-        endurance INTEGER DEFAULT 1,
-        constitution INTEGER DEFAULT 1,
-        precision INTEGER DEFAULT 1,
-        agility INTEGER DEFAULT 1,
-        vigor INTEGER DEFAULT 1,
-        spirit INTEGER DEFAULT 1,
-        willpower INTEGER DEFAULT 1,
-        arcane INTEGER DEFAULT 1,
-        current_health INTEGER DEFAULT 100,
-        total_health INTEGER DEFAULT 100,
-        current_stamina INTEGER DEFAULT 100,
-        total_stamina INTEGER DEFAULT 100,
-        current_mana INTEGER DEFAULT 100,
-        total_mana INTEGER DEFAULT 100,
-        current_xp INTEGER DEFAULT 0,
-        total_xp INTEGER DEFAULT 0,
-        current_gold INTEGER DEFAULT 0,
-        total_gold INTEGER DEFAULT 0,
-        upgrade_points INTEGER DEFAULT 0,
-        last_fight TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
-  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS character_items (
+    db.serialize(() => {
+      db.run("DROP TABLE IF EXISTS users;");
+      db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS characters;");
+      db.run(`
+        CREATE TABLE IF NOT EXISTS characters (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          faction TEXT NOT NULL,
+          class INTEGER DEFAULT 1,
+          level INTEGER DEFAULT 1,
+          strength INTEGER DEFAULT 1,
+          endurance INTEGER DEFAULT 1,
+          constitution INTEGER DEFAULT 1,
+          precision INTEGER DEFAULT 1,
+          agility INTEGER DEFAULT 1,
+          vigor INTEGER DEFAULT 1,
+          spirit INTEGER DEFAULT 1,
+          willpower INTEGER DEFAULT 1,
+          arcane INTEGER DEFAULT 1,
+          current_health INTEGER DEFAULT 100,
+          total_health INTEGER DEFAULT 100,
+          current_stamina INTEGER DEFAULT 100,
+          total_stamina INTEGER DEFAULT 100,
+          current_mana INTEGER DEFAULT 100,
+          total_mana INTEGER DEFAULT 100,
+          current_xp INTEGER DEFAULT 0,
+          total_xp INTEGER DEFAULT 0,
+          current_gold INTEGER DEFAULT 0,
+          total_gold INTEGER DEFAULT 0,
+          upgrade_points INTEGER DEFAULT 0,
+          last_fight TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS item_definitions;");
+      db.run(`
+        CREATE TABLE IF NOT EXISTS item_definitions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          itemType INTEGER NOT NULL, 
+          equipType INTEGER DEFAULT NULL, 
+          equipPositionType INTEGER DEFAULT NULL, 
+          levelRequired INTEGER DEFAULT 1,
+          price INTEGER NOT NULL
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS item_instances;");
+      db.run(`
+        CREATE TABLE IF NOT EXISTS item_instances (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          character_id INTEGER NOT NULL,
+          item_id INTEGER NOT NULL,
+          stock INTEGER DEFAULT 1,
+          equipped BOOLEAN DEFAULT FALSE,
+          FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+          FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS effects;");
+      db.run(`
+        CREATE TABLE IF NOT EXISTS effects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT UNIQUE NOT NULL
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS items_effects;");  
+      db.run(`
+        CREATE TABLE IF NOT EXISTS items_effects (
+          item_id INTEGER NOT NULL,
+          effect_id INTEGER NOT NULL,
+          value INTEGER NOT NULL,
+          FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+          FOREIGN KEY (effect_id) REFERENCES effects(id) ON DELETE CASCADE,
+          PRIMARY KEY (item_id, effect_id)
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS activities;");  
+      db.run(`
+      CREATE TABLE IF NOT EXISTS activities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         character_id INTEGER NOT NULL,
-        item_id INTEGER NOT NULL,
-        stock INTEGER DEFAULT 1,
-        equipped BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        type INTEGER NOT NULL,
+        start_time TIMESTAMP NOT NULL,
+        duration INTEGER NOT NULL,
+        completed BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
       )
     `);
-  
+    db.run("DROP TABLE IF EXISTS battle_logs;");  
     db.run(`
-      CREATE TABLE IF NOT EXISTS items (
+      CREATE TABLE IF NOT EXISTS battle_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        itemType INTEGER NOT NULL, 
-        equipType INTEGER DEFAULT NULL, 
-        equipPositionType INTEGER DEFAULT NULL, 
-        levelRequired INTEGER DEFAULT 1,
-        price INTEGER NOT NULL
+        attacker_id INTEGER NOT NULL,
+        defender_id INTEGER NOT NULL,
+        winner_id INTEGER NOT NULL,
+        gold_won INTEGER,
+        xp_won INTEGER,
+        last_attack TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (attacker_id) REFERENCES characters(id),
+        FOREIGN KEY (defender_id) REFERENCES characters(id),
+        FOREIGN KEY (winner_id) REFERENCES characters(id)
       )
     `);
-  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS effects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL
-      )
-    `);
-  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS items_effects (
-        item_id INTEGER NOT NULL,
-        effect_id INTEGER NOT NULL,
-        value INTEGER NOT NULL,
-        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
-        FOREIGN KEY (effect_id) REFERENCES effects(id) ON DELETE CASCADE,
-        PRIMARY KEY (item_id, effect_id)
-      )
-    `);
-
-    db.run(`
-    CREATE TABLE IF NOT EXISTS activities (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      character_id INTEGER NOT NULL,
-      type INTEGER NOT NULL,
-      start_time TIMESTAMP NOT NULL,
-      duration INTEGER NOT NULL,
-      completed BOOLEAN DEFAULT FALSE,
-      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS battles (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      attacker_id INTEGER NOT NULL,
-      defender_id INTEGER NOT NULL,
-      winner_id INTEGER NOT NULL,
-      gold_won INTEGER,
-      xp_won INTEGER,
-      last_attack TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (attacker_id) REFERENCES characters(id),
-      FOREIGN KEY (defender_id) REFERENCES characters(id),
-      FOREIGN KEY (winner_id) REFERENCES characters(id)
-    )
-  `);
-  
+    db.run("DROP TABLE IF EXISTS messages;");  
     db.run(`
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

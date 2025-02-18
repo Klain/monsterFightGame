@@ -1,5 +1,5 @@
-import DatabaseService from "./databaseService";
-import { Item } from "../models/item.model";
+import CacheDataService from "./CacheDataService";
+import { ItemDefinition } from "../models/itemDefinition.model";
 
 class ItemDatabaseService {
   
@@ -8,9 +8,9 @@ class ItemDatabaseService {
    * @param id - ID del ítem.
    * @returns El ítem encontrado.
    */
-  static async getItemById(id: number): Promise<Item | null> {
+  static async getItemById(id: number): Promise<ItemDefinition | null> {
     try {
-      return DatabaseService.getItemFromCache(id);
+      return CacheDataService.getItemDefinition(id);
 
     } catch (error) {
       console.error("❌ Error al obtener ítem:", error);
@@ -22,9 +22,9 @@ class ItemDatabaseService {
    * Obtener todos los ítems.
    * @returns Una lista de ítems.
    */
-   static async getAllItems(): Promise<Item[]> {
+   static async getAllItems(): Promise<ItemDefinition[]> {
     try {
-      return DatabaseService.getAllItemsFromCache();
+      return CacheDataService.getAllItemDefinitions();
 
     } catch (error) {
       console.error("❌ Error al obtener ítems:", error);

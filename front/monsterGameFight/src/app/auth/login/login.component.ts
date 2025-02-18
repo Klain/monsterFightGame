@@ -32,8 +32,8 @@ export class LoginComponent {
   password: string = '';
   errorMessage: string = '';
   isLoading: boolean = false;
-  hidePassword: boolean = true; // Para mostrar u ocultar contraseña
-
+  hidePassword: boolean = true; 
+  
   constructor(private authService: AuthService, private router: Router, private snackBar: MatSnackBar) {}
 
   login() {

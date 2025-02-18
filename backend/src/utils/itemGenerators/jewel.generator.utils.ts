@@ -1,9 +1,9 @@
-import { Item } from "../../models/item.model";
+import { ItemDefinition } from "../../models/itemDefinition.model";
 import { Rarity, ItemType, EquipType, EquipPositionType } from "../../constants/enums";
 import { rollRarity, calculatePrice, positionNames, rarityPrefixes } from "./common.generator.utils";
 
 // Generador Procedural de Joyas
-export function generateJewel(level: number): Item {
+export function generateJewel(level: number): ItemDefinition {
   const rarity = rollRarity([
     { rarity: Rarity.COMMON, chance: 70 },
     { rarity: Rarity.UNCOMMON, chance: 20 },
@@ -15,7 +15,7 @@ export function generateJewel(level: number): Item {
   const bonuses = calculateJewelBonuses(level, position);
 
   // Construir la joya
-  return new Item({
+  return new ItemDefinition({
     id: Date.now(),
     name: generateJewelName(rarity, position),
     itemType: ItemType.EQUIPMENT,

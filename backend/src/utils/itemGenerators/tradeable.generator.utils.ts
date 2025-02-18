@@ -1,9 +1,9 @@
-import { Item } from "../../models/item.model";
+import { ItemDefinition } from "../../models/itemDefinition.model";
 import { ItemType, Profession, Rarity } from "../../constants/enums";
 import { rollRarity, calculatePrice, rarityPrefixes } from "./common.generator.utils";
 
 // Generador de Trade Goods
-export function generateTradeGood(level: number, profession: Profession): Item {
+export function generateTradeGood(level: number, profession: Profession): ItemDefinition {
   const rarity = rollRarity([
     { rarity: Rarity.COMMON, chance: 60 },
     { rarity: Rarity.UNCOMMON, chance: 25 },
@@ -16,7 +16,7 @@ export function generateTradeGood(level: number, profession: Profession): Item {
   const quantity = rollQuantity(level, rarity);
   const basePrice = calculateTradeGoodPrice(rarity, quantity);
 
-  return new Item({
+  return new ItemDefinition({
     id: Date.now(),
     name: generateTradeGoodName(rarity, material, quantity),
     itemType: ItemType.TRADEGOODS,

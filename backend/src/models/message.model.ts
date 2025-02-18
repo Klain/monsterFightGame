@@ -13,37 +13,6 @@ export class Message {
 			Object.assign(this, data);
 	}
 
-	/*
-	database
-			CREATE TABLE IF NOT EXISTS messages (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			sender_id INTEGER NOT NULL,
-			sender_name TEXT NOT NULL,
-			receiver_id INTEGER NOT NULL,
-			receiver_name TEXT NOT NULL,
-			subject TEXT NOT NULL,
-			body TEXT NOT NULL,
-			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			read BOOLEAN DEFAULT FALSE,
-			FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-			FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
-			)
-	*/
-	static parseDb(data: Partial<Message> ): Message {
-		const timestamp = typeof data.timestamp === "string" ? new Date(data.timestamp) : data.timestamp;
-		return new Message({
-				id:data.id,
-				sender_id:data.sender_id,
-				sender_name:data.sender_name,
-				receiver_id: data.receiver_id,
-				receiver_name: data.receiver_name,
-				subject: data.subject,
-				body: data.body,
-				timestamp: timestamp,
-				read: data.read
-		});
-	}
-
 	wsr(): any {
 		return {
 				[this.id ?? "0"]: {

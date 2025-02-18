@@ -1,5 +1,5 @@
-import DatabaseService from "./databaseService";
-import { CharacterItem } from "../models/characterItem";
+import CacheDataService from "./CacheDataService";
+import { ItemInstance } from "../models/itemInstance.model";
 
 class InventoryService {
   /**
@@ -7,8 +7,8 @@ class InventoryService {
    * @param characterId ID del personaje.
    * @returns Lista de objetos en su inventario.
    */
-  static getInventory(characterId: number): CharacterItem[] {
-    return DatabaseService.getInventoryFromCache(characterId);
+  static getInventory(characterId: number): ItemInstance[] {
+    return CacheDataService.getInventory(characterId).items;
   }
 
   /**
@@ -17,17 +17,16 @@ class InventoryService {
    * @param itemId ID del ítem a equipar.
    */
   static async equipItem(characterId: number, itemId: number): Promise<void> {
-    await DatabaseService.run(
-      `UPDATE character_items SET equipped = TRUE WHERE character_id = ? AND item_id = ?`,
-      [characterId, itemId]
-    );
+    const inventory = CacheDataService.getInventory(characterId);
 
     // 🔄 Actualizar caché
-    const inventory = DatabaseService.getInventoryFromCache(characterId);
-    const updatedInventory = inventory.map((ci) =>
-      ci.itemId === itemId ? new CharacterItem({ ...ci, equipped: true }) : ci
+    inventory.items = inventory.items.map((ci) =>
+      ci.item_id === itemId ? new ItemInstance({ ...ci, equipped: true }) : ci
     );
-    DatabaseService.updateInventoryInCache(characterId, updatedInventory);
+    CacheDataService.updateInventory(characterId, inventory);
+
+    // 🔄 Marcar para sincronización en base de datos
+    CacheDataService.pendingUpdates.add(characterId);
   }
 
   /**
@@ -36,42 +35,41 @@ class InventoryService {
    * @param itemId ID del ítem a desequipar.
    */
   static async unequipItem(characterId: number, itemId: number): Promise<void> {
-    await DatabaseService.run(
-      `UPDATE character_items SET equipped = FALSE WHERE character_id = ? AND item_id = ?`,
-      [characterId, itemId]
-    );
+    const inventory = CacheDataService.getInventory(characterId);
 
     // 🔄 Actualizar caché
-    const inventory = DatabaseService.getInventoryFromCache(characterId);
-    const updatedInventory = inventory.map((ci) =>
-      ci.itemId === itemId ? new CharacterItem({ ...ci, equipped: false }) : ci
+    inventory.items = inventory.items.map((ci) =>
+      ci.item_id === itemId ? new ItemInstance({ ...ci, equipped: false }) : ci
     );
-    DatabaseService.updateInventoryInCache(characterId, updatedInventory);
+    CacheDataService.updateInventory(characterId, inventory);
+
+    // 🔄 Marcar para sincronización en base de datos
+    CacheDataService.pendingUpdates.add(characterId);
   }
 
   /**
-   * Vende un ítem, eliminándolo del inventario del personaje.
+   * Vende un ítem, eliminándolo del inventario del personaje y sumando el oro.
    * @param characterId ID del personaje.
    * @param itemId ID del ítem a vender.
    */
   static async sellItem(characterId: number, itemId: number): Promise<void> {
-    const item = DatabaseService.getItemFromCache(itemId);
+    const item = CacheDataService.getItemDefinition(itemId);
     if (!item) throw new Error("Ítem no encontrado en caché");
 
-    await DatabaseService.run(
-      `DELETE FROM character_items WHERE character_id = ? AND item_id = ?`,
-      [characterId, itemId]
-    );
-    await DatabaseService.run(
-      `UPDATE characters SET current_gold = current_gold + ? WHERE id = ?`,
-      [item.price, characterId]
-    );
+    // 🔄 Actualizar caché eliminando el ítem del inventario
+    const inventory = CacheDataService.getInventory(characterId);
+    inventory.items = inventory.items.filter((ci) => ci.item_id !== itemId);
+    CacheDataService.updateInventory(characterId, inventory);
 
-    // 🔄 Actualizar caché
-    const inventory = DatabaseService.getInventoryFromCache(characterId).filter(
-      (ci) => ci.itemId !== itemId
-    );
-    DatabaseService.updateInventoryInCache(characterId, inventory);
+    // 🔄 Marcar para sincronización en base de datos
+    CacheDataService.pendingUpdates.add(characterId);
+
+    // 🔄 Actualizar oro en caché
+    const character = CacheDataService.getCharacter(characterId);
+    if (character) {
+      character.currentGold += item.price;
+      CacheDataService.updateCharacter(characterId, character);
+    }
   }
 }
 

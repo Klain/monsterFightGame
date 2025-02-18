@@ -1,5 +1,5 @@
 import { Character } from "../models/character.model";
-import DatabaseService from "./databaseService";
+import CacheDataService from "./CacheDataService";
 import CharacterService from "./characterService";
 import { Message } from "../models/message.model";
 import { sendMessage } from "./messageService";
@@ -14,7 +14,7 @@ class CombatService {
   */
   static async canAttackAgain(attacker: Character, defender: Character): Promise<boolean> {
   try {
-    const lastAttack = await DatabaseService.get<{ last_attack: string }>(
+    const lastAttack = await CacheDataService.get<{ last_attack: string }>(
       `SELECT last_attack FROM battles 
       WHERE attacker_id = ? AND defender_id = ? 
       ORDER BY last_attack DESC LIMIT 1`,
@@ -268,7 +268,7 @@ class CombatService {
       console.log(`✅ Mensajes enviados a ${attacker.name} y ${defender.name}`);
   
       // Registrar batalla o robo en la base de datos
-      await DatabaseService.run(
+      await CacheDataService.run(
         `INSERT INTO battles (attacker_id, defender_id, winner_id, gold_won, xp_won) 
          VALUES (?, ?, ?, ?, ?)`,
         [attacker.id, defender.id, winner?.id??0 , goldWon, xpWon]

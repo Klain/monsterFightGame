@@ -1,4 +1,4 @@
-import DatabaseService from "./databaseService";
+import CacheDataService from "./CacheDataService";
 import { Character } from "../models/character.model";
 import { AttributeType } from "../constants/attributes";
 import { ActivityReward } from "../models/activityReward.model";
@@ -21,7 +21,7 @@ class CharacterService {
       });
 
       // Inserta el personaje en la base de datos usando sus propiedades
-      const result = await DatabaseService.run(
+      const result = await CacheDataService.run(
         `INSERT INTO characters (
           user_id, name, faction, class, level, strength, endurance, constitution, precision, agility, vigor, spirit, willpower, arcane, 
           current_health, total_health, current_stamina, total_stamina, current_mana, total_mana, 
@@ -61,7 +61,7 @@ class CharacterService {
       newCharacter.id = result.lastID;
 
       // Actualizar el caché (si lo usas)
-      DatabaseService.updateCharacterInCache(newCharacter.id, newCharacter);
+      CacheDataService.updateCharacter(newCharacter.id, newCharacter);
 
       console.log(`✅ Personaje creado para el usuario ${userId}`);
       return newCharacter;
@@ -72,7 +72,7 @@ class CharacterService {
   }
   // Obtener un personaje por su ID de usuario
   static async getCharacterById(userId: number): Promise<Character|null> {
-    const character = DatabaseService.getCharacterFromCache(userId);
+    const character = CacheDataService.getCharacter(userId);
     return character;
   }
   // Mejorar un atributo del personaje
@@ -88,7 +88,7 @@ class CharacterService {
       const updatedXp = character.currentXp - cost;
   
       // Sincronizar con la base de datos
-      await DatabaseService.run(
+      await CacheDataService.run(
         `UPDATE characters SET ${attribute} = ?, current_xp = ? WHERE id = ?`,
         [updatedValue, updatedXp, character.id]
       );
@@ -97,7 +97,7 @@ class CharacterService {
       character[attribute] = updatedValue;
       character.currentXp = updatedXp;
   
-      DatabaseService.updateCharacterInCache(character.id, character);
+      CacheDataService.updateCharacter(character.id, character);
       return character;
     } catch (error) {
       console.error("❌ Error en upgradeCharacterAttribute:", error);
@@ -112,23 +112,23 @@ class CharacterService {
       character.currentStamina = Math.ceil(Math.min(character.totalStamina, character.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0) ));
       character.currentMana = Math.ceil(Math.min(character.totalMana, character.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0)));
   
-      await DatabaseService.run(
+      await CacheDataService.run(
         `UPDATE characters SET current_xp = ?, current_gold = ?, current_health = ?, current_stamina = ?, current_mana = ? WHERE id = ?`,
         [character.currentXp, character.currentGold, character.currentHealth, character.currentStamina, character.currentMana, character.id]
       );
   
-      DatabaseService.updateCharacterInCache(character.id, character);
+      CacheDataService.updateCharacter(character.id, character);
     } catch (error) {
       console.error("Error al actualizar las recompensas del personaje:", error);
       throw new Error("No se pudo actualizar las recompensas del personaje.");
     }
   }
   static async getEquippedStats(id:number){
-    return DatabaseService.getCharacterFromCache(id);
+    return CacheDataService.getCharacter(id);
   }
   static async updateCharacterStatus(character: Character): Promise<void> {
     try {
-      await DatabaseService.run(
+      await CacheDataService.run(
         `UPDATE characters 
           SET current_health = ?, total_health = ?, 
               current_stamina = ?, total_stamina = ?, 
@@ -156,7 +156,7 @@ class CharacterService {
   }
   static async updateCharacterCurrencies(character: Character): Promise<void> {
     try {
-      await DatabaseService.run(
+      await CacheDataService.run(
         `UPDATE characters 
           SET current_gold = ?, total_gold = ?, 
               current_xp = ?, total_xp = ? 
@@ -213,7 +213,7 @@ class CharacterService {
     try {
       const minLevel = Math.max(1, character.level - range);
       const maxLevel = character.level + range;
-      const results = await DatabaseService.all<Character>(
+      const results = await CacheDataService.all<Character>(
         `SELECT * FROM characters 
           WHERE id != ? AND level BETWEEN ? AND ? 
           AND (last_fight IS NULL OR last_fight <= datetime('now', '-1 hour'))

@@ -1,6 +1,6 @@
 // backend/src/services/messageService.js
 import { Message } from "../models/message.model";
-import DatabaseService from "../services/databaseService";
+import CacheDataService from "./CacheDataService";
 
 /**
  * Envía un mensaje de un jugador a otro.
@@ -8,12 +8,12 @@ import DatabaseService from "../services/databaseService";
  */
 async function sendMessage( message : Message ):Promise<Message>{
   try {
-    const result = await DatabaseService.run(
+    const result = await CacheDataService.run(
       `INSERT INTO messages (sender_id, receiver_id, sender_name, receiver_name, subject, body, timestamp) 
       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [message.sender_id, message.receiver_id, message.sender_name, message.receiver_name, message.subject, message.body, message.timestamp]
     );
-    const insertedMessage = await DatabaseService.get<Partial<Message>>(
+    const insertedMessage = await CacheDataService.get<Partial<Message>>(
       `SELECT * FROM messages WHERE id = ?`,
       [result.lastID]
     );
@@ -41,7 +41,7 @@ async function sendMessage( message : Message ):Promise<Message>{
      `SELECT * FROM messages WHERE receiver_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?`
     :`SELECT * FROM messages WHERE sender_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
     
-    const messages = await DatabaseService.all<Message>(
+    const messages = await CacheDataService.all<Message>(
       query,
       [character_id, limit, offset]
     );
@@ -55,7 +55,7 @@ async function sendMessage( message : Message ):Promise<Message>{
 
 async function getCountMessages(character_id: number): Promise<number> {
   try {
-    const totalMessages = await DatabaseService.get<number>(
+    const totalMessages = await CacheDataService.get<number>(
       `SELECT COUNT(*) as total FROM messages WHERE receiver_id = ?`,
       [character_id]
     );
@@ -72,7 +72,7 @@ async function getCountMessages(character_id: number): Promise<number> {
  */
 async function markMessageAsRead( message : Message): Promise<{ message: string } | { error: string }> {
   try {
-    await DatabaseService.run(`UPDATE messages SET read = TRUE WHERE id = ?`, [message.id]);
+    await CacheDataService.run(`UPDATE messages SET read = TRUE WHERE id = ?`, [message.id]);
     return { message: "Mensaje marcado como leído." };
 
   } catch (error) {
@@ -87,7 +87,7 @@ async function markMessageAsRead( message : Message): Promise<{ message: string 
  */
  async function deleteMessage(message_id: number): Promise<{ message: string }> {
   try {
-    const result = await DatabaseService.run(
+    const result = await CacheDataService.run(
       `DELETE FROM messages WHERE id = ?`,
       [message_id]
     );
@@ -105,7 +105,7 @@ async function markMessageAsRead( message : Message): Promise<{ message: string 
 
 
 async function getMessageById(message_id:number):Promise<Message>{
-  const message = await DatabaseService.get<any>(
+  const message = await CacheDataService.get<any>(
     `SELECT * FROM messages WHERE id = ?`,
     [message_id]
   );
