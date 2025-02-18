@@ -1,0 +1,17 @@
+<!-- src\app\components\common\Item-Equipment-display\ItemEquipment.component.html -->
+<div class="equipment-container-background">
+    <div 
+      class="equipment-container"
+      [style.--grid-width]="width"
+      [style.--grid-height]="height">
+      <ng-container *ngFor="let item of character.equip ; let index = index">
+        <div [class]="getItemType(index)">
+          <ItemIcon 
+          [item]="item??undefined"
+          [rightClick]="action2"
+          [index]="index">
+          </ItemIcon>
+      </div>
+      </ng-container>
+    </div>
+  </div>

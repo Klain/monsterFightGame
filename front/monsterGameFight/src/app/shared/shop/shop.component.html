@@ -1,0 +1,23 @@
+<!-- front\monsterGameFight\src\app\game\shop\shop.component.html -->
+<div class="shopContainer">
+  <div *ngIf="shopList">
+      <ItemGrid *ngIf="shopList" [shopList]="shopList"
+      [cols]="cols" [rows]="rows" width="64px" heigth="64px" 
+      [action1]="shopAction1" [action2]="shopAction2"
+      [topLeft]="shopTopLeft" [topRight]="shopTopRight"
+      [bottomLeft]="shopBottomLeft" [bottomRight]="shopBottomRight"
+      >
+      </ItemGrid>
+  </div>
+  <br/>
+  <br/>
+  <div *ngIf="character">
+      <ItemGrid *ngIf="character" [character]="character"
+      [cols]="cols" [rows]="rows" width="64px" heigth="64px" 
+      [action1]="charAction1" [action2]="charAction2"
+      [topLeft]="charTopLeft" [topRight]="charTopRight"
+      [bottomLeft]="charBottomLeft" [bottomRight]="charBottomRight"
+      >
+      </ItemGrid>
+  </div>
+</div>    

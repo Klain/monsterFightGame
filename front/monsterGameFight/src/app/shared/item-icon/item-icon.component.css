@@ -1,0 +1,80 @@
+/* ItemIcon.component.css */
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%; 
+  height: 100%; 
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.item-icon {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.frame-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+}
+
+.top-left {
+  position: absolute; 
+  top: 5%;
+  left: 5%;
+  z-index: 4; 
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.5); 
+  padding: 2px 5px;
+  border-radius: 3px; 
+}
+
+.top-right {
+  position: absolute; 
+  top: 5%; 
+  right: 5%; 
+  z-index: 4; 
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.5); 
+  padding: 2px 5px;
+  border-radius: 3px; 
+}
+
+.bottom-left {
+  position: absolute; 
+  bottom: 5%; 
+  left: 5%; 
+  z-index: 4; 
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.5); 
+  padding: 2px 5px;
+  border-radius: 3px; 
+}
+
+.bottom-right {
+  position: absolute; 
+  bottom: 5%; 
+  right: 5%; 
+  z-index: 4; 
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.5); 
+  padding: 2px 5px;
+  border-radius: 3px; 
+}

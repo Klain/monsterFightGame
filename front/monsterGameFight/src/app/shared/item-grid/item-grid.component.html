@@ -1,0 +1,19 @@
+<!-- src\app\components\common\Item-Grid-display\ItemGrid.component.html -->
+<div class="grid-container" 
+     [style.gridTemplateColumns]="'repeat(' + cols + ', 1fr)'"
+     [style.gridTemplateRows]="'repeat(' + rows + ', 1fr)'">
+  <ng-container *ngFor="let item of itemList; let index = index">
+    <div class="gridItemContainer"
+         [style.--grid-width]="width"
+         [style.--grid-height]="height">
+        <ItemIcon
+        [item]="item??undefined"
+        [leftClick]="action1" [rightClick]="action2"
+        [topLeft]="topLeft" [topRight]="topRight"
+        [bottomLeft]="bottomLeft" [bottomRight]="bottomRight"
+        [index]="index"
+        >
+        </ItemIcon>
+    </div>
+  </ng-container>
+</div>

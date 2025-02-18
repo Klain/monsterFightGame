@@ -116,7 +116,7 @@ class WebSocketService {
     return {
       ...character?.wsr(),
       ...(activity ? activity.wsr() : { activity: null }),
-      ...(inventory?inventory.wsr():{inventory:{}}),
+      ...(inventory ? inventory.wsr() : {} ),
     };
   }
 

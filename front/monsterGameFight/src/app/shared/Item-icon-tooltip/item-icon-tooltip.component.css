@@ -1,5 +1,4 @@
-/* Capa de fondo oscuro */
-.mat-tooltip-overlay {
+.tooltip-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -9,10 +8,9 @@
   z-index: 999;
 }
 
-/* Tooltip con estilo de Angular Material */
-.mat-custom-tooltip {
+.custom-tooltip {
   position: absolute;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
   color: #000;
   padding: 15px;
   border-radius: 8px;
@@ -24,8 +22,7 @@
   transform: translateY(-10px);
 }
 
-/* Mostrar tooltip cuando sea visible */
-.mat-custom-tooltip.visible {
+.custom-tooltip.visible {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);

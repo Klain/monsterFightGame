@@ -3,4 +3,6 @@
 [character]="character"
 >
 </ItemGrid>
-<app-inventory></app-inventory>
+<ItemEquipment *ngIf="character"
+[character]="character"
+></ItemEquipment>

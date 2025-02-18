@@ -14,6 +14,10 @@ export class ShopService {
   }
 
   buyItem(itemId: number): Observable<any> {
-    return this.api.post(`shop/buy/${itemId}`);
+    return this.api.post(`shop/buy`,{ itemId });
+  }
+
+  sellItem(itemId: number): Observable<any> {
+    return this.api.post(`shop/sell`,{ itemId });
   }
 }

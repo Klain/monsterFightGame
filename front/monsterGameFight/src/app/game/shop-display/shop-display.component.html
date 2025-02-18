@@ -1,0 +1,8 @@
+<!-- front\monsterGameFight\src\app\game\shop-display\shop-display.component.html -->
+ <app-shop *ngIf="character" [character]="character" [shopList]="shopList"
+    [rows]="4" [cols]="10"  height="32px" width="32"
+    [shopBottomRight]="precioCompra" [charTopLeft]="unidades"
+    [charBottomRight]="precioVenta" 
+    [shopAction2]="buyItem" [charAction2]="sellItem"
+ >
+ </app-shop>

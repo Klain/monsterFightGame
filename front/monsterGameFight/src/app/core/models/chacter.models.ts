@@ -8,7 +8,8 @@ export interface Character {
   attributesUpgradeCost: Attributes;
   status: Status;
   currencies: Currencies;
-  inventory: Item[]; 
+  backpack: Item[]; 
+  equip: Item[]; 
   shop: Item[];
   activity: Activity | null;
   maxActivityDuration: number[];
@@ -59,15 +60,17 @@ export interface Message {
 }
 
 export interface Item {
-  id: number;
-  name: string;
-  itemType: number;
+  id : number;
+  name : string;
+  itemType : number;
+  levelRequired : number;
+  stock : number; // Número de veces que lo tiene en inventario
+  priceBuy : number;
+  priceSell : number;
+  imageUrl? : string;
+
   equipType?: number;
   equipPositionType?: number;
-  levelRequired: number;
-  price: number;
-  bonuses: Record<string, number>; // { "STRENGTH": 10, "AGILITY": 5, ... }
+  effects?: { effect_name: string; value: number }[];
   equipped?: boolean;
-  stock?: number; // Número de veces que lo tiene en inventario
-  imageUrl:string;
 }

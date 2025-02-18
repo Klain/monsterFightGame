@@ -4,16 +4,16 @@ import {MatCardModule} from '@angular/material/card';
 
 
 @Component({
-  selector: 'app-custom-tooltip',
+  selector: 'item-icon-tooltip',
   standalone:true,
-  templateUrl: './custom-tooltip.component.html',
-  styleUrls: ['./custom-tooltip.component.css'],
+  templateUrl: './item-icon-tooltip.component.html',
+  styleUrls: ['./item-icon-tooltip.component.css'],
   imports:[
     CommonModule,
     MatCardModule
   ]
 })
-export class CustomTooltipComponent {
+export class ItemIconTooltipComponent {
   @Input() visible = false;
   position = { x: 0, y: 0 };
 

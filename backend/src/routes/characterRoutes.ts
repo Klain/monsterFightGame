@@ -15,7 +15,7 @@ const router = express.Router();
 // Ruta: Mejorar un atributo del personaje
 router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { attribute } = req.body;
+      const { attribute } = req.body;
       const userId = req.locals.user!.id;
       const character = req.locals.character;
       const currentValue = character[attribute];

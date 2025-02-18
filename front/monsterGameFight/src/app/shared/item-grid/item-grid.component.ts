@@ -1,18 +1,16 @@
 //src\app\components\common\Item-Grid-display\ItemGrid.component.ts
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import {MatGridListModule} from '@angular/material/grid-list';
 import { Character,Item } from '../../core/models/chacter.models';
 import { CommonModule } from '@angular/common';
-import { ItemIconComponent } from '../Item-Icon-display/ItemIcon.component';
+import { ItemIconComponent } from '../item-icon/item-icon.component';
 
 @Component({
   selector: 'ItemGrid',
   standalone:true,
-  templateUrl: './ItemGrid.component.html',
-  styleUrls: ['./ItemGrid.component.css'],
+  templateUrl: './item-grid.component.html',
+  styleUrls: ['./item-grid.component.css'],
   imports:[
     CommonModule,
-    MatGridListModule,
     ItemIconComponent
   ]
 })
@@ -39,31 +37,32 @@ export class ItemGridComponent implements  OnChanges {
   debugItemIndex: number=0;
   itemList: (Item | null)[] = [];
 
-  constructor() { }
+  constructor(    
+    ) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['character'] && changes['character'].currentValue) {
       this.character = changes['character'].currentValue;
-      this.itemList = [];
-      if (this.character?.inventory) {
+      if (this.character?.backpack) {
+        this.itemList = [];
         for (let i = 0; i < (this.rows * this.cols); i++) {
-          this.itemList.push(this.character.inventory[i] || null);
+          this.itemList.push(this.character.backpack[i] || null);
         }
       }
     }else if (changes['shopList'] && changes['shopList'].currentValue){
       this.shopList = changes['shopList'].currentValue;
       if (this.shopList) {
+        this.itemList = [];
         for (let i = 0; i < (this.rows * this.cols); i++) {
           this.itemList.push(this.shopList[i] || null);
         }
       }
     }else if(changes['smithItems'] && changes['smithItems'].currentValue){
       let smithItems = changes['smithItems'].currentValue;
-      this.itemList = [];
       if(Array.isArray(smithItems)){
+        this.itemList = [];
         for (let i = 0; i < (this.rows * this.cols); i++) {
           this.itemList.push(smithItems[i] || null);
-
         }
       }
     }

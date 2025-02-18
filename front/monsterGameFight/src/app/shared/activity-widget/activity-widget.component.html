@@ -11,7 +11,7 @@
     </div>
   
     <!-- Slider y botón para estado "parado" -->
-    <div *ngIf="!activity">
+    <div *ngIf="!activity || (activity && activity.type!==activityType)">
       <mat-slider [disabled]="duration <= 0 || maxDuration <= 0" >
         <input matSliderThumb [(ngModel)]="duration" [min]="1" [max]="maxDuration" step="1" />
       </mat-slider>

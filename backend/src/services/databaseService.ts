@@ -92,13 +92,16 @@ class DatabaseService {
     return this.itemCache.get(itemId) || null;
   }
 
+  static getAllItemsFromCache(): Item[] {
+    return Array.from(this.itemCache.values());
+  }
+  
   // 📦 Obtener el inventario de un personaje desde el caché
   static getInventoryFromCache(characterId: number): CharacterItem[] {
     const inventory = this.inventoryCache.get(characterId);
     return inventory ? Array.from(inventory) : []; // Asegurar que siempre se devuelva un array
   }
   
-
   // 🔄 Actualizar el inventario de un personaje en caché
   static updateInventoryInCache(characterId: number, updatedInventory: CharacterItem[]): void {
     this.inventoryCache.set(characterId, updatedInventory);

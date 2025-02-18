@@ -68,28 +68,4 @@ router.post("/unequip/:itemId", authMiddleware, validateCharacterMiddleware, asy
   }
 });
 
-/**
- * 💰 Vender un ítem
- */
-router.post("/sell/:itemId", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
-  try {
-    const character = req.locals.character;
-    const { itemId } = req.params;
-
-    await InventoryService.sellItem(character.id, Number(itemId));
-
-    // 🛠️ Actualizamos la caché sin hacer consultas innecesarias
-    const updatedInventory = InventoryService.getInventory(character.id);
-
-    webSocketService.characterRefresh(character.userId, {
-      inventory: updatedInventory,
-    });
-
-    res.status(200).json({ message: "Ítem vendido con éxito" });
-  } catch (error:any) {
-    console.error("❌ Error al vender ítem:", error);
-    res.status(500).json({ error: error.message || "Error al vender el ítem." });
-  }
-});
-
 export default router;

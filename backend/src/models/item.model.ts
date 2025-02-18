@@ -10,7 +10,7 @@ export class Item {
   price: number = 0;
 
   // Bonificaciones que otorga el objeto (dinámico según los efectos asignados)
-  bonuses: Record<string, number> = {}; // Almacenará { "STRENGTH": 10, "AGILITY": 5, ... }
+  effects: Record<string, number> = {}; // Almacenará { "STRENGTH": 10, "AGILITY": 5, ... }
 
   constructor(data: Partial<Item>) {
     Object.assign(this, data);
@@ -18,7 +18,9 @@ export class Item {
 
   wsr(){
     return {
-      ...this
+      ...this,
+      priceBuy: this.price,
+      priceSell: this.price/2
     }
   }
 
@@ -58,7 +60,7 @@ export class Item {
       equipPositionType: data.equipPositionType ?? undefined,
       levelRequired: data.levelRequired,
       price: data.price,
-      bonuses,
+      effects:{...bonuses},
     });
   }
 }

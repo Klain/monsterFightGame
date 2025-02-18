@@ -19,7 +19,7 @@ export class CharacterItem {
           ...databaseItem.wsr(),
           characterId: this.characterId,
           equipped: this.equipped,
-          stock: this.stock
+          stock: this.stock,
         }
       };
       

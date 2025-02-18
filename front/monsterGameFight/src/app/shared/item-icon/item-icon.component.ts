@@ -1,22 +1,25 @@
 //src\app\components\common\Item-Icon-display\ItemIcon.component.ts
 import { Component, Input, OnInit, SimpleChanges, OnChanges, ViewChild } from '@angular/core';
-import {MatCardModule} from '@angular/material/card';
-import { CustomTooltipComponent } from '../Item-icon-tooltip/custom-tooltip.component';
-import { Item } from '../../core/models/chacter.models';
 import { CommonModule } from '@angular/common';
+import { ItemIconTooltipComponent } from '../Item-icon-tooltip/item-icon-tooltip.component';
+import { Item } from '../../core/models/chacter.models';
+import { formatMoney } from '../../core/pipes/format-money';
+import { EquipType } from '../../core/constants/enums';
 
 @Component({
   selector: 'ItemIcon',
   standalone:true,
-  templateUrl: './ItemIcon.component.html',
-  styleUrls: ['./ItemIcon.component.css'],
+  templateUrl: './item-icon.component.html',
+  styleUrls: ['./item-icon.component.css'],
   imports:[
     CommonModule,
-    MatCardModule,
-    CustomTooltipComponent
+    formatMoney,
+    ItemIconTooltipComponent,
   ]
 })
 export class ItemIconComponent implements OnInit , OnChanges  {
+  public readonly EquipType = EquipType;
+
   @Input() width: string = '100%';
   @Input() height: string = '100%';
   @Input() topLeft?: (...args: any[]) => any;
@@ -27,9 +30,10 @@ export class ItemIconComponent implements OnInit , OnChanges  {
   @Input() leftClick?: (...args: any[]) => any;
   @Input() rightClick?: (...args: any[]) => any;
   @Input() index : number = -1;
-  @ViewChild('tooltip') tooltip!: CustomTooltipComponent;
+  //@ViewChild('tooltip') tooltip!: ItemIconTooltipComponent;
 
-  constructor( ) {}
+  constructor(
+   ) {}
   ngOnInit() {
 
   }
@@ -47,7 +51,6 @@ export class ItemIconComponent implements OnInit , OnChanges  {
     if (changes['leftClick'] && changes['leftClick'].currentValue) {this.leftClick=changes['leftClick'].currentValue}
     if (changes['rightClick'] && changes['rightClick'].currentValue) {this.rightClick=changes['rightClick'].currentValue}
     if (changes['index'] && changes['index'].currentValue) {this.index=changes['index'].currentValue}
-    
   }
 
   get backgroundImage(): string {
@@ -83,6 +86,10 @@ export class ItemIconComponent implements OnInit , OnChanges  {
   showTooltip(event: MouseEvent): void {
     const x = event.clientX;
     const y = event.clientY + 20;
-    this.tooltip.show(x, y);
+    //this.tooltip.show(x, y);
+  }
+
+  isEquipable(): boolean {
+    return (this.item?.equipType?true:false);
   }
 }

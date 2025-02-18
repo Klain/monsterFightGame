@@ -4,7 +4,7 @@ import { generateArmor } from "./armor.generator.utils";
 import { generateAccessory } from "./accessory.generator.utils";
 import { generateConsumable } from "./consumable.generator.utils";
 import { generateTradeGood } from "./tradeable.generator.utils";
-import ItemService from "../../services/itemService";
+import ItemDatabaseService from "../../services/ItemDatabaseService";
 import { Item } from "../../models/item.model";
 
 

@@ -1,0 +1,87 @@
+.equipment-container-background{
+    padding:2rem;
+    background-image: url("/assets/drawable/ui/ui_background_book_el.png");
+    background-size: 100% 100%;
+  }
+  .equipment-container {
+    height: calc(var(--grid-height)*6);
+    width: calc(var(--grid-width)*3);
+    position: relative; 
+    display: flex;
+    justify-content: center;
+  }
+  
+  .equipIcon{
+    position: absolute; 
+    height: var(--grid-height); 
+    width: var(--grid-width);
+  }
+  
+  .HEAD{
+    top: 0%; 
+    left: 33%; 
+  }
+  .NECK{
+    top: 16%; 
+    left: 0%; 
+  }
+  .CHEST{
+    top: 16%; 
+    left: 33%; 
+  }
+  .SHOULDER{
+    top: 16%; 
+    left: 66%;
+  }
+  .WRIST{
+    top: 32%; 
+    left: 0%;
+  }
+  .HANDS{
+    top: 32%; 
+    left: 33%;
+  }
+  .WAIST{
+    top: 32%; 
+    left: 66%;
+  }
+  .RING{
+    top: 48%; 
+    left: 0%;
+  }
+  .LEGS{
+    top: 48%; 
+    left: 33%;
+  }
+  .RING2{
+    top: 48%; 
+    left: 66%;
+  }
+  .TRINKET{
+    top: 64%; 
+    left: 0%;
+  }
+  .FEET{
+    top: 64%; 
+    left: 33%;
+  }
+  .TRINKET2{
+    top: 64%; 
+    left: 66%;
+  }
+  .MAINHAND{
+    top: 80%; 
+    left: 0%;
+  }
+  .CLOAK{
+    top: 80%; 
+    left: 33%;
+  }
+  .MAINHAND2{
+    top: 80%; 
+    left: 66%;
+  }
+  .OFFHAND{
+    top: 80%; 
+    left: 66%;
+  }
