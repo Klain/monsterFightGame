@@ -266,6 +266,13 @@ class DatabaseService {
   }
 
   // ✅ MESSAGES
+  static async getAllMessages(): Promise<Message[]> {
+    const dbMessages = await MessageService.getAllMessages();
+    if(dbMessages){
+      return dbMessages.map(this.mapDbMessage);
+    }
+    return [];
+  }
   static async sendMessage(message: Partial<Message>): Promise<number> {
     return MessageService.sendMessage({
       sender_id: message.sender_id!,

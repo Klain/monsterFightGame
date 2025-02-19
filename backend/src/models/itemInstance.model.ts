@@ -12,7 +12,7 @@ export class ItemInstance {
   }
 
   wsr(){
-    const databaseItem = CacheDataService.getItemDefinition(this.item_id);
+    const databaseItem = CacheDataService.getItemDefinitionById(this.item_id);
     if(databaseItem){
       const result = {
         [this.id]: {

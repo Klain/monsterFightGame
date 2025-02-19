@@ -9,6 +9,25 @@ import { deflate } from "zlib";
 
 class CombatService {
 
+
+  static async getOpponentList(character: Character, range: number = 5): Promise<Character[]> {
+    try {
+      const minLevel = Math.max(1, character.level - range);
+      const maxLevel = character.level + range;
+      const results = await CacheDataService.all<Character>(
+        `SELECT * FROM characters 
+          WHERE id != ? AND level BETWEEN ? AND ? 
+          AND (last_fight IS NULL OR last_fight <= datetime('now', '-1 hour'))
+          ORDER BY RANDOM() LIMIT 30`,
+        [character.id, minLevel, maxLevel]
+      );
+      const shuffled = results.sort(() => 0.5 - Math.random()).slice(0, 5);
+      return shuffled.map((result) => new Character(result));
+    } catch (error) {
+      console.error("Error al obtener posibles oponentes:", error);
+      throw new Error("Error al buscar posibles oponentes.");
+    }
+  }
   /**
   * Verifica si un atacante puede atacar a un defensor nuevamente.
   */
