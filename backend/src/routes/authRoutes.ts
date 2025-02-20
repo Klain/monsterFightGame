@@ -3,10 +3,11 @@ import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { getUserByUsername, createUser } from "../services/userServices";
-import CharacterService from "../services/characterService";
 import { registerSession, logoutUser, isSessionValid } from "../sessionManager";
 import authMiddleware from "../middleware/authMiddleware";
 import "dotenv/config";
+import { Character } from "../models/character.model";
+import DatabaseService from "../services/database/databaseService";
 
 const router = express.Router();
 
@@ -33,7 +34,11 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
     const newUser = await createUser(username, hashedPassword);
 
     // Crear un personaje inicial para el usuario
-    await CharacterService.createCharacterForUser(newUser.id, username);
+    const newCharacter = new Character({
+      userId:newUser.id,
+      name:username
+    });
+    await DatabaseService.createCharacter(newCharacter);
 
     res.status(201).json({ message: "Usuario y personaje creados exitosamente." });
   } catch (error) {

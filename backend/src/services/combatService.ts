@@ -1,70 +1,45 @@
-import { Character } from "../models/character.model";
 import CacheDataService from "./CacheDataService";
-import CharacterService from "./characterService";
+import { Character } from "../models/character.model";
 import { Message } from "../models/message.model";
-import { sendMessage } from "./messageService";
 import ServerConfig from "../constants/serverConfig";
-import { lookup } from "dns";
-import { deflate } from "zlib";
+
 
 class CombatService {
-
-
-  static async getOpponentList(character: Character, range: number = 5): Promise<Character[]> {
+  static getOpponentList(character: Character, range: number = 5): Character[] {
     try {
-      const minLevel = Math.max(1, character.level - range);
-      const maxLevel = character.level + range;
-      const results = await CacheDataService.all<Character>(
-        `SELECT * FROM characters 
-          WHERE id != ? AND level BETWEEN ? AND ? 
-          AND (last_fight IS NULL OR last_fight <= datetime('now', '-1 hour'))
-          ORDER BY RANDOM() LIMIT 30`,
-        [character.id, minLevel, maxLevel]
+      const range = 5;
+      const results = CacheDataService.getAllCharacters().filter(
+        opponent=> opponent.level<=(character.level+range) && opponent.level>=(character.level-range)
       );
       const shuffled = results.sort(() => 0.5 - Math.random()).slice(0, 5);
-      return shuffled.map((result) => new Character(result));
+      return shuffled;
     } catch (error) {
       console.error("Error al obtener posibles oponentes:", error);
       throw new Error("Error al buscar posibles oponentes.");
     }
   }
-  /**
-  * Verifica si un atacante puede atacar a un defensor nuevamente.
-  */
   static async canAttackAgain(attacker: Character, defender: Character): Promise<boolean> {
-  try {
-    const lastAttack = await CacheDataService.get<{ last_attack: string }>(
-      `SELECT last_attack FROM battles 
-      WHERE attacker_id = ? AND defender_id = ? 
-      ORDER BY last_attack DESC LIMIT 1`,
-      [attacker.id, defender.id]
-    );
+    try {
+      const lastFight = defender.lastFight;
+      if (!lastFight) { return true;  }
+      const lastAttackTime = new Date(lastFight);
+      const now = new Date();
 
-    if (!lastAttack) {
-      return true; // Si no hay registro previo, puede atacar
+      // Tiempo en minutos desde el último ataque
+      const minutesSinceLastAttack = (now.getTime() - lastAttackTime.getTime()) / 60000;
+      return minutesSinceLastAttack >= 60;
+    } catch (error) {
+      console.error("Error al verificar restricción de ataque:", error);
+      return false;
     }
-
-    const lastAttackTime = new Date(lastAttack.last_attack);
-    const now = new Date();
-
-    // Tiempo en minutos desde el último ataque
-    const minutesSinceLastAttack = (now.getTime() - lastAttackTime.getTime()) / 60000;
-    return minutesSinceLastAttack >= 60; // Solo puede atacar si ha pasado 1 hora
-  } catch (error) {
-    console.error("Error al verificar restricción de ataque:", error);
-    return false; // Por defecto, prevenir ataques en caso de error
-  }
   }
   static async handleCombat(attacker: Character, defender: Character): Promise<any> {
     try {
       // Cargar configuración de combate
       const { maxTurns, attackEnergyCost, defendEnergyCost } = ServerConfig.assault;
-  
       const battleLog: string[] = [];
       battleLog.push(`${attacker.name} desafía a ${defender.name}. ¡El combate comienza!`);
-  
       let turn = 1;
-  
       // Combate por turnos
       while (!attacker.isDead() && !defender.isDead() && turn <= maxTurns) {
         if (turn % 2 !== 0) {
@@ -96,10 +71,8 @@ class CombatService {
         }
         turn++;
       }
-  
       let winner;
       let loser;
-  
       // Si se alcanzó el máximo de turnos
       if (turn > maxTurns) {
         const attackerHealthPercentage = attacker.getHealthPercentage();
@@ -125,11 +98,15 @@ class CombatService {
       let goldLooted = 0;
       if(winner && loser){
         goldLooted = Math.floor(Math.random() * loser.currentGold);
+        winner.currentXp += xpGained*1.2;
+        loser.currentXp += xpGained;
+        winner.currentGold += goldLooted;
+        loser.currentGold -= goldLooted;
+      }else{
+        attacker.currentXp += xpGained;
+        defender.currentXp += xpGained;
       }
       
-      // Aplicar recompensas y penalizaciones
-      await CharacterService.applyCombatRewards(winner??attacker, loser??defender, xpGained, goldLooted, ( winner == null && loser == null ));
-
       // Guardar batalla y enviar mensajes
       await CombatService.saveCombatLog(attacker, defender, winner, goldLooted, xpGained, battleLog);
   
@@ -144,64 +121,40 @@ class CombatService {
       throw new Error("Error interno en el combate.");
     }
   }
-  
-  
   static async handleHeist(thief: Character, target: Character): Promise<string[]> {
     const heistLog: string[] = [];
     heistLog.push(`${thief.name} intenta robar a ${target.name}!`);
-  
-    // Verificar si el objetivo tiene oro disponible
     if (target.currentGold <= 0) {
       heistLog.push(`${target.name} no tiene oro para robar.`);
       return heistLog;
     }
-  
-    // Calcular éxito del robo
     const successChance =
       (thief.agility + thief.precision) /
       ((thief.agility + thief.precision) + (target.agility + target.willpower));
     const isSuccessful = Math.random() < successChance;
     let stolenGold = 0;
-
     if (isSuccessful) {
       // Calcular oro robado
-      const maxSteal = Math.min(target.currentGold, 50); // Máximo oro a robar
+      const maxSteal = Math.min(target.currentGold, 50);
       stolenGold = Math.ceil(Math.random() * maxSteal);
-  
-      // Actualizar oro de ambos personajes
       thief.currentGold += stolenGold;
       target.currentGold -= stolenGold;
-  
-      // Sincronizar cambios en la base de datos
-      await CharacterService.updateCharacterCurrencies(thief);
-      await CharacterService.updateCharacterCurrencies(target);
-  
       heistLog.push(`${thief.name} ha robado ${stolenGold} de oro a ${target.name}.`);
     } else {
-      // Robo fallido, infligir daño al ladrón
       const retaliationDamage = Math.floor(target.calculateDamage(thief) * 0.5);
-      thief.receiveDamage(retaliationDamage);
-  
-      // Sincronizar cambios en la base de datos
-      await CharacterService.updateCharacterStatus(thief);
-  
+      thief.currentHealth-=retaliationDamage;
       heistLog.push(
         `${thief.name} falló en robar a ${target.name}. ${target.name} contraataca y causa ${retaliationDamage} de daño.`
       );
     }
-    await CombatService.saveCombatLog(
-      thief,
-      target,
+    CombatService.saveCombatLog(
+      thief, target,
       isSuccessful ? thief : target,
       isSuccessful ? stolenGold : 0,
       0,
       heistLog,
       true 
     );
-  
-
-
-
     return heistLog;
   }
 
@@ -219,10 +172,10 @@ class CombatService {
       // Crear mensajes para atacante y defensor
       if(winner){
         attackerMessage = new Message({
-          sender_id: attacker.id,
-          sender_name: attacker.name,
-          receiver_id: attacker.id, // Se envía a sí mismo
-          receiver_name: attacker.name,
+          senderId: attacker.id,
+          senderName: attacker.name,
+          receiverId: attacker.id, // Se envía a sí mismo
+          receiverName: attacker.name,
           subject: isHeist
             ? `¡Intento de robo contra ${ defender.name}: ${winner.id === attacker.id ? "El robo fue un exito" : "Fuiste descubierto durante el robo"}!`
             : `¡Asalto contra ${ defender.name}: ${winner.id === attacker.id ? "victoria" : "derrota"}!`,
@@ -236,10 +189,10 @@ class CombatService {
           `,
         });
         defenderMessage = new Message({
-          sender_id: attacker.id, 
-          sender_name: attacker.name,
-          receiver_id: defender.id,
-          receiver_name: defender.name,
+          senderId: attacker.id, 
+          senderName: attacker.name,
+          receiverId: defender.id,
+          receiverName: defender.name,
           subject: isHeist
             ? `¡${attacker.name} ${winner.id === defender.id ? "ha tratado de robarte" : "te ha robado"}!`
             : `¡${attacker.name} ${winner.id === defender.id ? "te asaltó" : "trato de asaltarte y huyo"}!`,
@@ -252,10 +205,10 @@ class CombatService {
         });
       }else{
         attackerMessage = new Message({
-          sender_id: attacker.id,
-          sender_name: attacker.name,
-          receiver_id: attacker.id,
-          receiver_name: attacker.name,
+          senderId: attacker.id,
+          senderName: attacker.name,
+          receiverId: attacker.id,
+          receiverName: attacker.name,
           subject: 
              `¡La batalla acabó en tablas!`,
           body: `
@@ -266,10 +219,10 @@ class CombatService {
           `,
         });
         defenderMessage = new Message({
-          sender_id: attacker.id,
-          sender_name: attacker.name,
-          receiver_id: attacker.id,
-          receiver_name: attacker.name,
+          senderId: attacker.id,
+          senderName: attacker.name,
+          receiverId: attacker.id,
+          receiverName: attacker.name,
           subject: 
              `¡La batalla acabó en tablas!`,
           body: `
@@ -280,12 +233,11 @@ class CombatService {
           `,
         });
       }
-      // Guardar mensajes usando el servicio
-      await sendMessage(attackerMessage);
-      await sendMessage(defenderMessage);
-  
+      attacker.sendMessage(attackerMessage);
+      defender.sendMessage(defenderMessage);
       console.log(`✅ Mensajes enviados a ${attacker.name} y ${defender.name}`);
   
+      CacheDataService.createBattleLog()
       // Registrar batalla o robo en la base de datos
       await CacheDataService.run(
         `INSERT INTO battles (attacker_id, defender_id, winner_id, gold_won, xp_won) 

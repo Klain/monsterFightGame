@@ -1,6 +1,6 @@
 import ActivityService, { dbActivity } from "./activity.service";
 import BattleLogService, { dbBattleLog } from "./battleLog.service";
-import CharacterService from "./character.service";
+import CharacterService, { dbCharacter } from "./character.service";
 import EffectService,{dbEffect} from "./effect.service";
 import ItemDefinitionService, { dbItemDefinition } from "./itemDefinition.service"; 
 import ItemInstanceService, { dbItemInstance } from "./itemInstance.service";
@@ -10,6 +10,7 @@ import MessageService,{dbMessage} from "./message.service";
 import { Activity } from "../../models/activity.model";
 import { BattleLog } from "../../models/battleLog.model";
 import { Character } from "../../models/character.model";
+import { ItemEffect } from "../../models/itemEffect.model"; 
 import { Effect } from "../../models/effect.model"; 
 import { ItemDefinition } from "../../models/itemDefinition.model";
 import { ItemInstance } from "../../models/itemInstance.model";
@@ -21,7 +22,7 @@ class DatabaseService {
   }
 
   // ✅ ACTIVITYS
-  static async createActivity(activity: Partial<Activity>): Promise<number> {
+  static async createActivity(activity: Activity): Promise<number> {
     return ActivityService.createActivity({
       character_id: activity.characterId!,
       type: activity.type!,
@@ -38,20 +39,23 @@ class DatabaseService {
     const dbActivities = await ActivityService.getActivitiesByCharacterId(characterId);
     return dbActivities.map(this.mapDbActivity);
   }
-  static async updateActivity(activityId: number, updatedActivity: Partial<Activity>): Promise<boolean> {
-    return ActivityService.updateActivity(activityId, {
-      type: updatedActivity.type!,
-      start_time: updatedActivity.startTime!.toISOString(),
-      duration: updatedActivity.duration!,
-      completed: updatedActivity.completed!,
-    });
+  static async updateActivity(updatedActivity: Activity): Promise<boolean> {
+
+    return ActivityService.updateActivity({
+      id : updatedActivity.id,
+      character_id: updatedActivity.characterId,
+      type : updatedActivity.type,
+      start_time : updatedActivity.startTime.toISOString(),
+      duration : updatedActivity.duration,
+      completed : updatedActivity.completed,
+    }); 
   }
   static async deleteActivity(activityId: number): Promise<boolean> {
     return ActivityService.deleteActivity(activityId);
   }
 
   // ✅ BATTLE LOGS
-  static async createBattleLog(battle: Partial<BattleLog>): Promise<number> {
+  static async createBattleLog(battle: BattleLog): Promise<number> {
     return BattleLogService.createBattle({
       attacker_id: battle.attackerId!,
       defender_id: battle.defenderId!,
@@ -69,8 +73,8 @@ class DatabaseService {
     const dbBattles = await BattleLogService.getBattlesByCharacterId(characterId);
     return dbBattles.map(this.mapDbBattleLog);
   }
-  static async updateBattleLog(battleId: number, updatedBattle: Partial<BattleLog>): Promise<boolean> {
-    return BattleLogService.updateBattle(battleId, {
+  static async updateBattleLog(updatedBattle: BattleLog): Promise<boolean> {
+    return BattleLogService.updateBattle({
       attacker_id: updatedBattle.attackerId!,
       defender_id: updatedBattle.defenderId!,
       winner_id: updatedBattle.winnerId!,
@@ -84,8 +88,9 @@ class DatabaseService {
   }
 
   // ✅ CHARACTERS
-  static async createCharacter(character: Partial<Character>): Promise<number> {
+  static async createCharacter(character: Character): Promise<number> {
     return CharacterService.createCharacter({
+      id : character.id,
       userId: character.userId!,
       name: character.name!,
       faction: character.faction!,
@@ -122,9 +127,10 @@ class DatabaseService {
     const dbCharacters = await CharacterService.getAllCharacters();
     return dbCharacters.map(this.mapDbCharacter);
   }
-  static async updateCharacter(characterId: number, updatedCharacter: Partial<Character>): Promise<boolean> {
-    return CharacterService.updateCharacter(characterId, {
+  static async updateCharacter(updatedCharacter: Character): Promise<boolean> {
+    return CharacterService.updateCharacter({
       userId: updatedCharacter.userId!,
+      id : updatedCharacter.id!,
       name: updatedCharacter.name!,
       faction: updatedCharacter.faction!,
       class: updatedCharacter.class!,
@@ -157,7 +163,7 @@ class DatabaseService {
   }
 
   // ✅ EFFECTS
-  static async createEffect(effect: Partial<Effect>): Promise<number> {
+  static async createEffect(effect: Effect): Promise<number> {
     return EffectService.createEffect({
       name: effect.name!,
     });
@@ -170,9 +176,9 @@ class DatabaseService {
     const dbEffects = await EffectService.getAllEffects();
     return dbEffects.map(this.mapDbEffect);
   }
-  static async updateEffect(effectId: number, updatedEffect: Partial<Effect>): Promise<boolean> {
-    return EffectService.updateEffect(effectId, {
-      name: updatedEffect.name!,
+  static async updateEffect(updatedEffect: Effect): Promise<boolean> {
+    return EffectService.updateEffect({
+      name: updatedEffect.name!,id:updatedEffect.id
     });
   }
   static async deleteEffect(effectId: number): Promise<boolean> {
@@ -180,7 +186,7 @@ class DatabaseService {
   }
 
   // ✅ ITEM DEFINITIONS
-  static async createItemDefinition(item: Partial<ItemDefinition>): Promise<number> {
+  static async createItemDefinition(item: ItemDefinition): Promise<number> {
     return ItemDefinitionService.createItem({
       name: item.name!,
       itemType: item.itemType!,
@@ -198,9 +204,10 @@ class DatabaseService {
     const dbItems = await ItemDefinitionService.getAllItems();
     return dbItems.map(this.mapDbItemDefinition);
   }
-  static async updateItemDefinition(itemId: number, updatedItem: Partial<ItemDefinition>): Promise<boolean> {
-    return ItemDefinitionService.updateItem(itemId, {
+  static async updateItemDefinition(updatedItem: ItemDefinition): Promise<boolean> {
+    return ItemDefinitionService.updateItem({
       name: updatedItem.name!,
+      id:updatedItem.id,
       itemType: updatedItem.itemType!,
       equipType: updatedItem.equipType || null,
       equipPositionType: updatedItem.equipPositionType || null,
@@ -213,7 +220,7 @@ class DatabaseService {
   }
 
   // ✅ ITEM INSTANCES
-  static async createItemInstance(instance: Partial<ItemInstance>): Promise<number> {
+  static async createItemInstance(instance: ItemInstance): Promise<number> {
     return ItemInstanceService.createItemInstance({
       character_id: instance.character_id!,
       item_id: instance.item_id!,
@@ -229,8 +236,8 @@ class DatabaseService {
     const dbInstances = await ItemInstanceService.getInventoryByCharacterId(characterId);
     return dbInstances.map(this.mapDbItemInstance);
   }
-  static async updateItemInstance(instanceId: number, updatedInstance: Partial<ItemInstance>): Promise<boolean> {
-    return ItemInstanceService.updateItemInstance(instanceId, {
+  static async updateItemInstance(updatedInstance: ItemInstance): Promise<boolean> {
+    return ItemInstanceService.updateItemInstance({
       character_id: updatedInstance.character_id!,
       item_id: updatedInstance.item_id!,
       stock: updatedInstance.stock!,
@@ -248,18 +255,19 @@ class DatabaseService {
   }
 
   // ✅ ITEM EFFECTS
-  static async addEffectToItem(itemEffect: dbItemEffect): Promise<boolean> {
+  static async addEffectToItem(itemEffect: ItemEffect): Promise<boolean> {
     return ItemEffectService.addEffectToItem({
-      item_id: itemEffect.item_id,
-      effect_id: itemEffect.effect_id,
+      item_id: itemEffect.effectId,
+      effect_id: itemEffect.effectId,
       value: itemEffect.value,
     });
   }
-  static async getEffectsByItemId(itemId: number): Promise<dbItemEffect[]> {
-    return ItemEffectService.getEffectsByItemId(itemId);
+  static async getEffectsByItemId(itemId: number): Promise<ItemEffect[]> {
+    const dbItemEffects = await ItemEffectService.getEffectsByItemId(itemId);
+    return dbItemEffects.map(dbitemEffect => this.mapDbItemEffect(dbitemEffect));
   }
-  static async removeEffectFromItem(itemId: number, effectId: number): Promise<boolean> {
-    return ItemEffectService.removeEffectFromItem(itemId, effectId);
+  static async removeEffectFromItem(itemEffect:ItemEffect): Promise<boolean> {
+    return ItemEffectService.removeEffectFromItem(itemEffect.itemId, itemEffect.effectId);
   }
   static async removeAllEffectsFromItem(itemId: number): Promise<boolean> {
     return ItemEffectService.removeAllEffectsFromItem(itemId);
@@ -273,12 +281,12 @@ class DatabaseService {
     }
     return [];
   }
-  static async sendMessage(message: Partial<Message>): Promise<number> {
+  static async sendMessage(message: Message): Promise<number> {
     return MessageService.sendMessage({
-      sender_id: message.sender_id!,
-      sender_name: message.sender_name!,
-      receiver_id: message.receiver_id!,
-      receiver_name: message.receiver_name!,
+      sender_id: message.senderId!,
+      sender_name: message.senderName!,
+      receiver_id: message.receiverId!,
+      receiver_name: message.receiverName!,
       subject: message.subject!,
       body: message.body!,
       timestamp: message.timestamp!.toISOString(),
@@ -322,10 +330,10 @@ class DatabaseService {
       lastAttack: new Date(dbBattle.last_attack),
     });
   }
-  private static mapDbCharacter(dbCharacter: Character): Character {
+  private static mapDbCharacter(dbCharacter: dbCharacter): Character {
     return new Character({
-      id: dbCharacter.id,
-      userId: dbCharacter.userId,
+      id: dbCharacter.character_id,
+      userId: dbCharacter.user_id,
       name: dbCharacter.name,
       faction: dbCharacter.faction,
       class: dbCharacter.class,
@@ -339,24 +347,31 @@ class DatabaseService {
       spirit: dbCharacter.spirit,
       willpower: dbCharacter.willpower,
       arcane: dbCharacter.arcane,
-      currentHealth: dbCharacter.currentHealth,
-      totalHealth: dbCharacter.totalHealth,
-      currentStamina: dbCharacter.currentStamina,
-      totalStamina: dbCharacter.totalStamina,
-      currentMana: dbCharacter.currentMana,
-      totalMana: dbCharacter.totalMana,
-      currentXp: dbCharacter.currentXp,
-      totalXp: dbCharacter.totalXp,
-      currentGold: dbCharacter.currentGold,
-      totalGold: dbCharacter.totalGold,
-      upgradePoints: dbCharacter.upgradePoints,
-      lastFight: dbCharacter.lastFight ? new Date(dbCharacter.lastFight) : undefined
+      currentHealth: dbCharacter.current_health,
+      totalHealth: dbCharacter.total_health,
+      currentStamina: dbCharacter.current_stamina,
+      totalStamina: dbCharacter.total_stamina,
+      currentMana: dbCharacter.current_mana,
+      totalMana: dbCharacter.total_mana,
+      currentXp: dbCharacter.current_xp,
+      totalXp: dbCharacter.total_xp,
+      currentGold: dbCharacter.current_gold,
+      totalGold: dbCharacter.total_gold,
+      upgradePoints: dbCharacter.upgrade_points,
+      lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
     });
   }
   private static mapDbEffect(dbEffect: dbEffect): Effect {
     return new Effect({
       id: dbEffect.id!,
       name: dbEffect.name,
+    });
+  } 
+  private static mapDbItemEffect(dbItemEffect: dbItemEffect): ItemEffect {
+    return new ItemEffect({
+      effectId: dbItemEffect.effect_id!,
+      itemId: dbItemEffect.item_id,
+      value: dbItemEffect.value,
     });
   } 
   private static mapDbItemDefinition(dbItem: dbItemDefinition): ItemDefinition {
@@ -383,10 +398,10 @@ class DatabaseService {
   private static mapDbMessage(dbMessage: dbMessage): Message {
     return new Message({
       id: dbMessage.id!,
-      sender_id: dbMessage.sender_id,
-      sender_name: dbMessage.sender_name,
-      receiver_id: dbMessage.receiver_id,
-      receiver_name: dbMessage.receiver_name,
+      senderId: dbMessage.sender_id,
+      senderName: dbMessage.sender_name,
+      receiverId: dbMessage.receiver_id,
+      receiverName: dbMessage.receiver_name,
       subject: dbMessage.subject,
       body: dbMessage.body,
       timestamp: new Date(dbMessage.timestamp),

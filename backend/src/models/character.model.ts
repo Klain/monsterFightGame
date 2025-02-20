@@ -4,6 +4,8 @@ import { Activity } from "./activity.model";
 import { ActivityReward } from "./activityReward.model";
 import { CharacterStatus } from "./characterStatus.model";
 import { Inventory } from "./inventory.model";
+import { ItemDefinition } from "./itemDefinition.model";
+import { ItemInstance } from "./itemInstance.model";
 import { Message } from "./message.model";
 
  //backend\src\models\character.ts
@@ -35,7 +37,6 @@ import { Message } from "./message.model";
   private _statuses: CharacterStatus[] = [];
   private _inventory:Inventory = new Inventory();
 
-  private _characterId: number = 0;
   private _currentXp: number = 0;
   private _totalXp: number = 0;
   private _currentGold: number = 0;
@@ -70,28 +71,56 @@ import { Message } from "./message.model";
     return this.activities.find(activity => !activity.completed) || null;
   }
   claimActivityReward(): void {
-    const activity = this.getActivityStatus();
-    if (!activity) {
-      throw new Error("No hay actividad en curso.");
-    }
-
-    if (activity.getRemainingTime() > 0) {
-      throw new Error("La actividad aún no está completada.");
-    }
-
-    const rewards: ActivityReward = Activity.calculateActivityReward(activity.type, activity.duration);
-
-    // ✅ Aquí no necesitamos llamar `updateCache()` porque los setters lo hacen automáticamente
+    const rewards: ActivityReward = Activity.calculateActivityReward(this.activities[0].type, this.activities[0].duration);
     this.currentXp += rewards.xp ?? 0;
     this.currentGold += rewards.gold ?? 0;
     this.currentHealth = Math.min(this.totalHealth, this.currentHealth + (rewards.health ?? 0) - (rewards.costHealth ?? 0));
     this.currentStamina = Math.min(this.totalStamina, this.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0));
     this.currentMana = Math.min(this.totalMana, this.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0));
-
-    activity.completed = true; // ✅ Setter de `completed` en `Activity` actualiza la caché
-    this.activities = this.activities.map(a => (a.id === activity.id ? activity : a)); // ✅ Setter lo maneja
+    this.activities[0].completed = true;
   }
 
+  equipItem(itemId: number): void {
+    this._inventory.items = this._inventory.items.map((ci) =>
+      ci.item_id === itemId ? new ItemInstance({ ...ci, equipped: true }) : ci
+    );
+    CacheDataService.updateInventory(this._id, this._inventory.items);
+  }
+  unequipItem(itemId: number): void {
+    this._inventory.items = this._inventory.items.map((ci) =>
+      ci.item_id === itemId ? new ItemInstance({ ...ci, equipped: false }) : ci
+    );
+    CacheDataService.updateInventory(this._id, this._inventory.items);
+  }
+  buyItem(item: ItemDefinition): void {
+    const existingItem = this._inventory.items.find(i => i.item_id === item.id);
+
+    if (this.currentGold < item.price) {
+      throw new Error("No tienes suficiente oro.");
+    }
+
+    if (existingItem) {
+      existingItem.stock += 1;
+    } else {
+      const newItem = new ItemInstance({
+        character_id: this._id,
+        item_id: item.id,
+        equipped: false,
+        stock: 1,
+      });
+      this._inventory.items.push(newItem);
+    }
+
+    this.currentGold -= item.price;
+    CacheDataService.updateCharacter(this._id, this);
+    CacheDataService.updateInventory(this._id, this._inventory.items);
+  }
+  sellItem(itemId: number): void {
+    const item = CacheDataService.getItemDefinitionById(itemId);
+    if (!item) throw new Error("Ítem no encontrado en caché");
+    this._inventory.items = this._inventory.items.filter((ci) => ci.item_id !== itemId);
+    this.currentGold += item.price;
+  }
 
   //RevisarOld
   calculateUpgradeCost(attributeValue: number): number {
@@ -108,10 +137,7 @@ import { Message } from "./message.model";
   hasEnoughGold(amount: number): boolean {
     return this.currentGold >= amount;
   }
-  // Aplica daño al personaje
-  receiveDamage(damage: number): void {
-    this.currentHealth = Math.max(0, this.currentHealth - damage);
-  }
+
   // Verifica si el personaje está muerto
   isDead(): boolean {
     return this.currentHealth <= 0;
@@ -278,99 +304,105 @@ import { Message } from "./message.model";
 
 
   // GETTERS Y SETTERS
-  private updateCache(): void { CacheDataService.updateCharacter(this._id, this); }
+  private updateCharacter(): void { CacheDataService.updateCharacter(this._id, this); }
+  private updateInventory():void { CacheDataService.updateInventory(this._id, this._inventory.items); }
 
   get id() { return this._id; }
-  set id(value: number) { this._id = value; this.updateCache(); }
+  set id(value: number) { this._id = value; this.updateCharacter(); }
 
   get userId() { return this._userId; }
-  set userId(value: number) { this._userId = value; this.updateCache(); }
+  set userId(value: number) { this._userId = value; this.updateCharacter(); }
 
   get name() { return this._name; }
-  set name(value: string) { this._name = value; this.updateCache(); }
+  set name(value: string) { this._name = value; this.updateCharacter(); }
 
   get faction() { return this._faction; }
-  set faction(value: string) { this._faction = value; this.updateCache(); }
+  set faction(value: string) { this._faction = value; this.updateCharacter(); }
 
   get class() { return this._class; }
-  set class(value: number) { this._class = value; this.updateCache(); }
+  set class(value: number) { this._class = value; this.updateCharacter(); }
 
   get level() { return this._level; }
-  set level(value: number) { this._level = value; this.updateCache(); }
+  set level(value: number) { this._level = value; this.updateCharacter(); }
 
   get strength() { return this._strength; }
-  set strength(value: number) { this._strength = value; this.updateCache(); }
+  set strength(value: number) { this._strength = value; this.updateCharacter(); }
 
   get endurance() { return this._endurance; }
-  set endurance(value: number) { this._endurance = value; this.updateCache(); }
+  set endurance(value: number) { this._endurance = value; this.updateCharacter(); }
 
   get constitution() { return this._constitution; }
-  set constitution(value: number) { this._constitution = value; this.updateCache(); }
+  set constitution(value: number) { this._constitution = value; this.updateCharacter(); }
 
   get precision() { return this._precision; }
-  set precision(value: number) { this._precision = value; this.updateCache(); }
+  set precision(value: number) { this._precision = value; this.updateCharacter(); }
 
   get agility() { return this._agility; }
-  set agility(value: number) { this._agility = value; this.updateCache(); }
+  set agility(value: number) { this._agility = value; this.updateCharacter(); }
 
   get vigor() { return this._vigor; }
-  set vigor(value: number) { this._vigor = value; this.updateCache(); }
+  set vigor(value: number) { this._vigor = value; this.updateCharacter(); }
 
   get spirit() { return this._spirit; }
-  set spirit(value: number) { this._spirit = value; this.updateCache(); }
+  set spirit(value: number) { this._spirit = value; this.updateCharacter(); }
 
   get willpower() { return this._willpower; }
-  set willpower(value: number) { this._willpower = value; this.updateCache(); }
+  set willpower(value: number) { this._willpower = value; this.updateCharacter(); }
 
   get arcane() { return this._arcane; }
-  set arcane(value: number) { this._arcane = value; this.updateCache(); }
+  set arcane(value: number) { this._arcane = value; this.updateCharacter(); }
 
   get currentHealth() { return this._currentHealth; }
-  set currentHealth(value: number) { this._currentHealth = value; this.updateCache(); }
+  set currentHealth(value: number) { this._currentHealth = value; this.updateCharacter(); }
 
   get totalHealth() { return this._totalHealth; }
-  set totalHealth(value: number) { this._totalHealth = value; this.updateCache(); }
+  set totalHealth(value: number) { this._totalHealth = value; this.updateCharacter(); }
 
   get currentStamina() { return this._currentStamina; }
-  set currentStamina(value: number) { this._currentStamina = value; this.updateCache(); }
+  set currentStamina(value: number) { this._currentStamina = value; this.updateCharacter(); }
 
   get totalStamina() { return this._totalStamina; }
-  set totalStamina(value: number) { this._totalStamina = value; this.updateCache(); }
+  set totalStamina(value: number) { this._totalStamina = value; this.updateCharacter(); }
 
   get currentMana() { return this._currentMana; }
-  set currentMana(value: number) { this._currentMana = value; this.updateCache(); }
+  set currentMana(value: number) { this._currentMana = value; this.updateCharacter(); }
 
   get totalMana() { return this._totalMana; }
-  set totalMana(value: number) { this._totalMana = value; this.updateCache(); }
+  set totalMana(value: number) { this._totalMana = value; this.updateCharacter(); }
 
   get statuses() { return this._statuses; }
-  set statuses(value: CharacterStatus[]) { this._statuses = value; this.updateCache(); }
+  set statuses(value: CharacterStatus[]) { this._statuses = value; this.updateCharacter(); }
 
   get inventory() { return this._inventory; }
-  set inventory(value: Inventory) { this._inventory = value; this.updateCache(); }
-
-  get characterId() { return this._characterId; }
-  set characterId(value: number) { this._characterId = value; this.updateCache(); }
+  set inventory(value: Inventory) { this._inventory = value; this.updateInventory(); }
 
   get currentXp() { return this._currentXp; }
-  set currentXp(value: number) { this._currentXp = value; this.updateCache(); }
-
+  set currentXp(value: number) {
+    this._totalXp += value - this._currentXp;
+    this._currentXp = value; 
+    this.updateCharacter(); 
+  }
   get totalXp() { return this._totalXp; }
-  set totalXp(value: number) { this._totalXp = value; this.updateCache(); }
+
 
   get currentGold() { return this._currentGold; }
-  set currentGold(value: number) { this._currentGold = value; this.updateCache(); }
+  set currentGold(value: number) { 
+    this._totalGold += value - this._currentGold;
+    this._currentGold = value; 
+    this.updateCharacter(); 
+  }
 
   get totalGold() { return this._totalGold; }
-  set totalGold(value: number) { this._totalGold = value; this.updateCache(); }
 
   get upgradePoints() { return this._upgradePoints; }
-  set upgradePoints(value: number) { this._upgradePoints = value; this.updateCache(); }
+  set upgradePoints(value: number) { this._upgradePoints = value; this.updateCharacter(); }
 
   get activities(): Activity[] { return this._activities; }
-  set activities(value: Activity[]) { this._activities = value; this.updateCache(); }
+  set activities(value: Activity[]) { this._activities = value; this.updateCharacter(); }
 
   get lastFight() { return this._lastFight; }
-  set lastFight(value: Date | undefined) { this._lastFight = value; this.updateCache(); }
+  set lastFight(value: Date | undefined) { this._lastFight = value; this.updateCharacter(); }
+
+
 
 }

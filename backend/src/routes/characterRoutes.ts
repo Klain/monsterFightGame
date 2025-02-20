@@ -1,13 +1,10 @@
 //backend\src\routes\characterRoutes.ts
 import express, { Request, Response } from "express";
 import { db } from "../database";
-import CharacterService from "../services/characterService";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateAttributeMiddleware } from "../middleware/validateAttributeMiddleware";
 import webSocketService from "../services/webSocketService";
-import ActivityService from "../services/activityService";
-import InventoryService from "../services/inventoryService";
 import { Inventory } from "../models/inventory.model";
 
 const router = express.Router();
@@ -25,11 +22,8 @@ router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeM
         res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
         return;
       }
-
-      await CharacterService.upgradeCharacterAttribute(character,attribute,cost);
-      const updatedCharacter = await CharacterService.getCharacterById(userId);
-
-      webSocketService.characterRefresh(userId,{...updatedCharacter?.wsr()});
+      character[attribute]+=1;
+      webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);
   } catch (error) {
     console.error("Error en la mejora de atributo:", error);
@@ -37,27 +31,7 @@ router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeM
   }
 });
 
-// Ruta: Obtener el ranking
-router.get("/leaderboard", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const leaderboard = await new Promise<any[]>((resolve, reject) => {
-      db.all(
-        `SELECT name, level, totalXp, totalGold FROM characters ORDER BY totalXp DESC LIMIT 10`,
-        (err, rows) => {
-          if (err) {
-            return reject(err);
-          }
-          resolve(rows);
-        }
-      );
-    });
 
-    res.json({ leaderboard });
-  } catch (error) {
-    console.error("Error al obtener ranking:", error);
-    res.status(500).json({ error: "Error interno al obtener el ranking." });
-  }
-});
 
 
 // Ruta: Obtener el personaje del usuario autenticado

@@ -4,8 +4,7 @@ import { validateCharacterMiddleware } from "../middleware/validateCharacterMidd
 import { validateMessageMiddleware } from "../middleware/validateMessageMiddleware"; 
 import { Character } from "../models/character.model";
 import { Message } from "../models/message.model";
-import CharacterService from "../services/characterService";
-import { sendMessage, getMessages, markMessageAsRead, getMessageById, getCountMessages,deleteMessage } from "../services/messageService";
+import CacheDataService from "../services/CacheDataService";
 import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
@@ -22,7 +21,7 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
       res.status(400).json({ error: "receiver_id, subject y body son obligatorios." });
       return;
     }
-    const receiver = await CharacterService.getCharacterById(receiver_id);
+    const receiver = CacheDataService.getCharacterById(receiver_id);
     if (!receiver){
       res.status(404).json({ error: "Destinatario no encontrado." });
       return;
@@ -30,17 +29,18 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
 
     const newMessage : Message = new Message({
       id: null,
-      sender_id: sender.id,
-      sender_name: sender.name,
-      receiver_id: receiver.id,
-      receiver_name: receiver.name,
+      senderId: sender.id,
+      senderName: sender.name,
+      receiverId: receiver.id,
+      receiverName: receiver.name,
       subject: subject,
       body: body,
       timestamp: new Date(),
       read: false
     });
 
-    const message = await sendMessage(newMessage);
+    sender.sendMessage(newMessage);
+
     if( receiver.id != sender.id){webSocketService.characterNewMessageSend(sender.userId,{
       ...message.wsr()
     });}

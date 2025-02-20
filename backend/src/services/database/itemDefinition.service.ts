@@ -60,7 +60,7 @@ class ItemDefinitionService {
       });
     });
   }
-  static async updateItem(itemId: number, updatedItem: Partial<dbItemDefinition>): Promise<boolean> {
+  static async updateItem(updatedItem: Partial<dbItemDefinition>): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE item_definitions SET
@@ -76,7 +76,7 @@ class ItemDefinitionService {
         updatedItem.equipPositionType || null,
         updatedItem.levelRequired,
         updatedItem.price,
-        itemId
+        updatedItem.id
       ];
 
       db.run(query, params, function (err) {

@@ -69,39 +69,26 @@ router.post("/heist", authMiddleware , validateCharacterMiddleware , validateDef
     res.status(500).json({ error: "Error interno al procesar el intento de robo." });
   }
 });
-export default router;
-
-
-
-// ya veremos si utilizamos esto o no... Ruta: Luchar en la arena contra un oponente aleatorio
-/*router.post("/arena-battle", authMiddleware, async (req: Request, res: Response): Promise<void> => {
+/*
+// Ruta: Obtener el ranking
+router.get("/leaderboard", async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.locals.user?.id || 0;
+    const leaderboard = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT name, level, totalXp, totalGold FROM characters ORDER BY totalXp DESC LIMIT 10`,
+        (err, rows) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(rows);
+        }
+      );
+    });
 
-    // Obtener personaje del usuario
-    const player = await CharacterService.getCharacterById(userId);
-    if (!player) {
-      res.status(404).json({ error: "No tienes un personaje." });
-      return;
-    }
-
-    // Buscar un oponente aleatorio
-    const opponents = await CharacterService.getOpponentList(player, 5);
-    const opponent = opponents[Math.floor(Math.random() * opponents.length)];
-
-    if (!opponent) {
-      res.status(404).json({ error: "No se encontró un oponente." });
-      return;
-    }
-
-    // Manejar combate
-    const combatResult = await CombatService.handleCombat(player, opponent);
-    res.status(200).json(combatResult);
+    res.json({ leaderboard });
   } catch (error) {
-    console.error("Error al iniciar la batalla en la arena:", error);
-    res.status(500).json({ error: "Error interno al iniciar la batalla en la arena." });
+    console.error("Error al obtener ranking:", error);
+    res.status(500).json({ error: "Error interno al obtener el ranking." });
   }
-});
+});*/
 export default router;
-
-*/

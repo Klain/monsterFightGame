@@ -1,10 +1,10 @@
 import express, { Request, response, Response } from "express";
-import ActivityService from "../services/activityService";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateActivityMiddleware } from "../middleware/validateActivityMiddleware";
 import webSocketService from "../services/webSocketService";
 import { ActivityType } from "../constants/enums";
+import { Character } from "../models/character.model";
 
 const router = express.Router();
 
@@ -16,12 +16,11 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const userId = req.locals.user!.id;
-      const character = req.locals.character;
+      const character : Character = req.locals.character;
       const activityType = req.locals.activityType!;
       const { duration } = req.body;
 
-      const existingActivity = await ActivityService.getActivityStatus(character);
-      if (existingActivity) {
+      if (character.getActivityStatus()) {
         res.status(400).json({ message: "El personaje ya está en otra actividad." });
         return;
       }
@@ -41,13 +40,10 @@ router.post(
         res.status(400).json({ error: `Duración inválida. Máximo permitido: ${maxDuration} minutos.` });
 
       }
-
-      await ActivityService.startActivity(character, activityType, duration);
-      const activity =  await ActivityService.getActivityStatus(character);
-
+      const activity = character.startActivity(activityType, duration);
       webSocketService.characterRefresh(userId,
         (activity ? activity.wsr() : { activity: null }),
-        );
+      );
       res.status(200);
     } catch (error) {
       console.error("Error al iniciar actividad:", error);
@@ -64,12 +60,18 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const userId = req.locals.user!.id;
-      const character = req.locals.character;
-      const updatedCharacter = await ActivityService.claimActivityReward(character);
-      const activity =  await ActivityService.getActivityStatus(character);
+      const character : Character = req.locals.character;
 
+      if (!character.getActivityStatus()) {
+        res.status(404).json({ error: "No hay actividad en curso." });
+      }
+      if (character.getActivityStatus()!.getRemainingTime() > 0) {
+        res.status(404).json({ error: "La actividad aún no está completada." });
+      }
+      character.claimActivityReward();
+      const activity = character.getActivityStatus();
       webSocketService.characterRefresh(userId,{
-        ...updatedCharacter?.wsr(),
+        ...character?.wsr(),
         ...(activity ? activity.wsr() : { activity: null }),
       });
       res.status(200);

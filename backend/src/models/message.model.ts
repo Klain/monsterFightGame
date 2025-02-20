@@ -13,7 +13,6 @@ export class Message {
 	  Object.assign(this, data);
 	}
   
-	// ✅ Método para serializar datos y enviarlos al frontend
 	wsr(): any {
 	  return {
 		[this.id ?? "0"]: {

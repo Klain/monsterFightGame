@@ -16,10 +16,10 @@ export class Inventory {
     let equipMapped = equip.map(item => item.wsr());
     equipMapped.length = 16; 
 
-    return {
+    return {inventory:{
       backpack: backpack,
       equip: equipMapped
-    };
+    }};
   }
   wsrBackpack(){
     const backpack =  this.items.filter(item=>item.equipped != true);

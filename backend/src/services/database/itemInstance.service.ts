@@ -57,7 +57,7 @@ class ItemInstanceService {
       });
     });
   }
-  static async updateItemInstance(instanceId: number, updatedInstance: Partial<dbItemInstance>): Promise<boolean> {
+  static async updateItemInstance(updatedInstance: Partial<dbItemInstance>): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE item_instances SET
@@ -70,7 +70,7 @@ class ItemInstanceService {
         updatedInstance.item_id,
         updatedInstance.stock,
         updatedInstance.equipped ? 1 : 0,
-        instanceId
+        updatedInstance.id
       ];
 
       db.run(query, params, function (err) {

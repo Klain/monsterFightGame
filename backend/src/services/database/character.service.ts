@@ -1,5 +1,35 @@
 import { db } from "../../database";
 import { Character } from "../../models/character.model";
+
+export interface dbCharacter{
+  user_id :number, 
+  character_id:number,
+  name:string, 
+  faction:string, 
+  class:number, 
+  level:number, 
+  strength:number, 
+  endurance:number, 
+  constitution:number,
+  precision:number,
+  agility:number, 
+  vigor:number, 
+  spirit:number, 
+  willpower:number, 
+  arcane:number, 
+  current_health:number, 
+  total_health:number, 
+  current_stamina:number, 
+  total_stamina:number, 
+  current_mana:number, 
+  total_mana:number, 
+  current_xp:number, 
+  total_xp:number, 
+  current_gold:number, 
+  total_gold:number, 
+  upgrade_points:number, 
+  last_fight: string
+}
 class CharacterService {
   static async createCharacter(character: Partial<Character>): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -32,31 +62,31 @@ class CharacterService {
       });
     });
   }
-  static async getCharacterById(characterId: number): Promise<Character | null> {
+  static async getCharacterById(characterId: number): Promise<dbCharacter | null> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM characters WHERE id = ?;`;
-      db.get(query, [characterId], (err, row) => {
+      db.get(query, [characterId], (err, row : dbCharacter) => {
         if (err) {
           reject(err);
         } else {
-          resolve(row ? new Character(row) : null);
+          resolve(row ? row : null);
         }
       });
     });
   }
-  static async getAllCharacters(): Promise<Character[]> {
+  static async getAllCharacters(): Promise<dbCharacter[]> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM characters;`;
-      db.all(query, [], (err, rows) => {
+      db.all(query, [], (err, rows:dbCharacter[]) => {
         if (err) {
           reject(err);
         } else {
-          resolve(rows.map((row:any) => new Character(row)));
+          resolve(rows);
         }
       });
     });
   }
-  static async updateCharacter(characterId: number, updatedCharacter: Partial<Character>): Promise<boolean> {
+  static async updateCharacter(updatedCharacter: Partial<Character>): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE characters SET
@@ -76,7 +106,7 @@ class CharacterService {
         updatedCharacter.currentStamina, updatedCharacter.totalStamina, updatedCharacter.currentMana, updatedCharacter.totalMana,
         updatedCharacter.currentXp, updatedCharacter.totalXp, updatedCharacter.currentGold, updatedCharacter.totalGold,
         updatedCharacter.upgradePoints, updatedCharacter.lastFight || null,
-        characterId
+        updatedCharacter.id
       ];
 
       db.run(query, params, function (err) {

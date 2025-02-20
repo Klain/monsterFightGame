@@ -54,14 +54,14 @@ class EffectService {
   }
 
   // ✅ Actualizar un efecto
-  static async updateEffect(effectId: number, updatedEffect: Partial<dbEffect>): Promise<boolean> {
+  static async updateEffect(updatedEffect: dbEffect): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE effects SET name = ?
         WHERE id = ?;
       `;
 
-      db.run(query, [updatedEffect.name, effectId], function (err) {
+      db.run(query, [updatedEffect.name, updatedEffect.id], function (err) {
         if (err) {
           reject(err);
         } else {

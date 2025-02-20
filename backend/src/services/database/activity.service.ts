@@ -66,7 +66,7 @@ class ActivityService {
   }
 
   // ✅ Actualizar el estado de una actividad (por ejemplo, marcarla como completada)
-  static async updateActivity(activityId: number, updatedActivity: Partial<dbActivity>): Promise<boolean> {
+  static async updateActivity(updatedActivity: dbActivity): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE activities SET
@@ -79,7 +79,7 @@ class ActivityService {
         updatedActivity.start_time,
         updatedActivity.duration,
         updatedActivity.completed ? 1 : 0,
-        activityId
+        updatedActivity.id
       ];
 
       db.run(query, params, function (err) {

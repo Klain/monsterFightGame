@@ -1,42 +1,30 @@
 import express, { Request, Response } from "express";
-import InventoryService from "../services/inventoryService";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
+import { Character } from "../models/character.model";
+import CacheDataService from "../services/CacheDataService";
 import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
 
-/**
- * 📦 Obtener el inventario del personaje autenticado
- */
 router.get("/", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
-    const character = req.locals.character;
-    const inventory = InventoryService.getInventory(character.id);
-    res.status(200).json(inventory);
+    const character : Character = req.locals.character;
+    res.status(200).json(character.inventory);
   } catch (error) {
     console.error("❌ Error al obtener inventario:", error);
     res.status(500).json({ error: "Error interno al recuperar el inventario." });
   }
 });
 
-/**
- * ⚔️ Equipar un ítem
- */
 router.post("/equip/:itemId", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
-    const character = req.locals.character;
+    const character : Character = req.locals.character;
     const { itemId } = req.params;
-
-    await InventoryService.equipItem(character.id, Number(itemId));
-
-    // Actualizamos directamente desde la caché
-    const updatedInventory = InventoryService.getInventory(character.id);
-
-    webSocketService.characterRefresh(character.userId, {
-      inventory: updatedInventory,
-    });
-
+    const item = character.inventory.items.filter(item=> item.equipped==false && item.id==(Number(itemId)))[0];
+    if(!item){  res.status(404).json({ error: "Objeto no encontrado." });  }
+    character.equipItem(item!.id);
+    webSocketService.characterRefresh(character.userId, {...character.inventory.wsr});
     res.status(200).json({ message: "Ítem equipado con éxito" });
   } catch (error:any) {
     console.error("❌ Error al equipar ítem:", error);
@@ -44,23 +32,13 @@ router.post("/equip/:itemId", authMiddleware, validateCharacterMiddleware, async
   }
 });
 
-/**
- * ❌ Desequipar un ítem
- */
 router.post("/unequip/:itemId", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
-    const character = req.locals.character;
+    const character : Character = req.locals.character;
     const { itemId } = req.params;
-
-    await InventoryService.unequipItem(character.id, Number(itemId));
-
-    // Actualizamos el inventario en caché
-    const updatedInventory = InventoryService.getInventory(character.id);
-
-    webSocketService.characterRefresh(character.userId, {
-      inventory: updatedInventory,
-    });
-
+    const item = character.inventory.items.filter(item=> item.equipped==true && item.id==(Number(itemId)))[0];
+    character.unequipItem(item.id);
+    webSocketService.characterRefresh(character.userId, {...character.inventory.wsr()});
     res.status(200).json({ message: "Ítem desequipado con éxito" });
   } catch (error:any) {
     console.error("❌ Error al desequipar ítem:", error);

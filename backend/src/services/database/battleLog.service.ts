@@ -70,7 +70,7 @@ class BattleLogService {
   }
 
   // ✅ Actualizar los datos de un combate
-  static async updateBattle(battleId: number, updatedBattle: Partial<dbBattleLog>): Promise<boolean> {
+  static async updateBattle(updatedBattle: dbBattleLog): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE battle_logs SET
@@ -86,7 +86,7 @@ class BattleLogService {
         updatedBattle.gold_won,
         updatedBattle.xp_won,
         updatedBattle.last_attack,
-        battleId
+        updatedBattle.id
       ];
 
       db.run(query, params, function (err) {
