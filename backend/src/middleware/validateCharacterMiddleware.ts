@@ -1,6 +1,6 @@
 // src/middleware/validateCharacterMiddleware.ts
 import { Request, Response, NextFunction } from "express";
-import CharacterService from "../services/characterService";
+import CacheDataService from "../services/cache/CacheDataService";
 
 export const validateCharacterMiddleware = async (
   req: Request,
@@ -9,15 +9,12 @@ export const validateCharacterMiddleware = async (
 ): Promise<void> => {
   try {
     if(req.locals.user){
-      const character = await CharacterService.getCharacterById(req.locals.user.id);
-
+      const character = CacheDataService.getCharacterById(req.locals.user.id);
       if (!character) {
         res.status(404).json({ error: "Personaje no encontrado para el usuario." });
         return;
       }
-
       req.locals.character = character;
-
       next(); 
     }else{
       throw new Error(

@@ -7,12 +7,10 @@ export interface dbBattleLog {
   winner_id: number;
   gold_won: number;
   xp_won: number;
-  last_attack: string; // Timestamp en formato ISO
+  last_attack: string; 
 }
 
-// 📌 Servicio para manejar los combates en la base de datos
 class BattleLogService {
-  // ✅ Registrar un nuevo combate
   static async createBattle(battle: dbBattleLog): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -38,8 +36,6 @@ class BattleLogService {
       });
     });
   }
-
-  // ✅ Obtener un combate por ID
   static async getBattleById(battleId: number): Promise<dbBattleLog | null> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM battle_logs WHERE id = ?;`;
@@ -52,8 +48,11 @@ class BattleLogService {
       });
     });
   }
-
-  // ✅ Obtener todos los combates de un personaje (como atacante o defensor)
+  /**
+   * Obtiene todos los dbBattleLogs relacionados con un character.
+   *  @param {number} characterId - ID atacante Ó defensor
+   *  @returns {Promise<dbBattleLog[]>} - Promesa de los dbBattleLogs
+   */
   static async getBattlesByCharacterId(characterId: number): Promise<dbBattleLog[]> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -68,8 +67,6 @@ class BattleLogService {
       });
     });
   }
-
-  // ✅ Actualizar los datos de un combate
   static async updateBattle(updatedBattle: dbBattleLog): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -98,8 +95,6 @@ class BattleLogService {
       });
     });
   }
-
-  // ✅ Eliminar un combate por ID
   static async deleteBattle(battleId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `DELETE FROM battle_logs WHERE id = ?;`;

@@ -6,6 +6,7 @@ import ItemDefinitionService, { dbItemDefinition } from "./itemDefinition.servic
 import ItemInstanceService, { dbItemInstance } from "./itemInstance.service";
 import ItemEffectService, { dbItemEffect } from "./itemEffect.service";
 import MessageService,{dbMessage} from "./message.service";
+import UserService, {dbUser} from "./user.services";
 
 import { Activity } from "../../models/activity.model";
 import { BattleLog } from "../../models/battleLog.model";
@@ -15,13 +16,14 @@ import { Effect } from "../../models/effect.model";
 import { ItemDefinition } from "../../models/itemDefinition.model";
 import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
+import { User } from "../../models/user.model";
 
 class DatabaseService {
   constructor() {
     console.log("📦 DatabaseService inicializado");
   }
 
-  // ✅ ACTIVITYS
+  // ACTIVITYS ✅ 
   static async createActivity(activity: Activity): Promise<number> {
     return ActivityService.createActivity({
       character_id: activity.characterId!,
@@ -40,7 +42,6 @@ class DatabaseService {
     return dbActivities.map(this.mapDbActivity);
   }
   static async updateActivity(updatedActivity: Activity): Promise<boolean> {
-
     return ActivityService.updateActivity({
       id : updatedActivity.id,
       character_id: updatedActivity.characterId,
@@ -54,15 +55,15 @@ class DatabaseService {
     return ActivityService.deleteActivity(activityId);
   }
 
-  // ✅ BATTLE LOGS
+  // BATTLE LOGS ✅ 
   static async createBattleLog(battle: BattleLog): Promise<number> {
     return BattleLogService.createBattle({
-      attacker_id: battle.attackerId!,
-      defender_id: battle.defenderId!,
-      winner_id: battle.winnerId!,
-      gold_won: battle.goldWon!,
-      xp_won: battle.xpWon!,
-      last_attack: battle.lastAttack!.toISOString(),
+      attacker_id: battle.attackerId,
+      defender_id: battle.defenderId,
+      winner_id: battle.winnerId,
+      gold_won: battle.goldWon,
+      xp_won: battle.xpWon,
+      last_attack: battle.lastAttack.toISOString(),
     });
   }
   static async getBattleLogById(battleId: number): Promise<BattleLog | null> {
@@ -88,8 +89,8 @@ class DatabaseService {
   }
 
   // ✅ CHARACTERS
-  static async createCharacter(character: Character): Promise<number> {
-    return CharacterService.createCharacter({
+  static async createCharacter(character: Character): Promise<Character | null> {
+    const lastId = await CharacterService.createCharacter({
       id : character.id,
       userId: character.userId!,
       name: character.name!,
@@ -118,6 +119,7 @@ class DatabaseService {
       upgradePoints: character.upgradePoints!,
       lastFight: character.lastFight || undefined
     });
+    return await this.getCharacterById(lastId);
   }
   static async getCharacterById(characterId: number): Promise<Character | null> {
     const dbCharacter = await CharacterService.getCharacterById(characterId);
@@ -162,10 +164,11 @@ class DatabaseService {
     return CharacterService.deleteCharacter(characterId);
   }
 
-  // ✅ EFFECTS
+  // EFFECTS ✅ 
   static async createEffect(effect: Effect): Promise<number> {
     return EffectService.createEffect({
-      name: effect.name!,
+      id:0,
+      name: effect.name,
     });
   }
   static async getEffectById(effectId: number): Promise<Effect | null> {
@@ -178,22 +181,24 @@ class DatabaseService {
   }
   static async updateEffect(updatedEffect: Effect): Promise<boolean> {
     return EffectService.updateEffect({
-      name: updatedEffect.name!,id:updatedEffect.id
+      name: updatedEffect.name,
+      id:updatedEffect.id
     });
   }
   static async deleteEffect(effectId: number): Promise<boolean> {
     return EffectService.deleteEffect(effectId);
   }
 
-  // ✅ ITEM DEFINITIONS
+  // ITEM DEFINITIONS ✅
   static async createItemDefinition(item: ItemDefinition): Promise<number> {
     return ItemDefinitionService.createItem({
-      name: item.name!,
-      itemType: item.itemType!,
+      id:0,
+      name: item.name,
+      itemType: item.itemType,
       equipType: item.equipType || null,
       equipPositionType: item.equipPositionType || null,
-      levelRequired: item.levelRequired!,
-      price: item.price!,
+      levelRequired: item.levelRequired,
+      price: item.price,
     });
   }
   static async getItemDefinitionById(itemId: number): Promise<ItemDefinition | null> {
@@ -219,42 +224,7 @@ class DatabaseService {
     return ItemDefinitionService.deleteItem(itemId);
   }
 
-  // ✅ ITEM INSTANCES
-  static async createItemInstance(instance: ItemInstance): Promise<number> {
-    return ItemInstanceService.createItemInstance({
-      character_id: instance.character_id!,
-      item_id: instance.item_id!,
-      stock: instance.stock!,
-      equipped: instance.equipped!,
-    });
-  }
-  static async getItemInstanceById(instanceId: number): Promise<ItemInstance | null> {
-    const dbInstance = await ItemInstanceService.getItemInstanceById(instanceId);
-    return dbInstance ? this.mapDbItemInstance(dbInstance) : null;
-  }
-  static async getInventoryByCharacterId(characterId: number): Promise<ItemInstance[]> {
-    const dbInstances = await ItemInstanceService.getInventoryByCharacterId(characterId);
-    return dbInstances.map(this.mapDbItemInstance);
-  }
-  static async updateItemInstance(updatedInstance: ItemInstance): Promise<boolean> {
-    return ItemInstanceService.updateItemInstance({
-      character_id: updatedInstance.character_id!,
-      item_id: updatedInstance.item_id!,
-      stock: updatedInstance.stock!,
-      equipped: updatedInstance.equipped!,
-    });
-  }
-  static async deleteItemInstance(instanceId: number): Promise<boolean> {
-    return ItemInstanceService.deleteItemInstance(instanceId);
-  }
-  static async updateInventory(characterId: number, updatedItems: ItemInstance[]): Promise<boolean> {
-    return ItemInstanceService.updateInventory(characterId,updatedItems);
-  }
-  static async deleteInventoryByCharacterId(characterId: number): Promise<boolean> {
-    return ItemInstanceService.deleteInventoryByCharacterId(characterId);
-  }
-
-  // ✅ ITEM EFFECTS
+  // ITEM EFFECTS ✅
   static async addEffectToItem(itemEffect: ItemEffect): Promise<boolean> {
     return ItemEffectService.addEffectToItem({
       item_id: itemEffect.effectId,
@@ -273,7 +243,44 @@ class DatabaseService {
     return ItemEffectService.removeAllEffectsFromItem(itemId);
   }
 
-  // ✅ MESSAGES
+  // ITEM INSTANCES ✅
+  static async createItemInstance(instance: ItemInstance): Promise<number> {
+    return ItemInstanceService.createItemInstance({
+      id:0,
+      character_id: instance.characterId,
+      item_id: instance.itemId,
+      stock: instance.stock,
+      equipped: instance.equipped,
+    });
+  }
+  static async getItemInstanceById(instanceId: number): Promise<ItemInstance | null> {
+    const dbInstance = await ItemInstanceService.getItemInstanceById(instanceId);
+    return dbInstance ? this.mapDbItemInstance(dbInstance) : null;
+  }
+  static async getInventoryByCharacterId(characterId: number): Promise<ItemInstance[]> {
+    const dbInstances = await ItemInstanceService.getInventoryByCharacterId(characterId);
+    return dbInstances.map(this.mapDbItemInstance);
+  }
+  static async updateItemInstance(updatedInstance: ItemInstance): Promise<boolean> {
+    return ItemInstanceService.updateItemInstance({
+      id:updatedInstance.id,
+      character_id: updatedInstance.characterId,
+      item_id: updatedInstance.itemId,
+      stock: updatedInstance.stock,
+      equipped: updatedInstance.equipped,
+    });
+  }
+  static async deleteItemInstance(instanceId: number): Promise<boolean> {
+    return ItemInstanceService.deleteItemInstance(instanceId);
+  }
+  static async updateInventory(characterId: number, updatedItems: ItemInstance[]): Promise<boolean> {
+    return ItemInstanceService.updateInventory(characterId,updatedItems);
+  }
+  static async deleteInventoryByCharacterId(characterId: number): Promise<boolean> {
+    return ItemInstanceService.deleteInventoryByCharacterId(characterId);
+  }
+
+  // MESSAGES ✅ 
   static async getAllMessages(): Promise<Message[]> {
     const dbMessages = await MessageService.getAllMessages();
     if(dbMessages){
@@ -281,24 +288,26 @@ class DatabaseService {
     }
     return [];
   }
-  static async sendMessage(message: Message): Promise<number> {
-    return MessageService.sendMessage({
-      sender_id: message.senderId!,
-      sender_name: message.senderName!,
-      receiver_id: message.receiverId!,
-      receiver_name: message.receiverName!,
-      subject: message.subject!,
-      body: message.body!,
-      timestamp: message.timestamp!.toISOString(),
-      read: message.read!,
+  static async createMessage(message: Message): Promise<Message|null> {
+    const lastId = await MessageService.createMessage({
+      id: message.id,
+      sender_id: message.senderId,
+      sender_name: message.senderName,
+      receiver_id: message.receiverId,
+      receiver_name: message.receiverName,
+      subject: message.subject,
+      body: message.body,
+      timestamp: message.timestamp.toISOString(),
+      read: message.read,
     });
+    return await this.getMessageById(lastId);
   }
   static async getMessageById(messageId: number): Promise<Message | null> {
     const dbMessage = await MessageService.getMessageById(messageId);
     return dbMessage ? this.mapDbMessage(dbMessage) : null;
   }
-  static async getMessagesByUserId(userId: number): Promise<Message[]> {
-    const dbMessages = await MessageService.getMessagesByUserId(userId);
+  static async getMessagesByCharacterId(characterId: number): Promise<Message[]> {
+    const dbMessages = await MessageService.getMessagesByUserId(characterId);
     return dbMessages.map(this.mapDbMessage);
   }
   static async markMessageAsRead(messageId: number): Promise<boolean> {
@@ -308,7 +317,36 @@ class DatabaseService {
     return MessageService.deleteMessage(messageId);
   }
 
-  // ✅ MAPPERS
+  // USERS ✅ 
+  static async createUser(user: User): Promise<number> {
+    return UserService.createUser({
+      id:0,
+      username:user.username,
+      password:user.password,
+      last_online:user.last_online.toISOString()
+    });
+  }
+  static async getUserById(userId: number): Promise<User | null> {
+    const dbUser = await UserService.getUserById(userId);
+    return dbUser ? this.mapDbUser(dbUser) : null;
+  }
+  static async getAllUsers(): Promise<User[]> {
+    const dbUsers = await UserService.getAllUsers();
+    return dbUsers.map(this.mapDbUser);
+  }
+  static async updateUser(updatedUser: User): Promise<boolean> {
+    return UserService.updateUser({
+      id:updatedUser.id,
+      username:updatedUser.username,
+      password:updatedUser.password,
+      last_online:updatedUser.last_online.toISOString(),
+    }); 
+  }
+  static async deleteUser(userId: number): Promise<boolean> {
+    return UserService.deleteUser(userId);
+  }
+
+  // MAPPERS ✅ 
   private static mapDbActivity(dbActivity: dbActivity): Activity {
     return new Activity({
       id: dbActivity.id,
@@ -338,6 +376,7 @@ class DatabaseService {
       faction: dbCharacter.faction,
       class: dbCharacter.class,
       level: dbCharacter.level,
+
       strength: dbCharacter.strength,
       endurance: dbCharacter.endurance,
       constitution: dbCharacter.constitution,
@@ -347,17 +386,20 @@ class DatabaseService {
       spirit: dbCharacter.spirit,
       willpower: dbCharacter.willpower,
       arcane: dbCharacter.arcane,
+
       currentHealth: dbCharacter.current_health,
       totalHealth: dbCharacter.total_health,
       currentStamina: dbCharacter.current_stamina,
       totalStamina: dbCharacter.total_stamina,
       currentMana: dbCharacter.current_mana,
       totalMana: dbCharacter.total_mana,
+
       currentXp: dbCharacter.current_xp,
       totalXp: dbCharacter.total_xp,
       currentGold: dbCharacter.current_gold,
       totalGold: dbCharacter.total_gold,
       upgradePoints: dbCharacter.upgrade_points,
+      
       lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
     });
   }
@@ -389,8 +431,8 @@ class DatabaseService {
   private static mapDbItemInstance(dbInstance: dbItemInstance): ItemInstance {
     return new ItemInstance({
       id: dbInstance.id!,
-      character_id: dbInstance.character_id,
-      item_id: dbInstance.item_id,
+      characterId: dbInstance.character_id,
+      itemId: dbInstance.item_id,
       stock: dbInstance.stock,
       equipped: dbInstance.equipped,
     });
@@ -408,6 +450,14 @@ class DatabaseService {
       read: dbMessage.read,
     });
   }
+  private static mapDbUser(dbUser: dbUser): User {
+    return new User({
+      id: dbUser.id,
+      username:dbUser.username,
+      password:dbUser.password,
+      last_online:new Date(dbUser.last_online),
+    });
+  } 
 }
 
 export default DatabaseService;

@@ -1,5 +1,5 @@
 export class Message {
-	id: number | null = null;
+	id: number = 0;
 	senderId: number = 0;
 	senderName: string = "";
 	receiverId: number = 0;

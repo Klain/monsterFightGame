@@ -1,9 +1,9 @@
-import CacheDataService from "../services/CacheDataService";
+import CacheDataService from "../services/cache/CacheDataService";
 
 export class ItemInstance {
   id: number = 0;
-  character_id: number = 0;
-  item_id: number = 0;
+  characterId: number = 0;
+  itemId: number = 0;
   equipped: boolean = false;
   stock: number = 0;
 
@@ -12,12 +12,12 @@ export class ItemInstance {
   }
 
   wsr(){
-    const databaseItem = CacheDataService.getItemDefinitionById(this.item_id);
+    const databaseItem = CacheDataService.getItemDefinitionById(this.itemId);
     if(databaseItem){
       const result = {
         [this.id]: {
           ...databaseItem.wsr(),
-          characterId: this.character_id,
+          characterId: this.characterId,
           equipped: this.equipped,
           stock: this.stock,
         }

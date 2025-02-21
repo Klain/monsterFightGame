@@ -1,7 +1,7 @@
 import { db } from "../../database";
 import { ItemInstance } from "../../models/itemInstance.model";
 export interface dbItemInstance {
-  id?: number;
+  id: number;
   character_id: number;
   item_id: number;
   stock: number;
@@ -57,7 +57,7 @@ class ItemInstanceService {
       });
     });
   }
-  static async updateItemInstance(updatedInstance: Partial<dbItemInstance>): Promise<boolean> {
+  static async updateItemInstance(updatedInstance: dbItemInstance): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE item_instances SET
@@ -99,8 +99,9 @@ class ItemInstanceService {
       await this.deleteInventoryByCharacterId(characterId);
       for (const item of updatedItems) {
         await ItemInstanceService.createItemInstance({
+          id:item.id,
           character_id: characterId,
-          item_id: item.item_id,
+          item_id: item.itemId,
           stock: item.stock,
           equipped: item.equipped,
         });
@@ -123,6 +124,5 @@ class ItemInstanceService {
       });
     });
   }
-
 }
 export default ItemInstanceService;

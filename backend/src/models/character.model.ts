@@ -1,5 +1,5 @@
 import { ActivityType, StatusEffect } from "../constants/enums";
-import CacheDataService from "../services/CacheDataService";
+import CacheDataService from "../services/cache/CacheDataService";
 import { Activity } from "./activity.model";
 import { ActivityReward } from "./activityReward.model";
 import { CharacterStatus } from "./characterStatus.model";
@@ -8,8 +8,7 @@ import { ItemDefinition } from "./itemDefinition.model";
 import { ItemInstance } from "./itemInstance.model";
 import { Message } from "./message.model";
 
- //backend\src\models\character.ts
- export class Character {
+export class Character {
   private _id: number = 0;
   private _userId: number = 0;
   private _name: string = "";
@@ -34,21 +33,56 @@ import { Message } from "./message.model";
   private _currentMana: number = 100;
   private _totalMana: number = 100;
 
-  private _statuses: CharacterStatus[] = [];
-  private _inventory:Inventory = new Inventory();
-
   private _currentXp: number = 0;
   private _totalXp: number = 0;
   private _currentGold: number = 0;
   private _totalGold: number = 0;
-
   private _upgradePoints: number = 0;
 
-  private _activities: Activity[] = [];
   private _lastFight?: Date;
 
+  private _statuses: CharacterStatus[] = [];
+  private _inventory:Inventory = new Inventory();
+  private _activities: Activity[] = [];
+
   constructor(data: Partial<Character>) {
-    Object.assign(this, data);
+    if(data){
+      this._id = data.id ?? 0 ;
+      this._userId = data.userId ?? 0 ;
+      this._name = data.name ?? "" ;
+      this._faction  = data.faction ?? "" ;
+      this._class = data.class ?? 1;
+      this._level = data.level ?? 1;
+
+      this._strength = data.strength ?? 1 ;
+      this._endurance = data.endurance ?? 1;
+      this._constitution = data.constitution ?? 1;
+      this._precision = data.precision ?? 1;
+      this._agility = data.agility ?? 1;
+      this._vigor = data.vigor ?? 1;
+      this._spirit = data.spirit ?? 1;
+      this._willpower = data.willpower ?? 1;
+      this._arcane = data.arcane ?? 1;
+
+      this._currentHealth = data.currentHealth ?? 100;
+      this._totalHealth = data.totalHealth ?? 100;
+      this._currentStamina = data.currentStamina ?? 100;
+      this._totalStamina = data.totalStamina ?? 100;
+      this._currentMana = data.currentMana ?? 100;
+      this._totalMana = data.totalMana ?? 100;
+
+      this._currentXp = data.currentXp ?? 0;
+      this._totalXp = data.totalXp ?? 0;
+      this._currentGold = data.currentGold ?? 0;
+      this._totalGold = data.totalGold ?? 0;
+      this._upgradePoints = data.upgradePoints ?? 0;
+
+      this._lastFight = data.lastFight;
+
+      this._statuses = data.statuses ?? [];
+      this._inventory = data.inventory ?? new Inventory();
+      this._activities = data.activities ?? [];
+    }
   }
   //Equipo
   static async getEquippedStats(id:number){
@@ -82,44 +116,38 @@ import { Message } from "./message.model";
 
   equipItem(itemId: number): void {
     this._inventory.items = this._inventory.items.map((ci) =>
-      ci.item_id === itemId ? new ItemInstance({ ...ci, equipped: true }) : ci
+      ci.itemId === itemId ? new ItemInstance({ ...ci, equipped: true }) : ci
     );
     CacheDataService.updateInventory(this._id, this._inventory.items);
   }
   unequipItem(itemId: number): void {
     this._inventory.items = this._inventory.items.map((ci) =>
-      ci.item_id === itemId ? new ItemInstance({ ...ci, equipped: false }) : ci
+      ci.itemId === itemId ? new ItemInstance({ ...ci, equipped: false }) : ci
     );
     CacheDataService.updateInventory(this._id, this._inventory.items);
   }
+
   buyItem(item: ItemDefinition): void {
-    const existingItem = this._inventory.items.find(i => i.item_id === item.id);
-
-    if (this.currentGold < item.price) {
-      throw new Error("No tienes suficiente oro.");
-    }
-
+    const existingItem = this._inventory.items.find(i => i.itemId === item.id);
     if (existingItem) {
       existingItem.stock += 1;
     } else {
       const newItem = new ItemInstance({
-        character_id: this._id,
-        item_id: item.id,
+        characterId: this._id,
+        itemId: item.id,
         equipped: false,
         stock: 1,
       });
       this._inventory.items.push(newItem);
     }
-
     this.currentGold -= item.price;
-    CacheDataService.updateCharacter(this._id, this);
+    CacheDataService.updateCharacter(this);
     CacheDataService.updateInventory(this._id, this._inventory.items);
   }
   sellItem(itemId: number): void {
     const item = CacheDataService.getItemDefinitionById(itemId);
-    if (!item) throw new Error("Ítem no encontrado en caché");
-    this._inventory.items = this._inventory.items.filter((ci) => ci.item_id !== itemId);
-    this.currentGold += item.price;
+    this._inventory.items = this._inventory.items.filter((ci) => ci.itemId !== itemId);
+    this.currentGold += item!.price;
   }
 
   //RevisarOld
@@ -187,10 +215,8 @@ import { Message } from "./message.model";
       }))
       .filter(status => status.duration > 0); // Eliminar estados con duración 0
   }
-  // Método para comprobar si un estado está activo
-  hasStatus(effect: StatusEffect): boolean {
-    return this.statuses.some(status => status.type === effect);
-  }
+  
+  hasStatus(effect: StatusEffect): boolean { return this.statuses.some(status => status.type === effect); }
 
 
 
@@ -283,28 +309,16 @@ import { Message } from "./message.model";
 
 
   // MENSAJERIA
-  sendMessage(message: Message):void{
-    CacheDataService.sendMessage(message.receiverId, message);
-  }
-  getMessages(characterId: number): Message[] {
-    return CacheDataService.getMessagesByUserId(characterId);
-  }
-  getCountMessages(characterId: number): number {
-    return CacheDataService.getMessagesByUserId(characterId).length;
-  }
-  markMessageAsRead(messageId: number): void{
-    CacheDataService.markMessageAsRead(messageId);
-  }
-  deleteMessage(messageId: number): void {
-    CacheDataService.deleteMessage(messageId);
-  }
-  getMessageById(messageId: number): Message | null {
-    return CacheDataService.getMessageById(messageId);
-  }
+  sendMessage(message: Message):void{ CacheDataService.createMessage(message); }
+  getMessages(characterId: number): Message[] { return CacheDataService.getMessagesByCharacterId(characterId); }
+  getCountMessages(characterId: number): number { return CacheDataService.getMessagesByCharacterId(characterId).length; }
+  markMessageAsRead(messageId: number): void{ CacheDataService.markMessageAsRead(messageId); }
+  deleteMessage(message: Message): void { CacheDataService.deleteMessage(message); }
+  getMessageById(messageId: number): Message | null { return CacheDataService.getMessageById(messageId); }
 
 
   // GETTERS Y SETTERS
-  private updateCharacter(): void { CacheDataService.updateCharacter(this._id, this); }
+  private updateCharacter(): void { CacheDataService.updateCharacter(this); }
   private updateInventory():void { CacheDataService.updateInventory(this._id, this._inventory.items); }
 
   get id() { return this._id; }
@@ -402,7 +416,4 @@ import { Message } from "./message.model";
 
   get lastFight() { return this._lastFight; }
   set lastFight(value: Date | undefined) { this._lastFight = value; this.updateCharacter(); }
-
-
-
 }

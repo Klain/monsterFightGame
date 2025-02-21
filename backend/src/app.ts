@@ -8,7 +8,7 @@ import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import webSocketService from "./services/webSocketService";
-import CacheDataService from "./services/CacheDataService";
+import CacheDataService from "./services/cache/CacheDataService";
 import authRouter from "./routes/authRoutes";
 import characterRoutes from "./routes/characterRoutes";
 import inventoryRoutes from "./routes/inventoryRoutes";

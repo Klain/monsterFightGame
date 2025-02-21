@@ -5,10 +5,7 @@ export interface dbItemEffect {
   effect_id: number;
   value: number;
 }
-
-// 📌 Servicio para manejar la relación entre ítems y efectos en la base de datos
 class ItemEffectService {
-  // ✅ Asignar un efecto a un ítem
   static async addEffectToItem(itemEffect: dbItemEffect): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -25,8 +22,6 @@ class ItemEffectService {
       });
     });
   }
-
-  // ✅ Obtener los efectos de un ítem por su ID
   static async getEffectsByItemId(itemId: number): Promise<dbItemEffect[]> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -45,8 +40,6 @@ class ItemEffectService {
       });
     });
   }
-
-  // ✅ Eliminar un efecto específico de un ítem
   static async removeEffectFromItem(itemId: number, effectId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -62,8 +55,6 @@ class ItemEffectService {
       });
     });
   }
-
-  // ✅ Eliminar todos los efectos de un ítem
   static async removeAllEffectsFromItem(itemId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `

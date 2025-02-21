@@ -1,6 +1,6 @@
 // src/middleware/validateCharacterMiddleware.ts
 import { Request, Response, NextFunction } from "express";
-import ItemDatabaseService from "../services/ItemDatabaseService";
+import CacheDataService from "../services/cache/CacheDataService";
 
 export const validateItemMiddleware = async (
   req: Request,
@@ -9,7 +9,7 @@ export const validateItemMiddleware = async (
 ): Promise<void> => {
   try {
     const itemId : number = +(req.body?.itemId || req.params?.itemId);
-    const item = await ItemDatabaseService.getItemById(itemId);
+    const item = await CacheDataService.getItemDefinitionById(itemId);
     if (!item) {
       res.status(404).json({ error: "No existe el objeto seleccionado." });
       return;

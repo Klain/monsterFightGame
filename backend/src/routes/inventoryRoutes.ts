@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { Character } from "../models/character.model";
-import CacheDataService from "../services/CacheDataService";
+import CacheDataService from "../services/cache/CacheDataService";
 import webSocketService from "../services/webSocketService";
 
 const router = express.Router();

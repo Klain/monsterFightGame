@@ -1,5 +1,5 @@
 import { ActivityType } from "../constants/enums";
-import CacheDataService from "../services/CacheDataService";
+import CacheDataService from "../services/cache/CacheDataService";
 
 export class Activity {
   private _id: number = 0;
@@ -16,7 +16,7 @@ export class Activity {
 
   private updateCache(): void {
     if (this._characterId) {
-      CacheDataService.updateActivity(this._id, this);
+      CacheDataService.updateActivity(this);
     }
   }
 

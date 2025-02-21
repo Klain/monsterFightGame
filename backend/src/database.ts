@@ -21,7 +21,8 @@ function runTables(): Promise<void> {
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT NOT NULL UNIQUE,
-          password TEXT NOT NULL
+          password TEXT NOT NULL,
+          last_online TIMESTAMP
         )
       `);
       db.run("DROP TABLE IF EXISTS characters;");
@@ -140,7 +141,6 @@ function runTables(): Promise<void> {
         read BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
-      )
       )`, resolve);
     });
   });
@@ -179,7 +179,7 @@ function populateWeapons(): Promise<void> {
     let completedInserts = 0;
 
     for (let i = 1; i <= ServerConfig.levelMax; i++) {
-      const baseQuery = `INSERT INTO items (name, itemType, equipType, equipPositionType, levelRequired, price)
+      const baseQuery = `INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, levelRequired, price)
                          VALUES (?, ?, ?, ?, ?, ?)`;
 
       const itemType = 3;

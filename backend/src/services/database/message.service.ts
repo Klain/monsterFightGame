@@ -1,20 +1,18 @@
 import { db } from "../../database";
 
 export interface dbMessage {
-  id?: number;
+  id: number;
   sender_id: number;
   sender_name: string;
   receiver_id: number;
   receiver_name: string;
   subject: string;
   body: string;
-  timestamp: string; // Fecha en formato ISO
+  timestamp: string; 
   read: boolean;
 }
 
-// 📌 Servicio para manejar los mensajes en la base de datos
 class MessageService {
-  // ✅ Obtener todos los mensajes
   static async getAllMessages(): Promise<dbMessage[] | null> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM messages;`;
@@ -27,8 +25,7 @@ class MessageService {
       });
     });
   }
-  // ✅ Enviar un nuevo mensaje
-  static async sendMessage(message: dbMessage): Promise<number> {
+  static async createMessage(message: dbMessage): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
         INSERT INTO messages (sender_id, sender_name, receiver_id, receiver_name, subject, body, timestamp, read)
@@ -55,7 +52,6 @@ class MessageService {
       });
     });
   }
-  // ✅ Obtener un mensaje por ID
   static async getMessageById(messageId: number): Promise<dbMessage | null> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM messages WHERE id = ?;`;
@@ -68,13 +64,12 @@ class MessageService {
       });
     });
   }
-  // ✅ Obtener todos los mensajes de un usuario (enviados y recibidos)
-  static async getMessagesByUserId(userId: number): Promise<dbMessage[]> {
+  static async getMessagesByUserId(characterId: number): Promise<dbMessage[]> {
     return new Promise((resolve, reject) => {
       const query = `
         SELECT * FROM messages WHERE sender_id = ? OR receiver_id = ? ORDER BY timestamp DESC;
       `;
-      db.all(query, [userId, userId], (err, rows) => {
+      db.all(query, [characterId, characterId], (err, rows) => {
         if (err) {
           reject(err);
         } else {
@@ -83,7 +78,6 @@ class MessageService {
       });
     });
   }
-  // ✅ Marcar un mensaje como leído
   static async markMessageAsRead(messageId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -99,7 +93,6 @@ class MessageService {
       });
     });
   }
-  // ✅ Eliminar un mensaje por ID
   static async deleteMessage(messageId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `DELETE FROM messages WHERE id = ?;`;

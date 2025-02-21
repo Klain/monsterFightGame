@@ -4,7 +4,7 @@ import { validateCharacterMiddleware } from "../middleware/validateCharacterMidd
 import { validateMessageMiddleware } from "../middleware/validateMessageMiddleware"; 
 import { Character } from "../models/character.model";
 import { Message } from "../models/message.model";
-import CacheDataService from "../services/CacheDataService";
+import CacheDataService from "../services/cache/CacheDataService";
 import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
@@ -28,7 +28,7 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
     }
 
     const newMessage : Message = new Message({
-      id: null,
+      id: 0,
       senderId: sender.id,
       senderName: sender.name,
       receiverId: receiver.id,
@@ -42,10 +42,10 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
     sender.sendMessage(newMessage);
 
     if( receiver.id != sender.id){webSocketService.characterNewMessageSend(sender.userId,{
-      ...message.wsr()
+      ...newMessage.wsr()
     });}
     webSocketService.characterNewMessageRecived(receiver.userId,{
-      ...message.wsr()
+      ...newMessage.wsr()
     });
     res.status(200).json({response:"Mensaje enviado con éxito"});
   } catch (error) {
@@ -67,8 +67,8 @@ router.get("/inbox", authMiddleware,validateCharacterMiddleware, async (req: Req
     }
 
     const character : Character = req.locals.character;
-    const messages = await getMessages(character.id,page,limit);
-    const totalMessages = await getCountMessages(character.id);
+    const messages = CacheDataService.getCharacterMessagesInbox(character.id, page , limit);
+    const totalMessages = CacheDataService.getCharacterMessagesInboxCount(character.id);
     res.json({
       messages,
       page,
@@ -91,8 +91,8 @@ router.get("/outbox", authMiddleware,validateCharacterMiddleware, async (req: Re
     }
 
     const character : Character = req.locals.character;
-    const messages = await getMessages(character.id,page,limit,false);
-    const totalMessages = await getCountMessages(character.id);
+    const messages = CacheDataService.getCharacterMessagesOutbox(character.id,page,limit);
+    const totalMessages = CacheDataService.getCharacterMessagesOutboxCount(character.id);
     res.json({
       messages,
       page,
@@ -110,26 +110,22 @@ router.get("/outbox", authMiddleware,validateCharacterMiddleware, async (req: Re
 router.post("/read/:message_id", authMiddleware,validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const character : Character = req.locals.character;
-
     const { message_id } = req.params;
     if (!message_id) {
       res.status(400).json({ error: "El ID del mensaje es obligatorio." });
       return;
     }
-
-    const message = await getMessageById(+message_id);
+    const message = CacheDataService.getMessageById(+message_id);
     if(!message){
       res.status(404).json({ error: "Error al obtener el mensaje." });
       return;
     }
-    const result = await markMessageAsRead(message);
-
-    message.read = true;
+    CacheDataService.markMessageAsRead(message.id);
+    const updatedMessage = CacheDataService.getMessageById(+message_id);
     webSocketService.characterNewMessageRecived(character.id, {
-      ...message.wsr()
+      ...updatedMessage?.wsr()
     })
-
-    res.json(result);
+    res.json(updatedMessage);
   } catch (error) {
     console.error("Error al marcar mensaje como leído:", error);
     res.status(500).json({ error: "Error interno al marcar mensaje como leído." });
@@ -140,29 +136,23 @@ router.post("/read/:message_id", authMiddleware,validateCharacterMiddleware, asy
 router.delete("/:message_id", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { message_id } = req.params;
-
-    // Verificar que el ID del mensaje sea válido
     if (!message_id || isNaN(Number(message_id))) {
       res.status(400).json({ error: "El ID del mensaje es obligatorio y debe ser un número válido." });
       return;
     }
-
-    // Verificar que el mensaje existe y pertenece al personaje actual
     const character: Character = req.locals.character;
-    const message = await getMessageById(Number(message_id));
+    const message = CacheDataService.getMessageById(Number(message_id));
     if (!message) {
       res.status(404).json({ error: "Mensaje no encontrado." });
       return;
     }
-
-    if (message.receiver_id !== character.id && message.sender_id !== character.id) {
+    //TODO revisar la eliminacion de mensajes para ser usable por ambos usuarios
+    if (message.receiverId !== character.id && message.senderId !== character.id) {
       res.status(403).json({ error: "No tienes permiso para eliminar este mensaje." });
       return;
     }
-
-    // Eliminar el mensaje
-    const result = await deleteMessage(Number(message_id));
-    res.json(result);
+    CacheDataService.deleteMessage(message);
+    res.json(true);
   } catch (error) {
     console.error("Error al eliminar mensaje:", error);
     res.status(500).json({ error: "Error interno al eliminar mensaje." });

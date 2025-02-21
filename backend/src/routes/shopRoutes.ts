@@ -1,20 +1,16 @@
 import express, { Request, Response } from "express";
 import ShopService from "../services/shopService";
+import CacheDataService from "../services/cache/CacheDataService";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateItemMiddleware } from "../middleware/validateItemMiddleware";
-
 import webSocketService from "../services/webSocketService";
-import InventoryService from "../services/inventoryService";
 import { ItemDefinition } from "../models/itemDefinition.model";
 import { Character } from "../models/character.model";
 import { Inventory } from "../models/inventory.model";
 
 const router = express.Router();
 
-/**
- * 🔹 Obtener los ítems disponibles en la tienda
- */
 router.get("/",authMiddleware,validateCharacterMiddleware,async (req: Request, res: Response) => {
   try {
     const character : Character = req.locals.character!;
@@ -30,29 +26,20 @@ router.get("/",authMiddleware,validateCharacterMiddleware,async (req: Request, r
   }
 });
 
-/**
- * 🛒 Comprar un ítem
- */
 router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMiddleware, async (req: Request, res: Response) => {
   try {
     const character : Character = req.locals.character!;
     const item : ItemDefinition = req.locals.item!;
 
-    if(character.currentGold >= item.price ){
-      await ShopService.buyItem(character, item);
-
-    }else{
+    if(!(character.currentGold >= item.price )){
       res.status(404).json({ error: "El personaje no dispone suficiente dinero." });
       return;
     }
-    // 🛠️ Actualizamos el caché en lugar de volver a consultar la BD
-    const updatedInventory = new Inventory(InventoryService.getInventory(character.id));
-    
+    character.buyItem(item);
     webSocketService.characterRefresh(character.userId, {
       ...character.wsrCurrencies(),
-      ...updatedInventory.wsrBackpack(),
+      ...character.inventory.wsrBackpack(),
     });
-
     res.status(200).json({ message: "Ítem comprado con éxito" });
   } catch (error:any) {
     console.error("❌ Error al comprar ítem:", error);
@@ -60,21 +47,18 @@ router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMid
   }
 });
 
-/**
- * 💰 Vender un ítem
- */
  router.post("/sell", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
-    const character = req.locals.character;
+    const character : Character = req.locals.character;
     const { itemId } = req.params;
 
-    await InventoryService.sellItem(character.id, Number(itemId));
-
-    // 🛠️ Actualizamos la caché sin hacer consultas innecesarias
-    const updatedInventory = InventoryService.getInventory(character.id);
-
+    if(!(character.inventory.items.filter(item=>item.equipped==false && item.itemId==+itemId).length>0 )){
+      res.status(404).json({ error: "El personaje no dispone del objeto para vender." });
+      return;
+    }
+    character.sellItem(+itemId);
     webSocketService.characterRefresh(character.userId, {
-      inventory: updatedInventory,
+      ...character.inventory.wsr(),
     });
 
     res.status(200).json({ message: "Ítem vendido con éxito" });

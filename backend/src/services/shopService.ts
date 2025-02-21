@@ -1,4 +1,4 @@
-import CacheDataService from "./CacheDataService";
+import CacheDataService from "./cache/CacheDataService";
 import { ItemDefinition } from "../models/itemDefinition.model";
 
 class ShopService {
@@ -7,7 +7,7 @@ class ShopService {
    * @returns Lista de ítems.
    */
   static getShopItems(): ItemDefinition[] {
-    return Array.from(CacheDataService.itemDefinitions.values());
+    return Array.from(CacheDataService.cacheItemDefinitions.values());
   }
 }
 

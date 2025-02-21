@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
 import authMiddleware from "../middleware/authMiddleware";
-import { Character } from "../models/character.model";
-import CharacterService from "../services/characterService";
-import CombatService from "../services/combatService";
-import ServerConfig from "../constants/serverConfig";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateDefenderMiddleware } from "../middleware/validateDefenderMiddleware";
+import CacheDataService from "../services/cache/CacheDataService";
+import { Character } from "../models/character.model";
+import CombatService from "../services/combatService";
+import ServerConfig from "../constants/serverConfig";
 import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
@@ -18,13 +18,11 @@ router.get("/searchOpponent", authMiddleware, validateCharacterMiddleware, async
       res.status(404).json({ error: "No tienes suficiente energía." });
       return;
     }
-
-    const opponents = await CharacterService.getOpponentList(character, 5);
+    const opponents = await CombatService.getOpponentList(character, 5);
     if (opponents.length === 0) {
       res.status(404).json({ error: "No se encontró un oponente adecuado." });
       return;
     }
-
     character.currentStamina-=ServerConfig.assault.searchCost;
     webSocketService.characterRefresh(character.userId,{...character.wsrStatus()});
     

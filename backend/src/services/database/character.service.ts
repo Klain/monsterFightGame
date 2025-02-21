@@ -32,7 +32,7 @@ export interface dbCharacter{
 }
 class CharacterService {
   static async createCharacter(character: Partial<Character>): Promise<number> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const query = `
         INSERT INTO characters (
           user_id, name, faction, class, level, strength, endurance, constitution, 

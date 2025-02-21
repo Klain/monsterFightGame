@@ -1,13 +1,10 @@
 import { db } from "../../database";
 
 export interface dbEffect {
-  id?: number;
+  id: number;
   name: string;
 }
-
-// 📌 Servicio para manejar los efectos en la base de datos
 class EffectService {
-  // ✅ Crear un nuevo efecto
   static async createEffect(effect: dbEffect): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -24,8 +21,6 @@ class EffectService {
       });
     });
   }
-
-  // ✅ Obtener un efecto por ID
   static async getEffectById(effectId: number): Promise<dbEffect | null> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM effects WHERE id = ?;`;
@@ -38,8 +33,6 @@ class EffectService {
       });
     });
   }
-
-  // ✅ Obtener todos los efectos
   static async getAllEffects(): Promise<dbEffect[]> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM effects;`;
@@ -52,8 +45,6 @@ class EffectService {
       });
     });
   }
-
-  // ✅ Actualizar un efecto
   static async updateEffect(updatedEffect: dbEffect): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `
@@ -70,8 +61,6 @@ class EffectService {
       });
     });
   }
-
-  // ✅ Eliminar un efecto por ID
   static async deleteEffect(effectId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `DELETE FROM effects WHERE id = ?;`;

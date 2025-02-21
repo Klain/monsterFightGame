@@ -1,8 +1,7 @@
 import { db } from "../../database";
-import { ItemDefinition } from "../../models/itemDefinition.model";
 
 export interface dbItemDefinition {
-  id?: number;
+  id: number;
   name: string;
   itemType: number;
   equipType?: number | null;
