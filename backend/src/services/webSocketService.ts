@@ -36,7 +36,6 @@ class WebSocketService {
     // Configurar eventos de conexión
     this.io.on("connection", (socket: Socket) => {
       const userId = socket.data.userId;
-    
       if (!userId) {
         console.warn("Conexión rechazada: el userId no está disponible en el socket.");
         socket.disconnect();

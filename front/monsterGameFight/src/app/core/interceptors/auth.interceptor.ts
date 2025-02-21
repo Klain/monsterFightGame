@@ -4,20 +4,20 @@ import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
+import { BehaviorSubject,Observable,tap } from 'rxjs';
+
+const isRefreshing = new BehaviorSubject<boolean>(false);
+let refreshTokenInProgress: Observable<any> | null = null;
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   const accessToken = localStorage.getItem('accessToken');
-
-  // Clonar la solicitud y añadir el header Authorization si hay un token
   let clonedRequest = req;
   if (accessToken) {
     clonedRequest = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      setHeaders: { Authorization: `Bearer ${accessToken}` },
     });
   }
 
@@ -26,33 +26,34 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
       if (error.status === 401 && localStorage.getItem('refreshToken')) {
         console.warn('Access token expirado. Intentando renovar...');
 
-        // Intentar renovar el token
-        return authService.refreshToken().pipe(
-          switchMap((response: any) => {
-            const newAccessToken = response.accessToken;
-            localStorage.setItem('accessToken', newAccessToken);
-            const refreshedRequest = req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${newAccessToken}`,
-              },
-            });
-            return next(refreshedRequest);
-          }),
-          catchError((refreshError: HttpErrorResponse) => {
-            if (refreshError.error?.error === 'invalid_refresh_token') {
+        if (!isRefreshing.getValue()) {
+          isRefreshing.next(true);
+          refreshTokenInProgress = authService.refreshToken().pipe(
+            tap((response: any) => {
+              localStorage.setItem('accessToken', response.accessToken);
+              isRefreshing.next(false);
+              refreshTokenInProgress = null;
+            }),
+            catchError((refreshError: HttpErrorResponse) => {
               console.warn('El refresh token ha expirado. Cerrando sesión.');
               authService.logout();
               router.navigate(['/auth/login']);
-            } else {
-              console.error('Error al renovar el token:', refreshError);
-            }
-            return throwError(() => refreshError);
+              isRefreshing.next(false);
+              refreshTokenInProgress = null;
+              return throwError(() => refreshError);
+            })
+          );
+        }
+
+        return refreshTokenInProgress!.pipe(
+          switchMap(() => {
+            const newAccessToken = localStorage.getItem('accessToken');
+            const refreshedRequest = req.clone({
+              setHeaders: { Authorization: `Bearer ${newAccessToken}` },
+            });
+            return next(refreshedRequest);
           })
         );
-      }
-
-      if (error.status !== 401) {
-        console.error('Error en la solicitud HTTP:', error);
       }
 
       return throwError(() => error);
