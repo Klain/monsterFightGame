@@ -9,6 +9,7 @@ import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
 import { Inventory } from "../../models/inventory.model";
 import { User } from "../../models/user.model";
+import { timeStamp } from "console";
 
 class CacheDataService {
   static cacheActivities: Map<number, Activity[]> = new Map();
@@ -396,11 +397,41 @@ class CacheDataService {
     return result;
   }
 
+
+  static syncLog():boolean{
+    let changes = {
+      pendingActivities: this.pendingActivities.size,
+      pendingBattleLogs: this.pendingBattleLogs.size,
+      pendingCharacters: this.pendingCharacters.size,
+      pendingEffects: this.pendingEffects.size,
+      pendingInventories: this.pendingInventories.size,
+      pendingItemDefinitions: this.pendingItemDefinitions.size,
+      pendingItemEffects: this.pendingItemEffects.size,
+      pendingMessages: this.pendingMessages.size,
+      pendingUsers: this.pendingUsers.size
+    };
+    
+    // Filtrar solo los elementos con cambios
+    let filteredChanges = Object.entries(changes)
+      .filter(([_, value]) => value > 0)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\n");
+    
+    let totalChanges = Object.values(changes).reduce((sum, val) => sum + val, 0);
+    
+    if (!(totalChanges > 0)) {
+      return false;
+    }else{
+      console.log(`Sincronizando ${totalChanges} cambios pendientes:\n${filteredChanges}`);
+      return true;
+    }
+  }
   // ✅ SINCRONIZACIÓN DIFERIDA CON BASE DE DATOS 
   static async syncPendingUpdates(): Promise<void> {
-    console.log(`🔄 Sincronizando cambios con la base de datos...`);
-    const batchSize = 10;
     try {
+
+      if(!this.syncLog()){return;}
+
       // Procesar batallas
       for (const battleLogList of this.cacheBattleLogs.values()) {
         await Promise.all(battleLogList.map(battleLog => this.updateBattleLog(battleLog)));
@@ -424,14 +455,10 @@ class CacheDataService {
       await Promise.all(
         Array.from(this.cacheUsers.values()).map(user => this.updateUser(user))
       );
-
-      console.log("✅ Sincronización completada.");
     } catch (error) {
       console.error("❌ Error en la sincronización con la base de datos:", error);
     }
   }
-
-
 }
 
 export default CacheDataService;
