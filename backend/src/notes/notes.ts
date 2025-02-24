@@ -1,4 +1,18 @@
 /*
+PARA AÑADIR:
+    DATABASE.TS
+        db.run(`
+            CREATE TABLE IF NOT EXISTS friendship (
+            idUser1 INTEGER NOT NULL,
+            idUser2 INTEGER NOT NULL,
+            state INTEGER DEFAULT 0
+            FOREIGN KEY (idUser1) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (idUser2) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+        
+
+
 REVISION:
     FRONT:
         PERFIL:
