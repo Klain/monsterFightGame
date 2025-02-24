@@ -1,21 +1,22 @@
 import { db } from "../../database";
 
 export interface dbFriendship {
-  idUser1: number,
-  idUser2: number,
-  active: number
+  id:number,
+  user_id_1: number,
+  user_id_2: number,
+  active: boolean
 }
 
 class FriendshipService {
   static async createFriendship(friendship: dbFriendship): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
-        INSERT INTO friendship (idUser1, idUser2)
+        INSERT INTO friendship (user_id_1, user_id_2)
         VALUES (?, ?);
       `;
       const params = [
-        friendship.idUser1,
-        friendship.idUser2
+        friendship.user_id_1,
+        friendship.user_id_2
       ];
       db.run(query, params, function (err) {
         if (err) {
@@ -26,11 +27,11 @@ class FriendshipService {
       });
     });
   }
-  static async getUserFriends(idUser1: number): Promise<dbFriendship[]> {
+  static async getUserFriendships(idUser1: number): Promise<dbFriendship[]> {
     return new Promise((resolve, reject) => {
       const query = `
         SELECT * FROM friendship 
-        WHERE (idUser1 = ? OR idUser2 = ?)
+        WHERE (user_id_1 = ? OR user_id_2 = ?)
         AND active = 1
         ;`;
       db.all(query, [idUser1,idUser1], (err, rows) => {
@@ -42,11 +43,11 @@ class FriendshipService {
       });
     });
   }
-  static async getUserFriendsReques(idUser1: number): Promise<dbFriendship[]> {
+  static async getUserFriendsRequest(idUser1: number): Promise<dbFriendship[]> {
     return new Promise((resolve, reject) => {
       const query = `
         SELECT * FROM friendship 
-        WHERE (idUser1 = ? OR idUser2 = ?)
+        WHERE (user_id_1 = ? OR user_id_2 = ?)
         AND active = 0
         ;`;
       db.all(query, [idUser1,idUser1], (err, rows) => {
@@ -62,13 +63,13 @@ class FriendshipService {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE friendship SET active = ?
-        WHERE idUser1 = ? AND idUser2 = ?;
+        WHERE user_id_1 = ? AND user_id_2 = ?;
       `;
 
       const params = [
         updatedFriendship.active,
-        updatedFriendship.idUser1,
-        updatedFriendship.idUser2
+        updatedFriendship.user_id_1,
+        updatedFriendship.user_id_2
       ];
 
       db.run(query, params, function (err) {
@@ -84,11 +85,10 @@ class FriendshipService {
     return new Promise((resolve, reject) => {
       const query = `
         DELETE FROM friendship 
-        WHERE idUser1 = ? AND idUser2 = ?;
+        WHERE id = ?;
       `;
       const params = [ 
-        updatedFriendship.idUser1, 
-        updatedFriendship.idUser2
+        updatedFriendship.id, 
       ];
       db.run(query, params , function (err) {
         if (err) {
