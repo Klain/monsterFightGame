@@ -133,7 +133,7 @@ FRIENDSHIP.SERVICE.TS
 */
 /*
 DATABASESERVICE.TS
-  // FRIENDSHIP ✅ 
+ // FRIENDSHIP ✅ 
   static async createFriendship(friendship: Friendship): Promise<number> {
     return FriendshipService.createFriendship({
       id:0,
@@ -164,6 +164,13 @@ DATABASESERVICE.TS
       user_id_1:updatedFriendship.idUser1,
       user_id_2:updatedFriendship.idUser2,
       active:updatedFriendship.active
+    });
+  }
+  private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
+    return new Friendship({
+      idUser1: dbFriendship.user_id_1,
+      idUser2: dbFriendship.user_id_2,
+      active: dbFriendship.active,
     });
   }
 */
@@ -205,6 +212,64 @@ DATABASESERVICE.TS
 */
 /*
 CacheDataService
+  static cacheFriendships: Map<number, Friendship[]> = new Map();
+  dbCharacters.forEach(async character =>{ 
+    const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
+    const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
+    const friendships = await DatabaseService.getUserFriendships(character.userId);
+    const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
+    const loadedCharacter = new Character({
+      ...character,
+      inventory:new Inventory(itemInstances),
+      activities: activities,
+      friendships: [...friendships,...friendshipsRequest]
+    });
+    this.cacheCharacters.set(character.id, loadedCharacter)
+  });
+  
+  // ✅ FRIENDSHIP CACHE MANAGEMENT
+  static async createFriendship(friendship: Friendship): Promise<boolean> {
+    const result = await DatabaseService.createFriendship(friendship);
+    if (!result) {throw new Error("Error durante la creacion de la solicitud de amistad")}
+    const user1Friendships = this.cacheFriendships.get(friendship.idUser1) ?? [];
+    user1Friendships.push(friendship);
+    this.cacheFriendships.set(friendship.idUser1, user1Friendships);
+    const user2Friendships = this.cacheFriendships.get(friendship.idUser2) ?? [];
+    user2Friendships.push(friendship);
+    this.cacheFriendships.set(friendship.idUser2, user2Friendships);
+    return true;
+  }
+  static getFriendshipById(userId:number, friendshipId: number): Friendship | null {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.id==friendshipId)[0] || null;
+  }
+  static getUserFriendships(userId: number): Friendship[] {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==true) || [];
+  }
+  static getUserFriendsRequest(userId: number): Friendship[] {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==false) || [];
+  }
+  static async updateFriendship(updatedFriendship: Friendship): Promise<void> {
+      const user1Friendships = this.cacheFriendships.get(updatedFriendship.idUser1) ?? [];
+      const user2Friendships = this.cacheFriendships.get(updatedFriendship.idUser2) ?? [];
+      const indexFriendship12 = user1Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
+      const indexFriendship21 = user2Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
+      if(indexFriendship12==-1 || indexFriendship21==-1){ throw new Error("Error al actualizar la solicitud de amistad"); }
+      user1Friendships[indexFriendship12].active=updatedFriendship.active;
+      user1Friendships[indexFriendship12].active=updatedFriendship.active;
+      this.cacheFriendships.set(updatedFriendship.idUser1, user1Friendships); 
+      this.cacheFriendships.set(updatedFriendship.idUser2, user2Friendships); 
+      const result = await DatabaseService.updateFriendship(updatedFriendship);
+  }  
+  static async deleteFriendship(deletedFriendship: Friendship): Promise<boolean> {
+    const result = await DatabaseService.deleteFriendship(deletedFriendship);
+    if(!result){throw new Error("Error durante la eliminacion de la solicitud de amistad")}
+    const user1Friendships = this.cacheFriendships.get(deletedFriendship.idUser1)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
+    const user2Friendships = this.cacheFriendships.get(deletedFriendship.idUser2)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
+    this.cacheFriendships.set(deletedFriendship.idUser1, user1Friendships); 
+    this.cacheFriendships.set(deletedFriendship.idUser2, user2Friendships); 
+    return result;
+  }
+
 */
 /*
     friendshipRoutes.ts
@@ -286,6 +351,36 @@ CacheDataService
     export default router;
 */
 /*
+    combatRoutes.ts
+    router.get( "/leaderboard", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      if (page < 1 || limit < 1) {
+        res.status(400).json({ error: "Los parámetros page y limit deben ser números positivos." });
+        return;
+      }
+      const allCharacters = CacheDataService.getAllCharacters();
+      const totalCharacters = allCharacters.length;
+      const sortedCharacters = allCharacters.sort((a, b) => b.totalGold - a.totalGold);
+      const startIndex = (page - 1) * limit;
+      const paginatedCharacters = sortedCharacters.slice(startIndex, startIndex + limit);
+      res.json({
+        characters: paginatedCharacters,
+        page,
+        limit,
+        total: totalCharacters,
+        totalPages: Math.ceil(totalCharacters / limit)
+      });
+    } catch (error) {
+      console.error("Error al obtener el leaderboard:", error);
+      res.status(500).json({ error: "Error interno al obtener el leaderboard." });
+    }
+  }
+);
+*/
+/*
 REVISION:
     FRONT:
         PERFIL:
@@ -354,13 +449,16 @@ REVISION:
             REVISAR ATRIBUTOS COMBINADOS PERFIL Y COMBATE
 
         TODO:
-            AÑADIR AMISTAD
+            
             AÑADIR GUARIDA
             AÑADIR EQUIPOS ( ARMADURAS ACCESORIOS)
             AÑADIR CONSUMIBLES
             AÑADIR CREACION PERSONAJE ( NOMBRE - CLASE)
             AÑADIR GREMIOS??
             AÑADIR ESTADOS?? 
+
+        REVISAR: 
+            AÑADIR AMISTAD
 
 
 
