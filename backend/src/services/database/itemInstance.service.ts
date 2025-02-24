@@ -1,4 +1,4 @@
-import { db } from "../../database";
+import { db } from "../../../data/database";
 import { ItemInstance } from "../../models/itemInstance.model";
 export interface dbItemInstance {
   id: number;

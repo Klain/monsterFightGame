@@ -8,11 +8,13 @@ export interface Character {
   attributesUpgradeCost: Attributes;
   status: Status;
   currencies: Currencies;
+  lair : Lair;
   backpack: Item[]; 
   equip: Item[]; 
   shop: Item[];
   activity: Activity | null;
   maxActivityDuration: number[];
+  
   lastFight?: Date;
 }
 
@@ -73,4 +75,11 @@ export interface Item {
   equipPositionType?: number;
   effects?: { effect_name: string; value: number }[];
   equipped?: boolean;
+}
+
+export interface Lair {
+  goldChest:number,
+  warehouse:number,
+  enviroment:number,
+  traps:number,
 }

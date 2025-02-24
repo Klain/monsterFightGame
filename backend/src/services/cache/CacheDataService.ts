@@ -9,12 +9,13 @@ import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
 import { Inventory } from "../../models/inventory.model";
 import { User } from "../../models/user.model";
-import { timeStamp } from "console";
+import { Friendship } from "../../models/friendship.model";
 
 class CacheDataService {
   static cacheActivities: Map<number, Activity[]> = new Map();
   static cacheBattleLogs: Map<number, BattleLog[]> = new Map();
   static cacheCharacters: Map<number, Character> = new Map();
+  static cacheFriendships: Map<number, Friendship[]> = new Map();
   static cacheEffects: Map<number, Effect> = new Map();
   static cacheItemDefinitions: Map<number, ItemDefinition> = new Map();
   static cacheInventories: Map<number, ItemInstance[]> = new Map();
@@ -65,10 +66,13 @@ class CacheDataService {
       dbCharacters.forEach(async character =>{ 
         const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
         const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
+        const friendships = await DatabaseService.getUserFriendships(character.userId);
+        const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
         const loadedCharacter = new Character({
           ...character,
           inventory:new Inventory(itemInstances),
-          activities: activities 
+          activities: activities,
+          friendships: [...friendships,...friendshipsRequest]
         });
         this.cacheCharacters.set(character.id, loadedCharacter)
       });
@@ -220,6 +224,49 @@ class CacheDataService {
     const result = await DatabaseService.deleteEffect(effectId);
     if(!result){throw new Error("Error durante la eliminacion del Efecto")}
     this.cacheEffects.delete(effectId);
+    return result;
+  }
+
+  // ✅ FRIENDSHIP CACHE MANAGEMENT
+  static async createFriendship(friendship: Friendship): Promise<boolean> {
+    const result = await DatabaseService.createFriendship(friendship);
+    if (!result) {throw new Error("Error durante la creacion de la solicitud de amistad")}
+    const user1Friendships = this.cacheFriendships.get(friendship.idUser1) ?? [];
+    user1Friendships.push(friendship);
+    this.cacheFriendships.set(friendship.idUser1, user1Friendships);
+    const user2Friendships = this.cacheFriendships.get(friendship.idUser2) ?? [];
+    user2Friendships.push(friendship);
+    this.cacheFriendships.set(friendship.idUser2, user2Friendships);
+    return true;
+  }
+  static getFriendshipById(userId:number, friendshipId: number): Friendship | null {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.id==friendshipId)[0] || null;
+  }
+  static getUserFriendships(userId: number): Friendship[] {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==true) || [];
+  }
+  static getUserFriendsRequest(userId: number): Friendship[] {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==false) || [];
+  }
+  static async updateFriendship(updatedFriendship: Friendship): Promise<void> {
+      const user1Friendships = this.cacheFriendships.get(updatedFriendship.idUser1) ?? [];
+      const user2Friendships = this.cacheFriendships.get(updatedFriendship.idUser2) ?? [];
+      const indexFriendship12 = user1Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
+      const indexFriendship21 = user2Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
+      if(indexFriendship12==-1 || indexFriendship21==-1){ throw new Error("Error al actualizar la solicitud de amistad"); }
+      user1Friendships[indexFriendship12].active=updatedFriendship.active;
+      user1Friendships[indexFriendship12].active=updatedFriendship.active;
+      this.cacheFriendships.set(updatedFriendship.idUser1, user1Friendships); 
+      this.cacheFriendships.set(updatedFriendship.idUser2, user2Friendships); 
+      const result = await DatabaseService.updateFriendship(updatedFriendship);
+  }  
+  static async deleteFriendship(deletedFriendship: Friendship): Promise<boolean> {
+    const result = await DatabaseService.deleteFriendship(deletedFriendship);
+    if(!result){throw new Error("Error durante la eliminacion de la solicitud de amistad")}
+    const user1Friendships = this.cacheFriendships.get(deletedFriendship.idUser1)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
+    const user2Friendships = this.cacheFriendships.get(deletedFriendship.idUser2)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
+    this.cacheFriendships.set(deletedFriendship.idUser1, user1Friendships); 
+    this.cacheFriendships.set(deletedFriendship.idUser2, user2Friendships); 
     return result;
   }
 

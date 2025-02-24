@@ -1,6 +1,7 @@
 import ActivityService, { dbActivity } from "./activity.service";
 import BattleLogService, { dbBattleLog } from "./battleLog.service";
 import CharacterService, { dbCharacter } from "./character.service";
+import FriendshipService, { dbFriendship } from "./friendhip.service";
 import EffectService,{dbEffect} from "./effect.service";
 import ItemDefinitionService, { dbItemDefinition } from "./itemDefinition.service"; 
 import ItemInstanceService, { dbItemInstance } from "./itemInstance.service";
@@ -17,6 +18,7 @@ import { ItemDefinition } from "../../models/itemDefinition.model";
 import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
 import { User } from "../../models/user.model";
+import { Friendship } from "../../models/friendship.model";
 
 class DatabaseService {
   constructor() {
@@ -116,6 +118,10 @@ class DatabaseService {
       totalXp: character.totalXp!,
       currentGold: character.currentGold!,
       totalGold: character.totalGold!,
+      goldChest: character.goldChest,
+      warehouse : character.warehouse,
+      enviroment : character.enviroment,
+      traps : character.traps,
       upgradePoints: character.upgradePoints!,
       lastFight: character.lastFight || undefined
     });
@@ -156,6 +162,10 @@ class DatabaseService {
       totalXp: updatedCharacter.totalXp!,
       currentGold: updatedCharacter.currentGold!,
       totalGold: updatedCharacter.totalGold!,
+      goldChest: updatedCharacter.goldChest,
+      warehouse : updatedCharacter.warehouse,
+      enviroment : updatedCharacter.enviroment,
+      traps : updatedCharacter.traps,
       upgradePoints: updatedCharacter.upgradePoints!,
       lastFight: updatedCharacter.lastFight || undefined
     });
@@ -187,6 +197,40 @@ class DatabaseService {
   }
   static async deleteEffect(effectId: number): Promise<boolean> {
     return EffectService.deleteEffect(effectId);
+  }
+
+  // FRIENDSHIP ✅ 
+  static async createFriendship(friendship: Friendship): Promise<number> {
+    return FriendshipService.createFriendship({
+      id:0,
+      user_id_1: friendship.idUser1,
+      user_id_2: friendship.idUser2,
+      active: friendship.active
+    });
+  }
+  static async getUserFriendships(userId: number): Promise<Friendship[]> {
+    const dbFriendships = await FriendshipService.getUserFriendships(userId);
+    return dbFriendships.map(this.mapDbFriendship);
+  }
+  static async getUserFriendsRequest(userId: number): Promise<Friendship[]> {
+    const dbFriendships = await FriendshipService.getUserFriendsRequest(userId);
+    return dbFriendships.map(this.mapDbFriendship);
+  }
+  static async updateFriendship(updatedFriendship: Friendship): Promise<boolean> {
+    return FriendshipService.updateFriendship({
+      id: updatedFriendship.id,
+      user_id_1 : updatedFriendship.idUser1,
+      user_id_2: updatedFriendship.idUser2,
+      active : updatedFriendship.active,
+    }); 
+  }
+  static async deleteFriendship(updatedFriendship: Friendship): Promise<boolean> {
+    return FriendshipService.deleteFriendship({
+      id:updatedFriendship.id,
+      user_id_1:updatedFriendship.idUser1,
+      user_id_2:updatedFriendship.idUser2,
+      active:updatedFriendship.active
+    });
   }
 
   // ITEM DEFINITIONS ✅
@@ -399,8 +443,20 @@ class DatabaseService {
       currentGold: dbCharacter.current_gold,
       totalGold: dbCharacter.total_gold,
       upgradePoints: dbCharacter.upgrade_points,
+
+      goldChest: dbCharacter.gold_chest,
+      warehouse : dbCharacter.warehouse,
+      enviroment : dbCharacter.enviroment,
+      traps : dbCharacter.traps,
       
       lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
+    });
+  }
+  private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
+    return new Friendship({
+      idUser1: dbFriendship.user_id_1,
+      idUser2: dbFriendship.user_id_2,
+      active: dbFriendship.active,
     });
   }
   private static mapDbEffect(dbEffect: dbEffect): Effect {

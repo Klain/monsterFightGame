@@ -1,6 +1,16 @@
 /*
 DATABASE.TS
   db.run(`
+        CREATE TABLE IF NOT EXISTS characters (
+          ...
+          gold_chest INTEGER DEFAULT 0,
+          warehouse INTEGER DEFAULT 0,
+          enviroment INTEGER DEFAULT 0,
+          traps INTEGER DEFAULT 0,
+          ...
+          )
+  `);
+  db.run(`
     CREATE TABLE IF NOT EXISTS friendship (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id_1 INTEGER NOT NULL,
@@ -10,6 +20,198 @@ DATABASE.TS
     FOREIGN KEY (user_id_2) REFERENCES users(id) ON DELETE CASCADE
     )
 `);
+*/
+/*
+      CHARACTER.SERVICE.TS
+        createCharacter
+          QUERY > gold_chest , warehouse , enviroment , traps , 
+          PARAMS > character.goldChest, character.warehouse, character.enviroment, character.traps, 
+        updateCharacter
+          QUERY > gold_chest , warehouse , enviroment , traps , 
+          PARAMS > character.goldChest, character.warehouse, character.enviroment, character.traps, 
+
+*/
+/*
+DATABASESERVICE.TS
+
+// CHARACTERS ✅ 
+  createCharacter >
+      goldChest: character.goldChest,
+      warehouse : character.warehouse,
+      enviroment : character.enviroment,
+      traps : character.traps,
+  updateCharacter > 
+      goldChest: character.goldChest,
+      warehouse : character.warehouse,
+      enviroment : character.enviroment,
+      traps : character.traps,
+  mapDbCharacter > 
+      goldChest: dbCharacter.gold_chest,
+      warehouse : dbCharacter.warehouse,
+      enviroment : dbCharacter.enviroment,
+      traps : dbCharacter.traps,
+
+ // FRIENDSHIP ✅ 
+  static async createFriendship(friendship: Friendship): Promise<number> {
+    return FriendshipService.createFriendship({
+      id:0,
+      user_id_1: friendship.idUser1,
+      user_id_2: friendship.idUser2,
+      active: friendship.active
+    });
+  }
+  static async getUserFriendships(userId: number): Promise<Friendship[]> {
+    const dbFriendships = await FriendshipService.getUserFriendships(userId);
+    return dbFriendships.map(this.mapDbFriendship);
+  }
+  static async getUserFriendsRequest(userId: number): Promise<Friendship[]> {
+    const dbFriendships = await FriendshipService.getUserFriendsRequest(userId);
+    return dbFriendships.map(this.mapDbFriendship);
+  }
+  static async updateFriendship(updatedFriendship: Friendship): Promise<boolean> {
+    return FriendshipService.updateFriendship({
+      id: updatedFriendship.id,
+      user_id_1 : updatedFriendship.idUser1,
+      user_id_2: updatedFriendship.idUser2,
+      active : updatedFriendship.active,
+    }); 
+  }
+  static async deleteFriendship(updatedFriendship: Friendship): Promise<boolean> {
+    return FriendshipService.deleteFriendship({
+      id:updatedFriendship.id,
+      user_id_1:updatedFriendship.idUser1,
+      user_id_2:updatedFriendship.idUser2,
+      active:updatedFriendship.active
+    });
+  }
+  private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
+    return new Friendship({
+      idUser1: dbFriendship.user_id_1,
+      idUser2: dbFriendship.user_id_2,
+      active: dbFriendship.active,
+    });
+  }
+*/
+/*
+  CHARACTER.MODEL.TS
+    private _friendships: Friendship[] = [];
+    private _goldChest: number = 0;
+    private _warehouse: number = 0;
+    private _enviroment: number = 0;
+    private _traps: number = 0;
+
+    constructor > 
+      this._friendships = data.friendships ?? [];
+      this._goldChest = data.goldChest ?? 0;
+      this._warehouse = data.warehouse ?? 0;
+      this._enviroment = data.enviroment ?? 0;
+      this._traps = data.traps ?? 0;
+
+    //Friends
+    getFriends():{id:number,username:string}[]{
+      const friendships = CacheDataService.getUserFriendships(this.id);
+      let friends: User[] = [];
+      friendships.forEach(friendship=>{
+        const friendId = friendship.idUser1==this.id? friendship.idUser2: friendship.idUser1;
+        const friend = CacheDataService.getUserById(friendId);
+        if(friend){
+          friends.push(friend);
+        }
+      });
+      return friends.map(friend=> {return {id:friend.id,username:friend.username} });
+    }
+    async sendFriendRequest(userId:number): Promise<boolean>{
+      const result = await CacheDataService.createFriendship({
+        id:0,
+        idUser1:this.id,
+        idUser2:userId,
+        active:false,
+      });
+      return result;
+    }
+    acceptFriendship(friendhip:Friendship){
+      CacheDataService.updateFriendship(friendhip);
+    }
+    async deleteFriendship(friendhip:Friendship):Promise<boolean>{
+      const result = await CacheDataService.deleteFriendship(friendhip);
+      return result;
+    }
+
+    get goldChest() { return this._goldChest; }
+    set goldChest(value: number) { this._goldChest = value; this.updateCharacter(); }
+
+    get warehouse() { return this._warehouse; }
+    set warehouse(value: number) { this._warehouse = value; this.updateCharacter(); }
+
+    get enviroment() { return this._enviroment; }
+    set enviroment(value: number) { this._enviroment = value; this.updateCharacter(); }
+
+    get traps() { return this._traps; }
+    set traps(value: number) { this._traps = value; this.updateCharacter(); }
+
+    get friendships(): Friendship[] { return this._friendships; }
+    set friendships(value: Friendship[]) { this._friendships = value; this.updateCharacter(); }
+*/
+/*
+CacheDataService
+  static cacheFriendships: Map<number, Friendship[]> = new Map();
+  dbCharacters.forEach(async character =>{ 
+    const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
+    const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
+    const friendships = await DatabaseService.getUserFriendships(character.userId);
+    const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
+    const loadedCharacter = new Character({
+      ...character,
+      inventory:new Inventory(itemInstances),
+      activities: activities,
+      friendships: [...friendships,...friendshipsRequest]
+    });
+    this.cacheCharacters.set(character.id, loadedCharacter)
+  });
+  
+  // ✅ FRIENDSHIP CACHE MANAGEMENT
+  static async createFriendship(friendship: Friendship): Promise<boolean> {
+    const result = await DatabaseService.createFriendship(friendship);
+    if (!result) {throw new Error("Error durante la creacion de la solicitud de amistad")}
+    const user1Friendships = this.cacheFriendships.get(friendship.idUser1) ?? [];
+    user1Friendships.push(friendship);
+    this.cacheFriendships.set(friendship.idUser1, user1Friendships);
+    const user2Friendships = this.cacheFriendships.get(friendship.idUser2) ?? [];
+    user2Friendships.push(friendship);
+    this.cacheFriendships.set(friendship.idUser2, user2Friendships);
+    return true;
+  }
+  static getFriendshipById(userId:number, friendshipId: number): Friendship | null {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.id==friendshipId)[0] || null;
+  }
+  static getUserFriendships(userId: number): Friendship[] {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==true) || [];
+  }
+  static getUserFriendsRequest(userId: number): Friendship[] {
+    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==false) || [];
+  }
+  static async updateFriendship(updatedFriendship: Friendship): Promise<void> {
+      const user1Friendships = this.cacheFriendships.get(updatedFriendship.idUser1) ?? [];
+      const user2Friendships = this.cacheFriendships.get(updatedFriendship.idUser2) ?? [];
+      const indexFriendship12 = user1Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
+      const indexFriendship21 = user2Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
+      if(indexFriendship12==-1 || indexFriendship21==-1){ throw new Error("Error al actualizar la solicitud de amistad"); }
+      user1Friendships[indexFriendship12].active=updatedFriendship.active;
+      user1Friendships[indexFriendship12].active=updatedFriendship.active;
+      this.cacheFriendships.set(updatedFriendship.idUser1, user1Friendships); 
+      this.cacheFriendships.set(updatedFriendship.idUser2, user2Friendships); 
+      const result = await DatabaseService.updateFriendship(updatedFriendship);
+  }  
+  static async deleteFriendship(deletedFriendship: Friendship): Promise<boolean> {
+    const result = await DatabaseService.deleteFriendship(deletedFriendship);
+    if(!result){throw new Error("Error durante la eliminacion de la solicitud de amistad")}
+    const user1Friendships = this.cacheFriendships.get(deletedFriendship.idUser1)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
+    const user2Friendships = this.cacheFriendships.get(deletedFriendship.idUser2)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
+    this.cacheFriendships.set(deletedFriendship.idUser1, user1Friendships); 
+    this.cacheFriendships.set(deletedFriendship.idUser2, user2Friendships); 
+    return result;
+  }
+
 */
 /*
 friendship.model
@@ -130,146 +332,6 @@ FRIENDSHIP.SERVICE.TS
   }
 
   export default FriendshipService;
-*/
-/*
-DATABASESERVICE.TS
- // FRIENDSHIP ✅ 
-  static async createFriendship(friendship: Friendship): Promise<number> {
-    return FriendshipService.createFriendship({
-      id:0,
-      user_id_1: friendship.idUser1,
-      user_id_2: friendship.idUser2,
-      active: friendship.active
-    });
-  }
-  static async getUserFriendships(userId: number): Promise<Friendship[]> {
-    const dbFriendships = await FriendshipService.getUserFriendships(userId);
-    return dbFriendships.map(this.mapDbFriendship);
-  }
-  static async getUserFriendsRequest(userId: number): Promise<Friendship[]> {
-    const dbFriendships = await FriendshipService.getUserFriendsRequest(userId);
-    return dbFriendships.map(this.mapDbFriendship);
-  }
-  static async updateFriendship(updatedFriendship: Friendship): Promise<boolean> {
-    return FriendshipService.updateFriendship({
-      id: updatedFriendship.id,
-      user_id_1 : updatedFriendship.idUser1,
-      user_id_2: updatedFriendship.idUser2,
-      active : updatedFriendship.active,
-    }); 
-  }
-  static async deleteFriendship(updatedFriendship: Friendship): Promise<boolean> {
-    return FriendshipService.deleteFriendship({
-      id:updatedFriendship.id,
-      user_id_1:updatedFriendship.idUser1,
-      user_id_2:updatedFriendship.idUser2,
-      active:updatedFriendship.active
-    });
-  }
-  private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
-    return new Friendship({
-      idUser1: dbFriendship.user_id_1,
-      idUser2: dbFriendship.user_id_2,
-      active: dbFriendship.active,
-    });
-  }
-*/
-/*
-  CHARACTER.MODEL.TS
-    private _friendships: Friendship[] = [];
-    constructor > this._friendships = data.friendships ?? [];
-    //Friends
-    getFriends():{id:number,username:string}[]{
-      const friendships = CacheDataService.getUserFriendships(this.id);
-      let friends: User[] = [];
-      friendships.forEach(friendship=>{
-        const friendId = friendship.idUser1==this.id? friendship.idUser2: friendship.idUser1;
-        const friend = CacheDataService.getUserById(friendId);
-        if(friend){
-          friends.push(friend);
-        }
-      });
-      return friends.map(friend=> {return {id:friend.id,username:friend.username} });
-    }
-    async sendFriendRequest(userId:number): Promise<boolean>{
-      const result = await CacheDataService.createFriendship({
-        id:0,
-        idUser1:this.id,
-        idUser2:userId,
-        active:false,
-      });
-      return result;
-    }
-    acceptFriendship(friendhip:Friendship){
-      CacheDataService.updateFriendship(friendhip);
-    }
-    async deleteFriendship(friendhip:Friendship):Promise<boolean>{
-      const result = await CacheDataService.deleteFriendship(friendhip);
-      return result;
-    }
-    get friendships(): Friendship[] { return this._friendships; }
-    set friendships(value: Friendship[]) { this._friendships = value; this.updateCharacter(); }
-*/
-/*
-CacheDataService
-  static cacheFriendships: Map<number, Friendship[]> = new Map();
-  dbCharacters.forEach(async character =>{ 
-    const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
-    const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
-    const friendships = await DatabaseService.getUserFriendships(character.userId);
-    const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
-    const loadedCharacter = new Character({
-      ...character,
-      inventory:new Inventory(itemInstances),
-      activities: activities,
-      friendships: [...friendships,...friendshipsRequest]
-    });
-    this.cacheCharacters.set(character.id, loadedCharacter)
-  });
-  
-  // ✅ FRIENDSHIP CACHE MANAGEMENT
-  static async createFriendship(friendship: Friendship): Promise<boolean> {
-    const result = await DatabaseService.createFriendship(friendship);
-    if (!result) {throw new Error("Error durante la creacion de la solicitud de amistad")}
-    const user1Friendships = this.cacheFriendships.get(friendship.idUser1) ?? [];
-    user1Friendships.push(friendship);
-    this.cacheFriendships.set(friendship.idUser1, user1Friendships);
-    const user2Friendships = this.cacheFriendships.get(friendship.idUser2) ?? [];
-    user2Friendships.push(friendship);
-    this.cacheFriendships.set(friendship.idUser2, user2Friendships);
-    return true;
-  }
-  static getFriendshipById(userId:number, friendshipId: number): Friendship | null {
-    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.id==friendshipId)[0] || null;
-  }
-  static getUserFriendships(userId: number): Friendship[] {
-    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==true) || [];
-  }
-  static getUserFriendsRequest(userId: number): Friendship[] {
-    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==false) || [];
-  }
-  static async updateFriendship(updatedFriendship: Friendship): Promise<void> {
-      const user1Friendships = this.cacheFriendships.get(updatedFriendship.idUser1) ?? [];
-      const user2Friendships = this.cacheFriendships.get(updatedFriendship.idUser2) ?? [];
-      const indexFriendship12 = user1Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
-      const indexFriendship21 = user2Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
-      if(indexFriendship12==-1 || indexFriendship21==-1){ throw new Error("Error al actualizar la solicitud de amistad"); }
-      user1Friendships[indexFriendship12].active=updatedFriendship.active;
-      user1Friendships[indexFriendship12].active=updatedFriendship.active;
-      this.cacheFriendships.set(updatedFriendship.idUser1, user1Friendships); 
-      this.cacheFriendships.set(updatedFriendship.idUser2, user2Friendships); 
-      const result = await DatabaseService.updateFriendship(updatedFriendship);
-  }  
-  static async deleteFriendship(deletedFriendship: Friendship): Promise<boolean> {
-    const result = await DatabaseService.deleteFriendship(deletedFriendship);
-    if(!result){throw new Error("Error durante la eliminacion de la solicitud de amistad")}
-    const user1Friendships = this.cacheFriendships.get(deletedFriendship.idUser1)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
-    const user2Friendships = this.cacheFriendships.get(deletedFriendship.idUser2)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
-    this.cacheFriendships.set(deletedFriendship.idUser1, user1Friendships); 
-    this.cacheFriendships.set(deletedFriendship.idUser2, user2Friendships); 
-    return result;
-  }
-
 */
 /*
     friendshipRoutes.ts
@@ -408,7 +470,6 @@ REVISION:
                 CONTROLAR DURACION MAXIMA
                 COMPLETAR ACTIVIDAD
                     RECOMPENSA ACTIVIDAD
-                
             REVISAR:
                 CONTROLAR NO INICIAR ESTADO CHARACTER
 
@@ -419,8 +480,9 @@ REVISION:
                 INICIAR COMBATE
                 MOSTRAR RESULTADO COMBATE
                 ACTUALIZAR RECOMPENSAS
-            PENDIENTE:
+            REVISAR:
                 MOSTRAR RANKING
+            PENDIENTE:
                 FILTROS RANKING??
                 AMISTAD??
 
@@ -451,6 +513,14 @@ REVISION:
         TODO:
             
             AÑADIR GUARIDA
+              cofre : minimo de oro que no te podran robar nunca
+              almacen: aumenta los espacios del inventario
+              entorno : reduce la posibilidad de recibir un ataque ( a la hora de que un 
+              oponente busque enemigos tienes una posibilidad de no aparecer en su listado)
+              trampas/alarmas :  reduce la posibilidad de recibir un robo.
+              (a futuro añadire mesas de crafteo o cosas asi pero por ahora no)
+              aguas termales?? : regeneracion de salud
+              piedra de mana?? : regeneracion de mana ( no en este juego al menos...)
             AÑADIR EQUIPOS ( ARMADURAS ACCESORIOS)
             AÑADIR CONSUMIBLES
             AÑADIR CREACION PERSONAJE ( NOMBRE - CLASE)

@@ -3,11 +3,12 @@ import CacheDataService from "../services/cache/CacheDataService";
 import { Activity } from "./activity.model";
 import { ActivityReward } from "./activityReward.model";
 import { CharacterStatus } from "./characterStatus.model";
+import { Friendship } from "./friendship.model";
 import { Inventory } from "./inventory.model";
 import { ItemDefinition } from "./itemDefinition.model";
 import { ItemInstance } from "./itemInstance.model";
 import { Message } from "./message.model";
-
+import { User } from "./user.model";
 export class Character {
   private _id: number = 0;
   private _userId: number = 0;
@@ -39,11 +40,17 @@ export class Character {
   private _totalGold: number = 0;
   private _upgradePoints: number = 0;
 
+  private _goldChest: number = 0;
+  private _warehouse: number = 0;
+  private _enviroment: number = 0;
+  private _traps: number = 0;
+
   private _lastFight?: Date;
 
   private _statuses: CharacterStatus[] = [];
   private _inventory:Inventory = new Inventory();
   private _activities: Activity[] = [];
+  private _friendships: Friendship[] = [];
 
   constructor(data: Partial<Character>) {
     if(data){
@@ -77,11 +84,17 @@ export class Character {
       this._totalGold = data.totalGold ?? 0;
       this._upgradePoints = data.upgradePoints ?? 0;
 
+      this._goldChest = data.goldChest ?? 0;
+      this._warehouse = data.warehouse ?? 0;
+      this._enviroment = data.enviroment ?? 0;
+      this._traps = data.traps ?? 0;
+
       this._lastFight = data.lastFight;
 
       this._statuses = data.statuses ?? [];
       this._inventory = data.inventory ?? new Inventory();
       this._activities = data.activities ?? [];
+      this._friendships = data.friendships ?? [];
     }
   }
   //Equipo
@@ -148,6 +161,37 @@ export class Character {
     const item = CacheDataService.getItemDefinitionById(itemId);
     this._inventory.items = this._inventory.items.filter((ci) => ci.itemId !== itemId);
     this.currentGold += item!.price;
+  }
+
+  //Friends
+  getFriends():{id:number,username:string}[]{
+    const friendships = CacheDataService.getUserFriendships(this.id);
+    let friends: User[] = [];
+    friendships.forEach(friendship=>{
+      const friendId = friendship.idUser1==this.id? friendship.idUser2: friendship.idUser1;
+      const friend = CacheDataService.getUserById(friendId);
+      if(friend){
+        friends.push(friend);
+      }
+    });
+    return friends.map(friend=> {return {id:friend.id,username:friend.username} });
+  }
+  async sendFriendRequest(userId:number): Promise<boolean>{
+    const result = await CacheDataService.createFriendship({
+      id:0,
+      idUser1:this.id,
+      idUser2:userId,
+      active:false,
+    });
+    return result;
+  }
+  acceptFriendship(friendship:Friendship){
+    friendship.active=true;
+    CacheDataService.updateFriendship(friendship);
+  }
+  async deleteFriendship(friendhip:Friendship):Promise<boolean>{
+    const result = await CacheDataService.deleteFriendship(friendhip);
+    return result;
   }
 
   //RevisarOld
@@ -219,8 +263,6 @@ export class Character {
   hasStatus(effect: StatusEffect): boolean { return this.statuses.some(status => status.type === effect); }
 
 
-
-
   // OUTPUTS AL FRONT
   wsr():any{
     return{
@@ -233,6 +275,7 @@ export class Character {
       ...this.wsrCurrencies(),
       ...this.wsrStatus(),
       ...this.wsrActivitiesDuration(),
+      ...this.wsrLair(),
     }
   }
   wsrAttributes():any{
@@ -300,6 +343,16 @@ export class Character {
     return {
       maxActivityDuration:maxActivityDuration,
     };
+  }
+  wsrLair():Partial<SharedCharacter>{
+    return{
+      lair: {
+        goldChest: this.goldChest,
+        warehouse : this.warehouse,
+        enviroment : this.enviroment,
+        traps : this.traps
+      }
+    }
   }
 
   exploracionMaxDuration(){ return this.currentStamina }
@@ -411,8 +464,23 @@ export class Character {
   get upgradePoints() { return this._upgradePoints; }
   set upgradePoints(value: number) { this._upgradePoints = value; this.updateCharacter(); }
 
+  get goldChest() { return this._goldChest; }
+  set goldChest(value: number) { this._goldChest = value; this.updateCharacter(); }
+
+  get warehouse() { return this._warehouse; }
+  set warehouse(value: number) { this._warehouse = value; this.updateCharacter(); }
+
+  get enviroment() { return this._enviroment; }
+  set enviroment(value: number) { this._enviroment = value; this.updateCharacter(); }
+
+  get traps() { return this._traps; }
+  set traps(value: number) { this._traps = value; this.updateCharacter(); }
+
   get activities(): Activity[] { return this._activities; }
   set activities(value: Activity[]) { this._activities = value; this.updateCharacter(); }
+
+  get friendships(): Friendship[] { return this._friendships; }
+  set friendships(value: Friendship[]) { this._friendships = value; this.updateCharacter(); }
 
   get lastFight() { return this._lastFight; }
   set lastFight(value: Date | undefined) { this._lastFight = value; this.updateCharacter(); }
