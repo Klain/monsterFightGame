@@ -1,4 +1,4 @@
-import { db } from "../../../data/database";
+import { db } from "../../database/database";
 
 export interface dbItemEffect {
   item_id: number;

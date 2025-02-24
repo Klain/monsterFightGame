@@ -1,4 +1,4 @@
-import { db } from "../../../data/database";
+import { db } from "../../database/database";
 import { Character } from "../../models/character.model";
 
 export interface dbCharacter{

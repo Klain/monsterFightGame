@@ -13,21 +13,40 @@ class WebSocketService {
     this.io = io;
     this.io.use(async (socket, next) => {
       const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (!token) return next(new Error("Token de autenticación requerido"));
+      console.log(`🔍 [WS Middleware] Token recibido:`, token);
+      
+      if (!token) {
+        console.warn("❌ Token de autenticación requerido.");
+        return next(new Error("Token de autenticación requerido"));
+      }
+    
       try {
         const decoded = jwt.verify(token, process.env.ACCESS_SECRET!) as jwt.JwtPayload;
+        console.log(`🔍 [WS Middleware] Token decodificado:`, decoded);
+    
         if (typeof decoded === "object" && "id" in decoded) {
           const isValidSession = await isSessionValid(decoded.id, token);
-          if (!isValidSession) return next(new Error("Sesión no válida o expirada."));
+          console.log(`🔍 [WS Middleware] ¿Sesión válida?`, isValidSession);
+    
+          if (!isValidSession) {
+            console.warn("❌ Sesión no válida o expirada.");
+            return next(new Error("Sesión no válida o expirada."));
+          }
+    
           socket.data.userId = decoded.id;
+          console.log(`✅ Usuario autenticado en WebSocket: ${socket.data.userId}`);
           next();
         } else {
+          console.warn("❌ Token inválido: no contiene un ID de usuario.");
           next(new Error("Token inválido: no contiene un ID de usuario"));
         }
       } catch (error) {
+        console.error("❌ Error al verificar el token:", error);
         next(new Error("Token inválido o expirado"));
       }
     });
+    
+    
     this.io.on("connection", (socket: Socket) => {
       const userId = socket.data.userId;
       if (!userId) {

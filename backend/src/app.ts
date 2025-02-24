@@ -2,7 +2,7 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { initializeDatabase } from "../data/database";
+import { initializeDatabase } from "./database/database";
 import bodyParser from "body-parser";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
@@ -52,9 +52,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     console.log("✅ Servicio de WebSocket inicializado correctamente.");
   } catch (error) {
     console.error("❌ Error durante la inicialización:", error);
-    process.exit(1); // Salir si la inicialización falla
-  }
-})();
+    process.exit(1);
+}})();
 
 // Middlewares globales
 app.use(cors());

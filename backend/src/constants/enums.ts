@@ -19,6 +19,9 @@ export enum AttributeType {
     ARCANE,
 }
 export enum EffectType {
+    NONE,
+    USABLE_EFFECT,
+    DURATION_EFFECT,
     STRENGTH,
     ENDURANCE,
     CONSTITUTION,
@@ -28,6 +31,10 @@ export enum EffectType {
     SPIRIT,
     WILLPOWER,
     ARCANE,
+    HEALTH,
+    HEALTH_REGEN,
+    ENERGY,
+    ENERGY_REGEN,
     COMBAT_GOLD_BONUS,
     COMBAT_XP_BONUS,
     COMBAT_HIDE_BONUS,
@@ -37,10 +44,6 @@ export enum EffectType {
     WORK_GOLD_BONUS,
     WORK_XP_BONUS,
     WORK_TIME_BONUS,
-    HEALTH_REGEN_BONUS,
-    ENERGY_REGEN_BONUS,
-    USABLE_EFFECT,
-    DURATION_EFFECT,
 }
 export enum CharacterClass {
     ADVENTURER,

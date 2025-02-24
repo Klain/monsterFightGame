@@ -1,4 +1,4 @@
-import { db } from "../../../data/database";
+import { db } from "../../database/database";
 
 export interface dbBattleLog {
   id?: number;

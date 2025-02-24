@@ -46,7 +46,7 @@ export class WebSocketService {
     this.manuallyDisconnected = false;
 
     this.socket = io(Constants.baseUrl, {
-      auth: { token: accessToken },
+      auth: { token: this.tokenService.getAccessToken() },
       reconnection: true,
       reconnectionAttempts: 3,
       reconnectionDelay: 3000,
