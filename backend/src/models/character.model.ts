@@ -52,56 +52,16 @@ export class Character {
   private _activities: Activity[] = [];
   private _friendships: Friendship[] = [];
 
-  constructor(data: Partial<Character>) {
-    if(data){
-      this._id = data.id ?? 0 ;
-      this._userId = data.userId ?? 0 ;
-      this._name = data.name ?? "" ;
-      this._faction  = data.faction ?? "" ;
-      this._class = data.class ?? 1;
-      this._level = data.level ?? 1;
-
-      this._strength = data.strength ?? 1 ;
-      this._endurance = data.endurance ?? 1;
-      this._constitution = data.constitution ?? 1;
-      this._precision = data.precision ?? 1;
-      this._agility = data.agility ?? 1;
-      this._vigor = data.vigor ?? 1;
-      this._spirit = data.spirit ?? 1;
-      this._willpower = data.willpower ?? 1;
-      this._arcane = data.arcane ?? 1;
-
-      this._currentHealth = data.currentHealth ?? 100;
-      this._totalHealth = data.totalHealth ?? 100;
-      this._currentStamina = data.currentStamina ?? 100;
-      this._totalStamina = data.totalStamina ?? 100;
-      this._currentMana = data.currentMana ?? 100;
-      this._totalMana = data.totalMana ?? 100;
-
-      this._currentXp = data.currentXp ?? 0;
-      this._totalXp = data.totalXp ?? 0;
-      this._currentGold = data.currentGold ?? 0;
-      this._totalGold = data.totalGold ?? 0;
-      this._upgradePoints = data.upgradePoints ?? 0;
-
-      this._goldChest = data.goldChest ?? 0;
-      this._warehouse = data.warehouse ?? 0;
-      this._enviroment = data.enviroment ?? 0;
-      this._traps = data.traps ?? 0;
-
-      this._lastFight = data.lastFight;
-
-      this._statuses = data.statuses ?? [];
-      this._inventory = data.inventory ?? new Inventory();
-      this._activities = data.activities ?? [];
-      this._friendships = data.friendships ?? [];
-    }
+  constructor(data: any) {
+    Object.assign(this, data);
   }
+  
   //Equipo
   static async getEquippedStats(id:number){
   }
   //Actividades
-  startActivity(activityType: ActivityType, duration: number): Activity {
+  startActivity(activityType: ActivityType, duration: number): Activity | null {
+    if(this.activities.length!=0){return null;}
     const newActivity = new Activity({
       characterId: this._id,
       userId: this._userId,
@@ -110,8 +70,8 @@ export class Character {
       duration: duration,
       completed: false,
     });
-
-    this.activities = [...this.activities, newActivity]; // ✅ Setter maneja la caché
+    CacheDataService.createActivity(newActivity);
+    this.activities = [...this.activities, newActivity]; 
     return newActivity;
   }
   getActivityStatus(): Activity | null {
@@ -125,6 +85,8 @@ export class Character {
     this.currentStamina = Math.min(this.totalStamina, this.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0));
     this.currentMana = Math.min(this.totalMana, this.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0));
     this.activities[0].completed = true;
+    CacheDataService.deleteActivity(this.activities[0])
+
   }
 
   equipItem(itemId: number): void {
@@ -332,13 +294,12 @@ export class Character {
     }
   }
   wsrActivitiesDuration(): any {
-    const maxActivityDuration = [
-      0,
-      Math.floor(this.exploracionMaxDuration()),
-      Math.floor(this.sanarMaxDuration()),
-      Math.floor(this.descansarMaxDuration()),
-      Math.floor(this.meditarMaxDuration()),
-     ];
+    const maxActivityDuration = {
+      [ActivityType.EXPLORE] : Math.floor(this.exploracionMaxDuration()),
+      [ActivityType.HEAL] : Math.floor(this.sanarMaxDuration()),
+      [ActivityType.REST] : Math.floor(this.descansarMaxDuration()),
+      [ActivityType.MEDITATE] : Math.floor(this.meditarMaxDuration()),
+    };
   
     return {
       maxActivityDuration:maxActivityDuration,

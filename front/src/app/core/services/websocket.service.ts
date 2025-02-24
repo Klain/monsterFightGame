@@ -1,126 +1,173 @@
 //front\monsterGameFight\src\app\core\services\websocket.service.ts
-import { Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { Constants } from '../constants/config';
+import { TokenService } from './token.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WebSocketService {
+  private authService!: AuthService; 
   private socket: Socket | null = null;
+  private manuallyDisconnected = false;
+  private registeredEvents: Map<string, (...args: any[]) => void> = new Map();
+  private isConnectedSubject = new BehaviorSubject<boolean>(false);
+  isConnected$ = this.isConnectedSubject.asObservable();
 
-  constructor() {
-    // Escuchar el evento para conectar el WebSocket
-    document.addEventListener('websocket:connect', () => {
-      this.connect();
+  constructor(private tokenService: TokenService, private injector: Injector) {
+    setTimeout(() => {
+      this.authService = this.injector.get(AuthService);
+      this.authService.authState$.subscribe((isAuthenticated) => {
+        if (isAuthenticated) {
+          this.connect();
+        } else {
+          this.disconnect();
+        }
+      });
     });
   }
 
   connect(): void {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = this.tokenService.getAccessToken();
 
     if (!accessToken) {
-      console.error('No hay access token disponible. No se puede conectar al WebSocket.');
+      console.error('❌ No hay access token disponible. No se puede conectar al WebSocket.');
       return;
     }
 
-    if (!this.socket || !this.socket.connected) {
-      this.socket = io(Constants.baseUrl, {
-        auth: {
-          token: accessToken,
-        },
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-        transports: ['websocket'],
-      });
-
-      this.setupListeners();
-    } else {
-      console.warn('Socket ya está conectado.');
+    if (this.socket && this.socket.connected) {
+      console.warn('⚠️ El socket ya está conectado.');
+      return;
     }
-  }
-  
 
-  // Configurar listeners de eventos globales
+    this.manuallyDisconnected = false;
+
+    this.socket = io(Constants.baseUrl, {
+      auth: { token: accessToken },
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 3000,
+      transports: ['websocket'],
+    });
+
+    this.setupListeners();
+  }
+
   private setupListeners(): void {
     if (!this.socket) {
-      console.error('Socket no inicializado. Listeners no configurados.');
+      console.error('❌ Socket no inicializado. Listeners no configurados.');
       return;
     }
 
-    this.socket.on('connect', () => {
-      console.log('Conectado al servidor WebSocket con ID:', this.socket?.id);
+    this.registerEvent('connect', () => {
+      console.log('✅ Conectado al servidor WebSocket con ID:', this.socket?.id);
+      this.isConnectedSubject.next(true);
+      this.emit("register", this.tokenService.getAccessToken()); // Emitir evento de registro
     });
 
-    this.socket.on('disconnect', (reason: string) => {
-      console.warn('Desconectado del servidor WebSocket:', reason);
-    });
+    this.registerEvent('disconnect', (reason: string) => {
+      console.warn('⚠️ Desconectado del servidor WebSocket:', reason);
+      this.isConnectedSubject.next(false);
 
-    this.socket.on('connect_error', (error: any) => {
-      console.error('Error de conexión al WebSocket:', error);
-    });
-
-    this.socket.on('reconnect_attempt', (attempt: number) => {
-      console.info('Intentando reconectar... Intento número:', attempt);
-    });
-
-    this.socket.on('reconnect', () => {
-      console.log('Reconexión exitosa al servidor WebSocket.');
-    });
-
-    this.socket.on('error', (error: any) => {
-      console.error('Error recibido del servidor WebSocket:', error);
-    });
-  }
-
-  // Enviar un evento al servidor
-  emit(event: string, data: any): void {
-    if (!this.socket || !this.socket.connected) {
-      console.error(`Socket no inicializado. No se puede emitir evento: ${event}`);
-      this.connect(); // Intentar conectar antes de emitir
-      return;
-    }
-  
-    this.socket.emit(event, data);
-  }
-  
-
-  // Escuchar un evento del servidor
-  on(event: string): Observable<any> {
-    return new Observable((observer:any) => {
-      if (!this.socket || !this.socket.connected) {
-        console.error(`Socket no inicializado. No se puede escuchar evento: ${event}`);
-        this.connect(); // Intentar conectar antes de escuchar
+      if (this.manuallyDisconnected) {
+        console.log('⏹️ Desconexión manual, no se intentará reconectar.');
         return;
       }
-  
-      this.socket.on(event, (data: any) => {
-        observer.next(data);
-      });
-  
-      // Limpieza cuando el observable se desuscriba
-      return () => this.socket?.off(event);
+
+      if (reason === 'io server disconnect') {
+        console.warn('🚨 El servidor ha cerrado la conexión. Intentando reconectar...');
+        setTimeout(() => this.connect(), 5000);
+      }
+    });
+
+    this.registerEvent('connect_error', (error: any) => {
+      console.error('❌ Error de conexión al WebSocket:', error);
+    });
+
+    this.registerEvent('reconnect_attempt', (attempt: number) => {
+      console.info('🔄 Intentando reconectar... Intento número:', attempt);
+    });
+
+    this.registerEvent('reconnect', () => {
+      console.log('✅ Reconexión exitosa al servidor WebSocket.');
+      this.isConnectedSubject.next(true);
+    });
+
+    this.registerEvent('error', (error: any) => {
+      console.error('❌ Error recibido del servidor WebSocket:', error);
+    });
+
+    this.registerEvent('registered', (data: any) => {
+      console.log(`🎉 Usuario registrado en WebSocket:`, data);
+    });
+
+    this.registerEvent('characterRefresh', (data: any) => {
+      console.log('🆕 Refrescando personaje:', data);
     });
   }
-  
 
-  // Desconectar manualmente del WebSocket
-  disconnect(): void {
-    if (!this.socket) {
-      console.warn('Socket ya está desconectado.');
+  emit(event: string, data: any): void {
+    if (!this.socket || !this.socket.connected) {
+      console.warn(`⚠️ Socket no conectado. No se puede emitir evento: ${event}`);
       return;
     }
-    this.socket.disconnect();
-    this.socket = null;
-    console.log('Desconectado manualmente del WebSocket.');
+    this.socket.emit(event, data);
   }
 
-  // Reintentar conexión con un nuevo token (por ejemplo, tras renovar el accessToken)
+  on(event: string): Observable<any> {
+    return new Observable((observer: any) => {
+      if (!this.socket) {
+        console.error(`⚠️ Socket no inicializado. No se puede escuchar evento: ${event}`);
+        return;
+      }
+
+      const callback = (data: any) => observer.next(data);
+      this.socket.on(event, callback);
+      this.registeredEvents.set(event, callback);
+
+      return () => this.off(event);
+    });
+  }
+
+  off(event: string): void {
+    if (this.socket && this.registeredEvents.has(event)) {
+      this.socket.off(event, this.registeredEvents.get(event)!);
+      this.registeredEvents.delete(event);
+    }
+  }
+
+  private registerEvent(event: string, callback: (...args: any[]) => void): void {
+    if (this.socket) {
+      this.socket.on(event, callback);
+      this.registeredEvents.set(event, callback);
+    }
+  }
+
+  disconnect(): void {
+    if (!this.socket) {
+      console.warn('⚠️ Socket ya está desconectado.');
+      return;
+    }
+
+    this.manuallyDisconnected = true;
+    this.isConnectedSubject.next(false);
+
+    this.registeredEvents.forEach((callback, event) => {
+      this.socket?.off(event, callback);
+    });
+    this.registeredEvents.clear();
+
+    this.socket.disconnect();
+    this.socket = null;
+    console.log('⏹️ Desconectado manualmente del WebSocket.');
+  }
+
   reconnectWithNewToken(): void {
-    console.log('Intentando reconectar con un nuevo access token...');
+    console.log('🔄 Intentando reconectar con un nuevo access token...');
     this.disconnect();
-    this.connect();
+    setTimeout(() => this.connect(), 1000);
   }
 }

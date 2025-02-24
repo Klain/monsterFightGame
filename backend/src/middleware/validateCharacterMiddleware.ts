@@ -9,7 +9,7 @@ export const validateCharacterMiddleware = async (
 ): Promise<void> => {
   try {
     if(req.locals.user){
-      const character = CacheDataService.getCharacterById(req.locals.user.id);
+      const character = CacheDataService.getCharacterByUserId(req.locals.user.id);
       if (!character) {
         res.status(404).json({ error: "Personaje no encontrado para el usuario." });
         return;

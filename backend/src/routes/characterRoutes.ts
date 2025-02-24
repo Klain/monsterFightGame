@@ -20,6 +20,7 @@ router.post("/attributes/upgrade-attribute", authMiddleware , validateAttributeM
         res.status(400).json({ error: "No tienes suficiente experiencia para mejorar este atributo." });
         return;
       }
+      character.currentXp-=cost;
       character[attribute]+=1;
       webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);

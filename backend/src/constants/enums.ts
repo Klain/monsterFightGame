@@ -259,6 +259,3 @@ export enum ArmorMaterialType {
     MAIL = 3,
     PLATE = 4,
 }
-
-
-  

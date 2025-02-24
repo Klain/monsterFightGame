@@ -1,33 +1,39 @@
 //front\monsterGameFight\src\app\core\services\auth.service.ts
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, catchError, throwError, tap } from 'rxjs';
+import { Observable, BehaviorSubject, catchError, throwError, tap, timer, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TokenService } from './token.service';
 import { WebSocketService } from './websocket.service';
-
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private authStateSubject = new BehaviorSubject<boolean>(this.hasValidAccessToken());
+  private authStateSubject = new BehaviorSubject<boolean>(false);
   authState$ = this.authStateSubject.asObservable();
+  private refreshTimer$?: Observable<any>;
 
   constructor(
-    private api: ApiService, 
-    private router: Router
-  ) {}
+    private api: ApiService,
+    private router: Router,
+    private tokenService: TokenService,
+    private websocketService: WebSocketService
+  ) {
+    this.initAuthState();
+  }
+
+   isAuthenticated(): boolean {
+    return this.authStateSubject.getValue();
+  }
 
   // Iniciar sesión
   login(username: string, password: string): Observable<any> {
     return this.api.post('auth/login', { username, password }).pipe(
       tap((response: any) => {
-        localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
+        this.tokenService.saveTokens(response.accessToken, response.refreshToken);
         this.updateAuthState(true);
-
-        // Emitir un evento para que otro servicio o componente maneje la conexión WebSocket
-        document.dispatchEvent(new CustomEvent('websocket:connect'));
+        this.startTokenRefreshTimer();
       }),
       catchError(this.handleAuthError.bind(this))
     );
@@ -42,14 +48,14 @@ export class AuthService {
 
   // Cerrar sesión
   logout(): void {
-    this.clearTokens();
+    this.tokenService.clearTokens();
     this.updateAuthState(false);
     this.router.navigate(['/auth/login']);
   }
 
-  // Renovar el token
+  // Renovar el token automáticamente antes de que expire
   refreshToken(): Observable<string> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = this.tokenService.getRefreshToken();
     if (!refreshToken) {
       console.warn('No hay refresh token disponible.');
       this.logout();
@@ -58,8 +64,12 @@ export class AuthService {
   
     return this.api.post<{ accessToken: string }>('auth/refresh-token', { refreshToken }).pipe(
       tap((response: any) => {
-        this.saveTokens(response.accessToken, refreshToken);
+        this.tokenService.saveTokens(response.accessToken, refreshToken);
         this.updateAuthState(true);
+  
+        // 🚀 Notificar al WebSocket que el token ha cambiado
+        console.log("🔄 Notificando al WebSocket que el token ha sido renovado.");
+        this.websocketService.reconnectWithNewToken();
       }),
       catchError((error: any) => {
         if (error.error?.error === 'invalid_refresh_token') {
@@ -71,43 +81,34 @@ export class AuthService {
     );
   }
   
+  
 
-  // Comprobar si el usuario está autenticado
-  isAuthenticated(): boolean {
-    return this.authStateSubject.getValue();
-  }
-
-  // Decodificar el token para obtener información
-  decodeToken(token: string): any {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-      console.error('Error al decodificar el token:', e);
-      return null;
+  // Inicializar el estado de autenticación al iniciar la app
+  private initAuthState(): void {
+    const isValid = this.tokenService.hasValidAccessToken();
+    this.authStateSubject.next(isValid);
+    if (isValid) {
+      this.startTokenRefreshTimer();
     }
   }
 
-  // Verificar si el token de acceso es válido
-  private hasValidAccessToken(): boolean {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) return false;
-
-    const tokenData = this.decodeToken(accessToken);
-    const currentTime = Math.floor(Date.now() / 1000);
-    return tokenData?.exp > currentTime;
+  // Iniciar temporizador para renovar el token antes de que expire
+  private startTokenRefreshTimer(): void {
+    const expiration = this.tokenService.getTokenExpiration();
+    if (!expiration) return;
+  
+    const delay = (expiration - 60) * 1000; // Renovar 1 minuto antes de expirar
+    this.refreshTimer$ = timer(delay).pipe(
+      switchMap(() => this.refreshToken())
+    );
+  
+    // 🚀 Este `subscribe()` hace que la renovación del token realmente se ejecute
+    this.refreshTimer$.subscribe({
+      next: () => console.log("🔄 Access token renovado automáticamente."),
+      error: (error) => console.error("❌ Error al renovar el token:", error),
+    });
   }
-
-  // Guardar tokens en localStorage
-  private saveTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-  }
-
-  // Limpiar tokens de localStorage
-  private clearTokens(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-  }
+  
 
   // Actualizar el estado de autenticación
   private updateAuthState(isAuthenticated: boolean): void {

@@ -3,7 +3,7 @@ import { Character } from "../../models/character.model";
 
 export interface dbCharacter{
   user_id :number, 
-  character_id:number,
+  id:number,
   name:string, 
   faction:string, 
   class:number, 

@@ -5,15 +5,11 @@ import { validateActivityMiddleware } from "../middleware/validateActivityMiddle
 import webSocketService from "../services/webSocketService";
 import { ActivityType } from "../constants/enums";
 import { Character } from "../models/character.model";
+import CacheDataService from "../services/cache/CacheDataService";
 
 const router = express.Router();
 
-router.post(
-  "/start",
-  authMiddleware,
-  validateCharacterMiddleware,
-  validateActivityMiddleware,
-  async (req: Request, res: Response) => {
+router.post( "/start", authMiddleware, validateCharacterMiddleware, validateActivityMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = req.locals.user!.id;
       const character : Character = req.locals.character;
@@ -29,18 +25,19 @@ router.post(
       if (activityType === ActivityType.EXPLORE) {
         maxDuration = character.currentStamina;
       } else if (activityType === ActivityType.HEAL) {
-        maxDuration = character.currentHealth < character.totalHealth ? 60 : 0;
+        maxDuration = character.currentHealth < character.totalHealth ? character.totalHealth - character.currentHealth : 0;
       } else if (activityType === ActivityType.REST) {
-        maxDuration = character.currentStamina < character.totalStamina ? 60 : 0;
+        maxDuration = character.currentStamina < character.totalStamina ? character.totalStamina - character.currentStamina : 0;
       } else if (activityType === ActivityType.MEDITATE) {
-        maxDuration = character.currentMana < character.totalMana ? 60 : 0;
+        maxDuration = character.currentMana < character.totalMana ? character.totalMana - character.currentMana : 0;
       }
 
       if (duration < 1 || duration > maxDuration) {
         res.status(400).json({ error: `Duración inválida. Máximo permitido: ${maxDuration} minutos.` });
-
+        return;
       }
       const activity = character.startActivity(activityType, duration);
+      if(!activity){res.status(500).json({ error: `Error al iniciar la actividad` }); }
       webSocketService.characterRefresh(userId,
         (activity ? activity.wsr() : { activity: null }),
       );
@@ -52,16 +49,10 @@ router.post(
   }
 );
 
-//Reclamar recompensa de actividad
-router.post(
-  "/claim",
-  authMiddleware,
-  validateCharacterMiddleware,
-  async (req: Request, res: Response) => {
+router.post( "/claim", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = req.locals.user!.id;
       const character : Character = req.locals.character;
-
       if (!character.getActivityStatus()) {
         res.status(404).json({ error: "No hay actividad en curso." });
       }

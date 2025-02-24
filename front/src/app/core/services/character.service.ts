@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { Attributes, Character } from '../models/character.models';
+import { Character } from '../models/character.models';
 import { WebSocketService } from './websocket.service';
 import { ActivityType } from '../enums/activity.enum';
 
@@ -15,8 +15,12 @@ export class CharacterService {
 
   constructor(private api: ApiService, private webSocketService: WebSocketService) {
     this.refreshCharacter().subscribe();
-    this.webSocketService.on('characterRefresh').subscribe((partialCharacter:Partial<Character>) => {
-      this.updateCharacterWithPartial(partialCharacter);
+    this.webSocketService.isConnected$.subscribe((connected: any) => {
+      if (connected) {
+        this.webSocketService.on('characterRefresh').subscribe((partialCharacter: Partial<Character>) => {
+          this.updateCharacterWithPartial(partialCharacter);
+        });
+      }
     });
   }
 
@@ -30,7 +34,6 @@ export class CharacterService {
   }
   private updateCharacterWithPartial(partialCharacter: Partial<Character>): void {
     const currentCharacter = this.characterSubject.value;
-
     if (currentCharacter) {
       const updatedCharacter = { ...currentCharacter, ...partialCharacter };
       this.characterSubject.next(updatedCharacter);

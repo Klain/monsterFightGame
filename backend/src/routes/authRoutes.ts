@@ -26,18 +26,15 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
       return;
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User ({
+    const newUser = await CacheDataService.createUser(new User ({
       id:0,
       username:username,
       password:hashedPassword,
-    });
-    CacheDataService.createUser(newUser);
-    const newCharacter = new Character({
+    }));
+    const newCharacter = await CacheDataService.createCharacter(new Character({
       userId:newUser.id,
       name:username
-    });
-    CacheDataService.createCharacter(newCharacter);
-
+    }));
     res.status(201).json({ message: "Usuario y personaje creados exitosamente." });
   } catch (error) {
     console.error("Error en el registro de usuario:", error);
@@ -58,6 +55,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ error: "Credenciales inválidas." });
       return;
     }
+    
     const accessToken = jwt.sign({ id: user.id, username: user.username }, process.env.ACCESS_SECRET!, { expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET!, { expiresIn: "7d" });
     registerSession(user.id, refreshToken);

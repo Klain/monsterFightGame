@@ -3,27 +3,23 @@ import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 import { Inventory } from "../models/inventory.model";
+import { isSessionValid } from "../sessionManager";
 
-// Map para rastrear usuarios conectados
 const connectedUsers = new Map<number, Socket>();
 
 class WebSocketService {
   private io: Server | null = null;
-
-  // Inicializar el servicio WebSocket
   initialize(io: Server) {
     this.io = io;
-
-    // Middleware para autenticar conexiones WebSocket
-    this.io.use((socket, next) => {
+    this.io.use(async (socket, next) => {
       const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (!token) {
-        return next(new Error("Token de autenticación requerido"));
-      }
+      if (!token) return next(new Error("Token de autenticación requerido"));
       try {
         const decoded = jwt.verify(token, process.env.ACCESS_SECRET!) as jwt.JwtPayload;
         if (typeof decoded === "object" && "id" in decoded) {
-          socket.data.userId = decoded.id; // Almacenar userId en los datos del socket
+          const isValidSession = await isSessionValid(decoded.id, token);
+          if (!isValidSession) return next(new Error("Sesión no válida o expirada."));
+          socket.data.userId = decoded.id;
           next();
         } else {
           next(new Error("Token inválido: no contiene un ID de usuario"));
@@ -32,8 +28,6 @@ class WebSocketService {
         next(new Error("Token inválido o expirado"));
       }
     });
-
-    // Configurar eventos de conexión
     this.io.on("connection", (socket: Socket) => {
       const userId = socket.data.userId;
       if (!userId) {
@@ -41,85 +35,104 @@ class WebSocketService {
         socket.disconnect();
         return;
       }
-    
-      console.log(`Usuario ${userId} intentando conectar vía WebSocket con ID: ${socket.id}`);
-    
-      // Registrar al usuario
+
+      console.log(`✅ Usuario ${userId} conectado vía WebSocket con ID: ${socket.id}`);
+
+      // 🔹 Registrar al usuario
       this.registerUser(socket, userId);
-    
-      // Manejar eventos del socket
+
+      // 🔹 Evento para actualizar token sin perder conexión
+      socket.on("updateToken", async (newToken) => {
+        try {
+          const decoded = jwt.verify(newToken, process.env.ACCESS_SECRET!) as jwt.JwtPayload;
+          if (typeof decoded === "object" && "id" in decoded) {
+            const isValidSession = await isSessionValid(decoded.id, newToken);
+            if (!isValidSession) {
+              socket.emit("error", { message: "Sesión no válida" });
+              socket.disconnect();
+              return;
+            }
+            socket.data.userId = decoded.id;
+            console.log(`🔄 Token actualizado para usuario ${decoded.id}`);
+            socket.emit("tokenUpdated", { success: true });
+          } else {
+            socket.emit("error", { message: "Token inválido" });
+          }
+        } catch (error) {
+          socket.emit("error", { message: "Error al verificar el token" });
+        }
+      });
+
+      // 🔹 Manejar eventos del socket
       socket.on("disconnect", (reason: string) => {
         this.handleDisconnect(userId, reason);
       });
-    
+
       socket.on("customEvent", (data: any) => {
-        console.log(`Evento personalizado recibido de usuario ${userId}:`, data);
+        console.log(`📩 Evento personalizado recibido de usuario ${userId}:`, data);
       });
+
+      // 🔹 Confirmar conexión exitosa al cliente
+      socket.emit("userRegistered", { success: true, userId });
+    });
     
-      // Confirmar al cliente que la conexión fue exitosa
-      socket.emit("connected", { success: true, userId });
-    });    
   }
-
   private registerUser(socket: Socket, userId: number): void {
-    // Desconectar cualquier socket previo
-    if (connectedUsers.has(userId)) {
-      const oldSocket = connectedUsers.get(userId);
-      oldSocket?.disconnect(true);
-      console.log(`Usuario ${userId} ya estaba conectado. Desconectando socket anterior.`);
+    const existingSocket = connectedUsers.get(userId);
+    if (existingSocket && existingSocket.id === socket.id) {
+      console.log(`⚠️ Usuario ${userId} ya está registrado con el mismo socket.`);
+      return;
     }
-  
-    // Registrar el nuevo socket
+    if (existingSocket && existingSocket.id !== socket.id) {
+      existingSocket.disconnect(true);
+      console.log(`🔄 Usuario ${userId} ya estaba conectado. Desconectando socket anterior.`);
+    }
     connectedUsers.set(userId, socket);
-    console.log(`Usuario ${userId} registrado en WebSocket con ID: ${socket.id}`);
+    console.log(`✅ Usuario ${userId} registrado en WebSocket con ID: ${socket.id}`);
   }
-  
-  // Manejar desconexión de usuarios
-  private handleDisconnect(userId: number, reason: string) {
-    if (connectedUsers.has(userId)) {
+  private async handleDisconnect(userId: number, reason: string) {
+    console.log(`❌ Usuario ${userId} desconectado. Razón: ${reason}`);
+    if (reason === "client disconnect") {
       connectedUsers.delete(userId);
-      console.log(`Usuario ${userId} desconectado. Razón: ${reason}`);
-    } else {
-      console.log(`Desconexión de socket no registrado. Razón: ${reason}`);
+      console.log(`🛑 Desconexión manual, usuario ${userId} eliminado.`);
+      return;
     }
+    setTimeout(() => {
+      if (!connectedUsers.has(userId)) {
+        console.log(`🔻 Usuario ${userId} sigue desconectado. Eliminando del sistema.`);
+        connectedUsers.delete(userId);
+      } else {
+        console.log(`🔄 Usuario ${userId} reconectado exitosamente.`);
+      }
+    }, 5000);
   }
-
-  // Notificar a un usuario específico
   notifyUser(userId: number, event: string, data: any) {
-    console.log("Usuarios conectados actualmente:", Array.from(connectedUsers.keys())); // DEPURAR
-  
+    console.log("🟢 Usuarios conectados actualmente:", Array.from(connectedUsers.keys()));
     const socket = connectedUsers.get(userId);
     if (socket) {
       socket.emit(event, data);
-      console.log(`Notificación enviada a usuario ${userId}:`, event, data);
+      console.log(`📢 Notificación enviada a usuario ${userId}:`, event, data);
     } else {
-      console.warn(`Usuario ${userId} no está conectado. No se pudo enviar:`, event, data);
+      console.warn(`⚠️ Usuario ${userId} no está conectado. No se pudo enviar:`, event, data);
     }
   }
-  
-
-  // Notificar a todos los usuarios conectados
   notifyAll(event: string, data: any) {
     if (this.io) {
       this.io.emit(event, data);
-      console.log(`Notificación enviada a todos los usuarios:`, event, data);
+      console.log(`📢 Notificación enviada a todos los usuarios:`, event, data);
     }
   }
 
-  // Notificar un cambio en el personaje de un usuario
   characterRefresh(userId: number, characterData: any) {
     this.notifyUser(userId, "characterRefresh", characterData);
   }
-  // Construir los datos para la notificación de refresh
-  characterRefreshBuilder(character: any, activity: any | null, inventory?:Inventory | null): any {
+  characterRefreshBuilder(character: any, activity: any | null, inventory?: Inventory | null): any {
     return {
       ...character?.wsr(),
       ...(activity ? activity.wsr() : { activity: null }),
-      ...(inventory ? inventory.wsr() : {} ),
+      ...(inventory ? inventory.wsr() : {}),
     };
   }
-
-  // Notificar un cambio en el personaje de un usuario
   characterNewMessageSend(userId: number, characterData: any) {
     this.notifyUser(userId, "characterNewMessageSend", characterData);
   }
@@ -127,6 +140,5 @@ class WebSocketService {
     this.notifyUser(userId, "characterNewMessageRecived", characterData);
   }
 }
-
 const webSocketService = new WebSocketService();
 export default webSocketService;

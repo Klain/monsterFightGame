@@ -1,20 +1,21 @@
-//front\monsterGameFight\src\app\core\interceptors\auth.interceptor.ts
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { TokenService } from '../services/token.service';
 import { Router } from '@angular/router';
-import { catchError, switchMap, throwError } from 'rxjs';
-import { BehaviorSubject,Observable,tap } from 'rxjs';
+import { catchError, switchMap, throwError, filter, take, tap, BehaviorSubject, Observable } from 'rxjs';
 
 const isRefreshing = new BehaviorSubject<boolean>(false);
 let refreshTokenInProgress: Observable<any> | null = null;
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
+  const tokenService = inject(TokenService);
   const router = inject(Router);
 
-  const accessToken = localStorage.getItem('accessToken');
+  const accessToken = tokenService.getAccessToken();
   let clonedRequest = req;
+
   if (accessToken) {
     clonedRequest = req.clone({
       setHeaders: { Authorization: `Bearer ${accessToken}` },
@@ -23,14 +24,14 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
 
   return next(clonedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && localStorage.getItem('refreshToken')) {
+      if (error.status === 401 && tokenService.getRefreshToken()) {
         console.warn('Access token expirado. Intentando renovar...');
 
         if (!isRefreshing.getValue()) {
           isRefreshing.next(true);
           refreshTokenInProgress = authService.refreshToken().pipe(
             tap((response: any) => {
-              localStorage.setItem('accessToken', response.accessToken);
+              tokenService.setAccessToken(response.accessToken);
               isRefreshing.next(false);
               refreshTokenInProgress = null;
             }),
@@ -46,8 +47,10 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
         }
 
         return refreshTokenInProgress!.pipe(
+          filter(token => token !== null),
+          take(1),
           switchMap(() => {
-            const newAccessToken = localStorage.getItem('accessToken');
+            const newAccessToken = tokenService.getAccessToken();
             const refreshedRequest = req.clone({
               setHeaders: { Authorization: `Bearer ${newAccessToken}` },
             });

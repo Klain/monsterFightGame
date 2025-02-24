@@ -19,6 +19,7 @@ import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
 import { User } from "../../models/user.model";
 import { Friendship } from "../../models/friendship.model";
+import { Inventory } from "../../models/inventory.model";
 
 class DatabaseService {
   constructor() {
@@ -414,42 +415,42 @@ class DatabaseService {
   }
   private static mapDbCharacter(dbCharacter: dbCharacter): Character {
     return new Character({
-      id: dbCharacter.character_id,
-      userId: dbCharacter.user_id,
-      name: dbCharacter.name,
-      faction: dbCharacter.faction,
-      class: dbCharacter.class,
-      level: dbCharacter.level,
-
-      strength: dbCharacter.strength,
-      endurance: dbCharacter.endurance,
-      constitution: dbCharacter.constitution,
-      precision: dbCharacter.precision,
-      agility: dbCharacter.agility,
-      vigor: dbCharacter.vigor,
-      spirit: dbCharacter.spirit,
-      willpower: dbCharacter.willpower,
-      arcane: dbCharacter.arcane,
-
-      currentHealth: dbCharacter.current_health,
-      totalHealth: dbCharacter.total_health,
-      currentStamina: dbCharacter.current_stamina,
-      totalStamina: dbCharacter.total_stamina,
-      currentMana: dbCharacter.current_mana,
-      totalMana: dbCharacter.total_mana,
-
-      currentXp: dbCharacter.current_xp,
-      totalXp: dbCharacter.total_xp,
-      currentGold: dbCharacter.current_gold,
-      totalGold: dbCharacter.total_gold,
-      upgradePoints: dbCharacter.upgrade_points,
-
-      goldChest: dbCharacter.gold_chest,
-      warehouse : dbCharacter.warehouse,
-      enviroment : dbCharacter.enviroment,
-      traps : dbCharacter.traps,
+      _id: dbCharacter.id,
+      _userId: dbCharacter.user_id,
+      _name: dbCharacter.name,
+      _faction: dbCharacter.faction,
+      _class: dbCharacter.class,
+      _level: dbCharacter.level,
+  
+      _strength: dbCharacter.strength ?? 1,
+      _endurance: dbCharacter.endurance ?? 1,
+      _constitution: dbCharacter.constitution ?? 1,
+      _precision: dbCharacter.precision ?? 1,
+      _agility: dbCharacter.agility ?? 1,
+      _vigor: dbCharacter.vigor ?? 1,
+      _spirit: dbCharacter.spirit ?? 1,
+      _willpower: dbCharacter.willpower ?? 1,
+      _arcane: dbCharacter.arcane ?? 1,
+  
+      _currentHealth: dbCharacter.current_health ?? 100,
+      _totalHealth: dbCharacter.total_health ?? 100,
+      _currentStamina: dbCharacter.current_stamina ?? 100,
+      _totalStamina: dbCharacter.total_stamina ?? 100,
+      _currentMana: dbCharacter.current_mana ?? 100,
+      _totalMana: dbCharacter.total_mana ?? 100,
+  
+      _currentXp: dbCharacter.current_xp ?? 0,
+      _totalXp: dbCharacter.total_xp ?? 0,
+      _currentGold: dbCharacter.current_gold ?? 0,
+      _totalGold: dbCharacter.total_gold ?? 0,
+      _upgradePoints: dbCharacter.upgrade_points ?? 0,
+  
+      _goldChest: dbCharacter.gold_chest,
+      _warehouse : dbCharacter.warehouse,
+      _enviroment : dbCharacter.enviroment,
+      _traps : dbCharacter.traps,
       
-      lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
+      _lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
     });
   }
   private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
@@ -459,6 +460,8 @@ class DatabaseService {
       active: dbFriendship.active,
     });
   }
+      
+  
   private static mapDbEffect(dbEffect: dbEffect): Effect {
     return new Effect({
       id: dbEffect.id!,

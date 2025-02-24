@@ -16,6 +16,7 @@ class CacheDataService {
   static cacheBattleLogs: Map<number, BattleLog[]> = new Map();
   static cacheCharacters: Map<number, Character> = new Map();
   static cacheFriendships: Map<number, Friendship[]> = new Map();
+  static cacheUserCharacter : Map<number, number> = new Map();
   static cacheEffects: Map<number, Effect> = new Map();
   static cacheItemDefinitions: Map<number, ItemDefinition> = new Map();
   static cacheInventories: Map<number, ItemInstance[]> = new Map();
@@ -80,6 +81,7 @@ class CacheDataService {
         this.cacheMessages.set(message.id,message );
       });
 
+
       setInterval(() => this.syncPendingUpdates(), 5000); 
 
       console.log("✅ Caché cargada correctamente.");
@@ -120,7 +122,7 @@ class CacheDataService {
   }  
   static async deleteActivity(activity: Activity): Promise<boolean> {
     const result = await DatabaseService.deleteActivity(activity.id)
-    if(!result){throw new Error("Error durante la eliminacion del BattleLog")}
+    if(!result){throw new Error("Error durante la eliminacion de la Actividad")}
     const activities = this.cacheActivities.get(activity.characterId);
     if (!activities) return false;
     this.cacheActivities.set(
@@ -175,6 +177,11 @@ class CacheDataService {
   // ✅ CHARACTER CACHE MANAGEMENT
   static getCharacterById(characterId: number): Character | null {
     return this.cacheCharacters.get(characterId) || null;
+  }
+  static getCharacterByUserId(userId: number): Character | null {
+    const characterId = this.cacheUserCharacter.get(userId);
+    if(!characterId){return null}
+    return this.cacheCharacters.get(characterId)||null;
   }
   static getAllCharacters(): Character[] {
     return Array.from(this.cacheCharacters.values());
@@ -447,13 +454,8 @@ class CacheDataService {
 
   static syncLog():boolean{
     let changes = {
-      pendingActivities: this.pendingActivities.size,
       pendingBattleLogs: this.pendingBattleLogs.size,
       pendingCharacters: this.pendingCharacters.size,
-      pendingEffects: this.pendingEffects.size,
-      pendingInventories: this.pendingInventories.size,
-      pendingItemDefinitions: this.pendingItemDefinitions.size,
-      pendingItemEffects: this.pendingItemEffects.size,
       pendingMessages: this.pendingMessages.size,
       pendingUsers: this.pendingUsers.size
     };
@@ -473,39 +475,78 @@ class CacheDataService {
       return true;
     }
   }
-  // ✅ SINCRONIZACIÓN DIFERIDA CON BASE DE DATOS 
+  // SINCRONIZACIÓN DIFERIDA CON BASE DE DATOS ✅ 
   static async syncPendingUpdates(): Promise<void> {
     try {
-
-      if(!this.syncLog()){return;}
+      if (!this.syncLog()) return;
 
       // Procesar batallas
-      for (const battleLogList of this.cacheBattleLogs.values()) {
-        await Promise.all(battleLogList.map(battleLog => this.updateBattleLog(battleLog)));
-      }
+      await Promise.all(
+        Array.from(this.pendingBattleLogs.values()).map(async (pendingBattleLog) => {
+          const battleLogs = this.cacheBattleLogs.get(pendingBattleLog);
+          if (battleLogs) {
+            await Promise.all(battleLogs.map(battleLog => DatabaseService.updateBattleLog(battleLog)));
+          }
+        })
+      );
 
       // Procesar personajes
-      for (const character of this.cacheCharacters.values()) {
-        await this.updateCharacter(character);
-        await Promise.all([
-          ...character.inventory.items.map(item => this.updateItemInstance(item)),
-          ...character.activities.map(activity => this.updateActivity(activity))
-        ]);
-      }
+      await Promise.all(
+        Array.from(this.pendingCharacters.values()).map(async (pendingCharacterId) => {
+          const pendingCharacter = this.cacheCharacters.get(pendingCharacterId);
+          if (pendingCharacter) {
+            try {
+              await DatabaseService.updateCharacter(pendingCharacter);
+              await Promise.all([
+                ...pendingCharacter.inventory.items.map(item => DatabaseService.updateItemInstance(item)),
+                ...pendingCharacter.activities.map(activity => DatabaseService.updateActivity(activity))
+              ]);
+            } catch (error) {
+              console.error(`❌ Error al actualizar personaje ID ${pendingCharacterId}:`, error);
+            }
+          }
+        })
+      );
 
       // Procesar mensajes
       await Promise.all(
-        Array.from(this.cacheMessages.values()).map(message => this.markMessageAsRead(message.id))
+        Array.from(this.pendingMessages.values()).map(async (pendingMessageId) => {
+          const pendingMessage = this.cacheMessages.get(pendingMessageId);
+          if (pendingMessage) {
+            try {
+              await DatabaseService.markMessageAsRead(pendingMessage.id);
+            } catch (error) {
+              console.error(`❌ Error al actualizar mensaje ID ${pendingMessageId}:`, error);
+            }
+          }
+        })
       );
 
       // Procesar usuarios
       await Promise.all(
-        Array.from(this.cacheUsers.values()).map(user => this.updateUser(user))
+        Array.from(this.pendingUsers.values()).map(async (pendingUserId) => {
+          const pendingUser = this.cacheUsers.get(pendingUserId);
+          if (pendingUser) {
+            try {
+              await DatabaseService.updateUser(pendingUser);
+            } catch (error) {
+              console.error(`❌ Error al actualizar usuario ID ${pendingUserId}:`, error);
+            }
+          }
+        })
       );
+
+      // Limpiar listas de pendientes
+      this.pendingBattleLogs.clear();
+      this.pendingCharacters.clear();
+      this.pendingMessages.clear();
+      this.pendingUsers.clear();
+
     } catch (error) {
       console.error("❌ Error en la sincronización con la base de datos:", error);
     }
   }
+
 }
 
 export default CacheDataService;

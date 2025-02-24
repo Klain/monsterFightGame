@@ -16,8 +16,7 @@ export class ActivityGridComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {
-    // Agregar todas las actividades excepto NONE
     this.validActivityTypes = Object.values(ActivityType)
-      .filter(value => typeof value === 'number' && value !== ActivityType.NONE) as ActivityType[];
+      .filter(value => typeof value === 'number' && value !== ActivityType.NONE && value !== ActivityType.ENCHANTING) as ActivityType[];
   }
 }
