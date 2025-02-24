@@ -67,26 +67,33 @@ router.post("/heist", authMiddleware , validateCharacterMiddleware , validateDef
     res.status(500).json({ error: "Error interno al procesar el intento de robo." });
   }
 });
-/*
-// Ruta: Obtener el ranking
-router.get("/leaderboard", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const leaderboard = await new Promise<any[]>((resolve, reject) => {
-      db.all(
-        `SELECT name, level, totalXp, totalGold FROM characters ORDER BY totalXp DESC LIMIT 10`,
-        (err, rows) => {
-          if (err) {
-            return reject(err);
-          }
-          resolve(rows);
-        }
-      );
-    });
 
-    res.json({ leaderboard });
-  } catch (error) {
-    console.error("Error al obtener ranking:", error);
-    res.status(500).json({ error: "Error interno al obtener el ranking." });
+router.get( "/leaderboard", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      if (page < 1 || limit < 1) {
+        res.status(400).json({ error: "Los parámetros page y limit deben ser números positivos." });
+        return;
+      }
+      const allCharacters = CacheDataService.getAllCharacters();
+      const totalCharacters = allCharacters.length;
+      const sortedCharacters = allCharacters.sort((a, b) => b.totalGold - a.totalGold);
+      const startIndex = (page - 1) * limit;
+      const paginatedCharacters = sortedCharacters.slice(startIndex, startIndex + limit);
+      res.json({
+        characters: paginatedCharacters,
+        page,
+        limit,
+        total: totalCharacters,
+        totalPages: Math.ceil(totalCharacters / limit)
+      });
+    } catch (error) {
+      console.error("Error al obtener el leaderboard:", error);
+      res.status(500).json({ error: "Error interno al obtener el leaderboard." });
+    }
   }
-});*/
+);
+
 export default router;

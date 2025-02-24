@@ -1,4 +1,4 @@
-import { db } from "../../database";
+import { db } from "../../../data/database";
 import { Character } from "../../models/character.model";
 
 export interface dbCharacter{
@@ -28,6 +28,10 @@ export interface dbCharacter{
   current_gold:number, 
   total_gold:number, 
   upgrade_points:number, 
+  gold_chest:number,
+  warehouse:number,
+  enviroment:number,
+  traps:number,
   last_fight: string
 }
 class CharacterService {
@@ -39,8 +43,10 @@ class CharacterService {
           precision, agility, vigor, spirit, willpower, arcane, 
           current_health, total_health, current_stamina, total_stamina, 
           current_mana, total_mana, current_xp, total_xp, 
-          current_gold, total_gold, upgrade_points, last_fight
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          current_gold, total_gold, 
+          gold_chest , warehouse , enviroment , traps , 
+          upgrade_points, last_fight
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       `;
 
       const params = [
@@ -50,6 +56,7 @@ class CharacterService {
         character.willpower, character.arcane, character.currentHealth, character.totalHealth,
         character.currentStamina, character.totalStamina, character.currentMana, character.totalMana,
         character.currentXp, character.totalXp, character.currentGold, character.totalGold,
+        character.goldChest, character.warehouse, character.enviroment, character.traps, 
         character.upgradePoints, character.lastFight || null
       ];
 
@@ -94,7 +101,9 @@ class CharacterService {
           constitution = ?, precision = ?, agility = ?, vigor = ?, spirit = ?, willpower = ?, arcane = ?, 
           current_health = ?, total_health = ?, current_stamina = ?, total_stamina = ?, 
           current_mana = ?, total_mana = ?, current_xp = ?, total_xp = ?, 
-          current_gold = ?, total_gold = ?, upgrade_points = ?, last_fight = ?
+          current_gold = ?, total_gold = ?,
+          gold_chest = ? , warehouse = ? , enviroment = ? , traps = ? , 
+          upgrade_points = ?, last_fight = ?
         WHERE id = ?;
       `;
 
@@ -105,6 +114,7 @@ class CharacterService {
         updatedCharacter.willpower, updatedCharacter.arcane, updatedCharacter.currentHealth, updatedCharacter.totalHealth,
         updatedCharacter.currentStamina, updatedCharacter.totalStamina, updatedCharacter.currentMana, updatedCharacter.totalMana,
         updatedCharacter.currentXp, updatedCharacter.totalXp, updatedCharacter.currentGold, updatedCharacter.totalGold,
+        updatedCharacter.goldChest, updatedCharacter.warehouse, updatedCharacter.enviroment, updatedCharacter.traps, 
         updatedCharacter.upgradePoints, updatedCharacter.lastFight || null,
         updatedCharacter.id
       ];
