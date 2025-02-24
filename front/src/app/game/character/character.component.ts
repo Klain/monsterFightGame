@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { CharacterAttributesComponent } from "../../shared/character-attributes/character-attributes.component";
 import { CharacterService } from "../../core/services/character.service";
 import { Observable } from "rxjs";
-import { Character } from "../../core/models/chacter.models";
+import { Character } from "../../core/models/character.models";
 import { ItemGridComponent } from "../../shared/item-grid/item-grid.component";
 import { ItemEquipmentComponent } from "../../shared/item-equipment/item-equipment.component";
 
@@ -30,9 +30,9 @@ export class CharacterComponent {
   ){
     this.character$ = this.characterService.character$;
     this.character$.subscribe({
-      next:(chacter)=>{
-        if(chacter){
-          this.character = chacter;
+      next:(character)=>{
+        if(character){
+          this.character = character;
         }
       },
       error:()=>{}

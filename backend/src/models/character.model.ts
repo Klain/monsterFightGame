@@ -344,7 +344,7 @@ export class Character {
       maxActivityDuration:maxActivityDuration,
     };
   }
-  wsrLair():Partial<SharedCharacter>{
+  wsrLair():any{
     return{
       lair: {
         goldChest: this.goldChest,

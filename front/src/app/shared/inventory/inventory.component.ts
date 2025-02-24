@@ -4,7 +4,7 @@ import { MatCardModule } from "@angular/material/card";
 import { MatButtonModule } from "@angular/material/button";
 import { InventoryService } from "../../core/services/inventory.service";
 import { WebSocketService } from "../../core/services/websocket.service";
-import { Item } from "../../core/models/chacter.models";
+import { Item } from "../../core/models/character.models";
 
 @Component({
   selector: "app-inventory",

@@ -2,7 +2,7 @@
 import { Component, Input, OnInit, SimpleChanges, OnChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ItemIconTooltipComponent } from '../Item-icon-tooltip/item-icon-tooltip.component';
-import { Item } from '../../core/models/chacter.models';
+import { Item } from '../../core/models/character.models';
 import { formatMoney } from '../../core/pipes/format-money';
 import { EquipType } from '../../core/constants/enums';
 

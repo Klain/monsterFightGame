@@ -6,7 +6,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSliderModule } from '@angular/material/slider';
 import { CharacterService } from '../../core/services/character.service';
-import { Character, Activity } from '../../core/models/chacter.models';
+import { Character, Activity } from '../../core/models/character.models';
 import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ActivityType,getActivityName } from '../../core/enums/activity.enum';

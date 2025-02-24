@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { Attributes, Character } from '../models/chacter.models';
+import { Attributes, Character } from '../models/character.models';
 import { WebSocketService } from './websocket.service';
 import { ActivityType } from '../enums/activity.enum';
 

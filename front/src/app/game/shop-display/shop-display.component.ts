@@ -4,7 +4,7 @@ import { Observable } from "rxjs";
 
 import { ShopComponent } from "../../shared/shop/shop.component";
 import { ShopService } from "../../core/services/shop.service";
-import { Character, Item } from "../../core/models/chacter.models";
+import { Character, Item } from "../../core/models/character.models";
 import { CharacterService } from "../../core/services/character.service";
 
 @Component({
@@ -25,9 +25,9 @@ export class ShopDisplayComponent implements OnInit {
   ) {
     this.character$ = this.characterService.character$;
     this.character$.subscribe({
-      next:(chacter)=>{
-        if(chacter){
-          this.character = chacter;
+      next:(character)=>{
+        if(character){
+          this.character = character;
         }
       },
       error:()=>{}

@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { CharacterService } from '../../core/services/character.service';
-import { Character } from '../../core/models/chacter.models';
+import { Character } from '../../core/models/character.models';
 import { validAttributes } from '../../core/constants/attributes';
 import { Observable } from 'rxjs';
 

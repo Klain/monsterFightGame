@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CharacterService } from '../../core/services/character.service';
-import { Character } from '../../core/models/chacter.models';
+import { Character } from '../../core/models/character.models';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ActivityGridComponent } from '../../shared/activity-grid/activity-grid.component';

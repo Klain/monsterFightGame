@@ -3,7 +3,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { EquipPositionType } from '../../core/constants/enums';
-import { Character } from '../../core/models/chacter.models';
+import { Character } from '../../core/models/character.models';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 
 @Component({

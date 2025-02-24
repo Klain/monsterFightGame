@@ -1,6 +1,6 @@
 import { Component, Input, SimpleChanges ,  OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { Character, Item } from "../../core/models/chacter.models";
+import { Character, Item } from "../../core/models/character.models";
 import { ItemGridComponent } from "../../shared/item-grid/item-grid.component";
 
 @Component({

@@ -1,6 +1,6 @@
 //src\app\components\common\Item-Grid-display\ItemGrid.component.ts
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Character,Item } from '../../core/models/chacter.models';
+import { Character,Item } from '../../core/models/character.models';
 import { CommonModule } from '@angular/common';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 
