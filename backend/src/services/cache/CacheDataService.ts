@@ -64,19 +64,26 @@ class CacheDataService {
       dbUsers.forEach(user=>{
         this.cacheUsers.set(user.id,user);
       });
-      dbCharacters.forEach(async character =>{ 
-        const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
-        const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
-        const friendships = await DatabaseService.getUserFriendships(character.userId);
-        const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
-        const loadedCharacter = new Character({
-          ...character,
-          inventory:new Inventory(itemInstances),
-          activities: activities,
-          friendships: [...friendships,...friendshipsRequest]
-        });
-        this.cacheCharacters.set(character.id, loadedCharacter)
-      });
+      for (const character of dbCharacters) { 
+        try {
+          const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
+          const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
+          const friendships = await DatabaseService.getUserFriendships(character.userId);
+          const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
+      
+          const loadedCharacter = new Character({
+            ...character,
+            inventory:new Inventory(itemInstances),
+            activities: activities,
+            friendships: [...friendships,...friendshipsRequest]
+          });
+          this.cacheCharacters.set(character.id, loadedCharacter)
+          this.cacheUserCharacter.set(character.userId, character.id);
+      
+        } catch (error) {
+          console.error(`Error cargando personaje ID ${character.id}:`, error);
+        }
+      }
       dbMessages.forEach(message => {
         this.cacheMessages.set(message.id,message );
       });
@@ -190,6 +197,7 @@ class CacheDataService {
     const newCharacter = await DatabaseService.createCharacter(character);
     if(newCharacter){
       this.cacheCharacters.set(newCharacter.id, newCharacter);
+      this.cacheUserCharacter.set(newCharacter.userId,newCharacter.id)
     }
   }
   static updateCharacter(updatedCharacter: Character): void {
@@ -423,7 +431,7 @@ class CacheDataService {
     const newUserId = await DatabaseService.createUser(user);
     const newUser = await DatabaseService.getUserById(newUserId);
     if(!newUser){throw new Error("Error al crear el usuario")}
-    this.cacheUsers.set(user.id, user);
+    this.cacheUsers.set(newUser.id, newUser);
     return newUser;
   }
   static getUserById(userId: number): User | null {

@@ -1,7 +1,7 @@
 import { db } from "../../database/database";
 
 export interface dbActivity {
-  id?: number;
+  id: number;
   character_id: number;
   type: number;
   start_time: string; 

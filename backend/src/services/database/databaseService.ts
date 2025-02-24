@@ -29,6 +29,7 @@ class DatabaseService {
   // ACTIVITYS ✅ 
   static async createActivity(activity: Activity): Promise<number> {
     return ActivityService.createActivity({
+      id:0,
       character_id: activity.characterId!,
       type: activity.type!,
       start_time: activity.startTime!.toISOString(),

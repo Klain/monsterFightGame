@@ -36,7 +36,7 @@ router.post( "/start", authMiddleware, validateCharacterMiddleware, validateActi
         res.status(400).json({ error: `Duración inválida. Máximo permitido: ${maxDuration} minutos.` });
         return;
       }
-      const activity = character.startActivity(activityType, duration);
+      const activity = await character.startActivity(activityType, duration);
       if(!activity){res.status(500).json({ error: `Error al iniciar la actividad` }); }
       webSocketService.characterRefresh(userId,
         (activity ? activity.wsr() : { activity: null }),

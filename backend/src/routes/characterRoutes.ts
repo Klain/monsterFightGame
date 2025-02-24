@@ -51,8 +51,8 @@ router.post("/lair/goldChest", authMiddleware , validateAttributeMiddleware, val
 // Ruta: Obtener el personaje del usuario autenticado
 router.get("/", authMiddleware,validateCharacterMiddleware , async (req: Request, res: Response): Promise<void> => {
   try {
-    const character = req.locals.character;
-    res.status(200).json(webSocketService.characterRefreshBuilder(character,character.activity,character.inventory));
+    const character : Character = req.locals.character;
+    res.status(200).json(webSocketService.characterRefreshBuilder(character,character.activities,character.inventory));
   } catch (error) {
     console.error("❌ Error al obtener personaje:", error);
     res.status(500).json({ error: "Error interno al recuperar el personaje." });

@@ -60,19 +60,18 @@ export class Character {
   static async getEquippedStats(id:number){
   }
   //Actividades
-  startActivity(activityType: ActivityType, duration: number): Activity | null {
+  async startActivity(activityType: ActivityType, duration: number): Promise<Activity | null> {
     if(this.activities.length!=0){return null;}
     const newActivity = new Activity({
       characterId: this._id,
-      userId: this._userId,
       type: activityType,
       startTime: new Date(),
       duration: duration,
       completed: false,
     });
-    CacheDataService.createActivity(newActivity);
-    this.activities = [...this.activities, newActivity]; 
-    return newActivity;
+    const newActivityCreated = await CacheDataService.createActivity(newActivity);
+    this.activities = [...this.activities, newActivityCreated]; 
+    return newActivityCreated;
   }
   getActivityStatus(): Activity | null {
     return this.activities.find(activity => !activity.completed) || null;
@@ -304,6 +303,9 @@ export class Character {
     return {
       maxActivityDuration:maxActivityDuration,
     };
+  }
+  wsrActivities(): any {
+    return this.activities[0]?.wsr() || {};
   }
   wsrLair():any{
     return{

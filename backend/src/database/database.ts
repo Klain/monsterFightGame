@@ -85,7 +85,7 @@ function runTables(): Promise<void> {
           price INTEGER NOT NULL
         )
       `);
-      //db.run("DROP TABLE IF EXISTS item_instances;");
+      db.run("DROP TABLE IF EXISTS item_instances;");
       db.run(`
         CREATE TABLE IF NOT EXISTS item_instances (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +97,7 @@ function runTables(): Promise<void> {
           FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
         )
       `);
-      //db.run("DROP TABLE IF EXISTS effects;");
+      db.run("DROP TABLE IF EXISTS effects;");
       db.run(`
         CREATE TABLE IF NOT EXISTS effects (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,7 +115,7 @@ function runTables(): Promise<void> {
           PRIMARY KEY (item_id, effect_id)
         )
       `);
-      //db.run("DROP TABLE IF EXISTS activities;");  
+      db.run("DROP TABLE IF EXISTS activities;");  
       db.run(`
       CREATE TABLE IF NOT EXISTS activities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -127,7 +127,7 @@ function runTables(): Promise<void> {
         FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
       )
     `);
-    //db.run("DROP TABLE IF EXISTS battle_logs;");  
+    db.run("DROP TABLE IF EXISTS battle_logs;");  
     db.run(`
       CREATE TABLE IF NOT EXISTS battle_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -142,7 +142,7 @@ function runTables(): Promise<void> {
         FOREIGN KEY (winner_id) REFERENCES characters(id)
       )
     `);
-    //db.run("DROP TABLE IF EXISTS messages;");  
+    db.run("DROP TABLE IF EXISTS messages;");  
     db.run(`
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,6 +158,7 @@ function runTables(): Promise<void> {
         FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
       )`, resolve);
     });
+    db.run("DROP TABLE IF EXISTS friendship;");  
     db.run(`
       CREATE TABLE IF NOT EXISTS friendship (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

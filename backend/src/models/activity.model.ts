@@ -3,7 +3,6 @@ import CacheDataService from "../services/cache/CacheDataService";
 
 export class Activity {
   private _id: number = 0;
-  private _userId: number = 0;
   private _characterId: number = 0;
   private _type: ActivityType = 0;
   private _startTime: Date = new Date();
@@ -23,9 +22,6 @@ export class Activity {
   // GETTERS Y SETTERS
   get id() { return this._id; }
   set id(value: number) { this._id = value; this.updateCache(); }
-
-  get userId() { return this._userId; }
-  set userId(value: number) { this._userId = value; this.updateCache(); }
 
   get characterId() { return this._characterId; }
   set characterId(value: number) { this._characterId = value; this.updateCache(); }

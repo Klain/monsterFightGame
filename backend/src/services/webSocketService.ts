@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 import { Inventory } from "../models/inventory.model";
 import { isSessionValid } from "../sessionManager";
+import { Character } from "../models/character.model";
 
 const connectedUsers = new Map<number, Socket>();
 
@@ -145,10 +146,10 @@ class WebSocketService {
   characterRefresh(userId: number, characterData: any) {
     this.notifyUser(userId, "characterRefresh", characterData);
   }
-  characterRefreshBuilder(character: any, activity: any | null, inventory?: Inventory | null): any {
+  characterRefreshBuilder(character: Character, activity: any | null, inventory?: Inventory | null): any {
     return {
       ...character?.wsr(),
-      ...(activity ? activity.wsr() : { activity: null }),
+      ...(character ? character.wsrActivities() : { activity: null }),
       ...(inventory ? inventory.wsr() : {}),
     };
   }
