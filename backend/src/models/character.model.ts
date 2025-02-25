@@ -59,35 +59,6 @@ export class Character {
   //Equipo
   static async getEquippedStats(id:number){
   }
-  //Actividades
-  async startActivity(activityType: ActivityType, duration: number): Promise<Activity | null> {
-    if(this.activities.length!=0){return null;}
-    const newActivity = new Activity({
-      characterId: this._id,
-      type: activityType,
-      startTime: new Date(),
-      duration: duration,
-      completed: false,
-    });
-    const newActivityCreated = await CacheDataService.createActivity(newActivity);
-    this.activities = [...this.activities, newActivityCreated]; 
-    return newActivityCreated;
-  }
-  getActivityStatus(): Activity | null {
-    return this.activities.find(activity => !activity.completed) || null;
-  }
-  claimActivityReward(): void {
-    const rewards: ActivityReward = Activity.calculateActivityReward(this.activities[0].type, this.activities[0].duration);
-    this.currentXp += rewards.xp ?? 0;
-    this.currentGold += rewards.gold ?? 0;
-    this.currentHealth = Math.min(this.totalHealth, this.currentHealth + (rewards.health ?? 0) - (rewards.costHealth ?? 0));
-    this.currentStamina = Math.min(this.totalStamina, this.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0));
-    this.currentMana = Math.min(this.totalMana, this.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0));
-    this.activities[0].completed = true;
-    CacheDataService.deleteActivity(this.activities[0])
-
-  }
-
   equipItem(itemId: number): void {
     this._inventory.items = this._inventory.items.map((ci) =>
       ci.itemId === itemId ? new ItemInstance({ ...ci, equipped: true }) : ci
@@ -101,6 +72,34 @@ export class Character {
     CacheDataService.updateInventory(this._id, this._inventory.items);
   }
 
+  //Actividades
+  async startActivity(activityType: ActivityType, duration: number): Promise<Activity | null> {
+    const newActivity = new Activity({
+      characterId: this._id,
+      type: activityType,
+      startTime: new Date(),
+      duration: duration,
+      completed: false,
+    });
+    const newActivityCreated = await CacheDataService.createActivity(newActivity);
+    this.activities.push(newActivityCreated);
+    return newActivityCreated;
+  }
+  getActivityStatus(): Activity | null {
+    return this.activities.find(activity => !activity.completed) || null;
+  }
+  async claimActivityReward(): Promise <boolean> {
+    const rewards: ActivityReward = Activity.calculateActivityReward(this.activities[0].type, this.activities[0].duration);
+    this.currentXp += rewards.xp ?? 0;
+    this.currentGold += rewards.gold ?? 0;
+    this.currentHealth = Math.min(this.totalHealth, this.currentHealth + (rewards.health ?? 0) - (rewards.costHealth ?? 0));
+    this.currentStamina = Math.min(this.totalStamina, this.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0));
+    this.currentMana = Math.min(this.totalMana, this.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0));
+    this.activities[0].completed = true;
+    return await CacheDataService.deleteActivity(this.activities[0])
+  }
+
+  //Shop
   buyItem(item: ItemDefinition): void {
     const existingItem = this._inventory.items.find(i => i.itemId === item.id);
     if (existingItem) {
@@ -155,27 +154,16 @@ export class Character {
     return result;
   }
 
-  //RevisarOld
+
   calculateUpgradeCost(attributeValue: number): number {
     return 100 + attributeValue * 10;
   }
   getHealthPercentage(): number {
     return (this.currentHealth / this.totalHealth) * 100;
   }
-  // Método para calcular el nivel basado en la experiencia total
-  getLevelFromXp(): number {
-    return Math.floor(this.totalXp / 1000);
-  }
-  // Método para verificar si tiene suficiente oro
-  hasEnoughGold(amount: number): boolean {
-    return this.currentGold >= amount;
-  }
-
-  // Verifica si el personaje está muerto
   isDead(): boolean {
     return this.currentHealth <= 0;
   }
-  // Calcula daño infligido a otro personaje
   calculateDamage(target: Character): number {
     // Probabilidad de evasión
     const evasionChance = target.agility / (this.precision + target.agility);
@@ -194,35 +182,6 @@ export class Character {
 
     return damage;
   }
-  // Añade experiencia y oro al personaje
-  addRewards(xp: number, gold: number): void {
-    this.currentXp += xp;
-    this.currentGold += gold;
-  }
-  // Reduce el oro del personaje
-  deductGold(amount: number): void {
-    this.currentGold = Math.max(0, this.currentGold - amount);
-  }
-  // Método para añadir un estado
-  addStatus(status: CharacterStatus): void {
-    this.statuses.push(status);
-  }
-  // Método para eliminar un estado
-  removeStatus(effect: StatusEffect): void {
-    this.statuses = this.statuses.filter(status => status.type !== effect);
-  }
-  // Método para reducir la duración de los estados
-  reduceStatusDurations(): void {
-    this.statuses = this.statuses
-      .map(status => ({
-        ...status,
-        duration: status.duration - 1,
-      }))
-      .filter(status => status.duration > 0); // Eliminar estados con duración 0
-  }
-  
-  hasStatus(effect: StatusEffect): boolean { return this.statuses.some(status => status.type === effect); }
-
 
   // OUTPUTS AL FRONT
   wsr():any{

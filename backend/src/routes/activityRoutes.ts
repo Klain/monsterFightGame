@@ -14,23 +14,15 @@ router.post( "/start", authMiddleware, validateCharacterMiddleware, validateActi
       const character : Character = req.locals.character;
       const activityType = req.locals.activityType!;
       const { duration } = req.body;
-
       if (character.getActivityStatus()) {
         res.status(400).json({ message: "El personaje ya está en otra actividad." });
         return;
       }
-
-      let maxDuration = 1;
-      if (activityType === ActivityType.EXPLORE) {
-        maxDuration = character.currentStamina;
-      } else if (activityType === ActivityType.HEAL) {
-        maxDuration = character.currentHealth < character.totalHealth ? character.totalHealth - character.currentHealth : 0;
-      } else if (activityType === ActivityType.REST) {
-        maxDuration = character.currentStamina < character.totalStamina ? character.totalStamina - character.currentStamina : 0;
-      } else if (activityType === ActivityType.MEDITATE) {
-        maxDuration = character.currentMana < character.totalMana ? character.totalMana - character.currentMana : 0;
+      const maxDuration = character.wsrActivitiesDuration().get(activityType) || 0;
+      if (maxDuration == 0) {
+        res.status(400).json({ error: `El personaje esta exhausto.` });
+        return;
       }
-
       if (duration < 1 || duration > maxDuration) {
         res.status(400).json({ error: `Duración inválida. Máximo permitido: ${maxDuration} minutos.` });
         return;
@@ -58,7 +50,11 @@ router.post( "/claim", authMiddleware, validateCharacterMiddleware, async (req: 
       if (character.getActivityStatus()!.getRemainingTime() > 0) {
         res.status(404).json({ error: "La actividad aún no está completada." });
       }
-      character.claimActivityReward();
+      const result = await character.claimActivityReward();
+      if(!result){ 
+        res.status(500).json({ error: "Error interno." });
+        return;
+      }
       const activity = character.getActivityStatus();
       webSocketService.characterRefresh(userId,{
         ...character?.wsr(),
