@@ -146,13 +146,6 @@ class WebSocketService {
   characterRefresh(userId: number, characterData: any) {
     this.notifyUser(userId, "characterRefresh", characterData);
   }
-  characterRefreshBuilder(character: Character, activity: any | null, inventory?: Inventory | null): any {
-    return {
-      ...character?.wsr(),
-      ...(character ? character.wsrActivities() : { activity: null }),
-      ...(inventory ? inventory.wsr() : {}),
-    };
-  }
   characterNewMessageSend(userId: number, characterData: any) {
     this.notifyUser(userId, "characterNewMessageSend", characterData);
   }

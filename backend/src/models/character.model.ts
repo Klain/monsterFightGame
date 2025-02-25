@@ -16,7 +16,7 @@ export class Character {
   private _faction: string = "";
   private _class: number = 1;
   private _level: number = 1;
-
+  //ATRIBUTES
   private _strength: number = 1;
   private _endurance: number = 1;
   private _constitution: number = 1;
@@ -26,7 +26,7 @@ export class Character {
   private _spirit: number = 1;
   private _willpower: number = 1;
   private _arcane: number = 1;
-
+  //
   private _currentHealth: number = 100;
   private _totalHealth: number = 100;
   private _currentStamina: number = 100;
@@ -192,10 +192,14 @@ export class Character {
       level: this.level,
       ...this.wsrAttributes(),
       ...this.wsrAttributesUpgradeCost(),
-      ...this.wsrCurrencies(),
       ...this.wsrStatus(),
-      ...this.wsrActivitiesDuration(),
+      ...this.wsrCurrencies(),
       ...this.wsrLair(),
+      ...this.wsrLairCost(),
+      ...this.wsrActivitiesDuration(),
+      ...this.wsrActivities(),
+      ...this.wsrInventory(),
+      ...this.wsrFriendship(),
     }
   }
   wsrAttributes():any{
@@ -228,6 +232,18 @@ export class Character {
       }
     }
   }
+  wsrStatus():any{
+    return {
+      status:{
+        currentHealth: Math.floor(this.currentHealth),
+        totalHealth:Math.floor( this.totalHealth),
+        currentStamina: Math.floor(this.currentStamina),
+        totalStamina: Math.floor(this.totalStamina),
+        currentMana: Math.floor(this.currentMana),
+        totalMana: Math.floor(this.totalMana),
+      }
+    }
+  }
   wsrCurrencies():any{
     return {
       currencies:{
@@ -239,15 +255,23 @@ export class Character {
       }
     }
   }
-  wsrStatus():any{
+  wsrLair():any{
+    return{
+      lair: {
+        goldChest: this.goldChest,
+        warehouse : this.warehouse,
+        enviroment : this.enviroment,
+        traps : this.traps
+      }
+    }
+  }
+  wsrLairCost():any{
     return {
-      status:{
-        currentHealth: Math.floor(this.currentHealth),
-        totalHealth:Math.floor( this.totalHealth),
-        currentStamina: Math.floor(this.currentStamina),
-        totalStamina: Math.floor(this.totalStamina),
-        currentMana: Math.floor(this.currentMana),
-        totalMana: Math.floor(this.totalMana),
+      lairCost:{
+        goldChest: this.calculateUpgradeCost(this.goldChest),
+        warehouse: this.calculateUpgradeCost(this.warehouse),
+        enviroment: this.calculateUpgradeCost(this.enviroment),
+        traps: this.calculateUpgradeCost(this.traps),
       }
     }
   }
@@ -266,16 +290,34 @@ export class Character {
   wsrActivities(): any {
     return this.activities[0]?.wsr() || {};
   }
-  wsrLair():any{
-    return{
-      lair: {
-        goldChest: this.goldChest,
-        warehouse : this.warehouse,
-        enviroment : this.enviroment,
-        traps : this.traps
+  wsrInventory():any{
+    return this.inventory.wsr()
+  }
+  wsrFriendship():any{
+    return {
+      friendships:{
+        friends: this.friendships.filter(
+            friendship=>friendship.active==true
+            ).map(
+              friendship=>{
+                const friendId = friendship.idUser1 == this.userId ? friendship.idUser2 : friendship.idUser1;
+                const name = CacheDataService.getUserById(friendId)?.username;
+                if(!friendId && !name){return;}
+                return { id:friendId , name : name }
+                }),
+        request: this.friendships.filter(
+          friendship=>friendship.active==false
+          ).map(
+            friendship=>{
+              const friendId = friendship.idUser1 == this.userId ? friendship.idUser2 : friendship.idUser1;
+              const name = CacheDataService.getUserById(friendId)?.username;
+              if(!friendId && !name){return;}
+              return { id:friendId , name : name }
+              }),
       }
     }
   }
+
 
   exploracionMaxDuration(){ return this.currentStamina }
   sanarMaxDuration(){ return (this.totalHealth-this.currentHealth)*1 }
