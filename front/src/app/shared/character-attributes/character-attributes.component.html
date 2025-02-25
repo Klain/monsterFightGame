@@ -3,6 +3,7 @@
   <mat-card-content>
     <p><strong>Facción:</strong> {{ character.faction }} <strong>Clase:</strong> {{ character.class }}</p>
     <p><strong>Nivel:</strong> {{ character.level }}</p>
+
     <p><strong>Salud:</strong> {{ character.status.currentHealth }} / {{ character.status.totalHealth }}</p>
     <p><strong>Energía:</strong> {{ character.status.currentStamina }} / {{ character.status.totalStamina }}</p>
     <p><strong>Mana:</strong> {{ character.status.currentMana }} / {{ character.status.totalMana }}</p>
@@ -11,15 +12,17 @@
     <p><strong>XP Disponible:</strong> {{ character.currencies.currentXp }}</p>
     <p><strong>Puntos de Mejora:</strong> {{ character.currencies.upgradePoints }}</p>
 
-    <mat-grid-list cols="3" rowHeight="100px" class="attribute-grid">
+    <!-- Asegurar que las propiedades existen antes de acceder a ellas -->
+    <mat-grid-list cols="3" rowHeight="100px" class="attribute-grid" *ngIf="character.attributes && character.attributesUpgradeCost">
       <mat-grid-tile *ngFor="let attribute of attributeList" class="attribute-tile">
         <div class="attribute">
           <p><strong>{{ attribute.label }}:</strong> {{ character.attributes[attribute.key] }}</p>
+
+          <!-- Verificamos que tanto `attributesUpgradeCost` como `currencies` existan antes de usarlos -->
           <button 
             mat-button 
-            color="primary" 
-            *ngIf="character.attributesUpgradeCost[attribute.key] !== undefined && 
-                   character.currencies.currentXp >= character.attributesUpgradeCost[attribute.key]"
+            color="primary"
+            *ngIf="character.attributesUpgradeCost[attribute.key] !== undefined && character.currencies && character.currencies.currentXp >= character.attributesUpgradeCost[attribute.key]"
             (click)="upgradeAttribute(attribute.key)"
             [disabled]="isLoading[attribute.key]">
             {{ isLoading[attribute.key] ? 'Mejorando...' : 'Mejorar (XP: ' + character.attributesUpgradeCost[attribute.key] + ')' }}

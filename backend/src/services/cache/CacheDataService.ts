@@ -131,6 +131,7 @@ class CacheDataService {
     if(!result){throw new Error("Error durante la eliminacion de la Actividad")}
     const activities = this.cacheActivities.get(activity.characterId);
     if (!activities) return false;
+    
     this.cacheActivities.set(
       activity.characterId,
       activities.filter(a => a.id !== activity.id)

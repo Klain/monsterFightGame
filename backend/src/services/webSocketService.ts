@@ -131,15 +131,15 @@ class WebSocketService {
     const socket = connectedUsers.get(userId);
     if (socket) {
       socket.emit(event, data);
-      console.log(`📢 Notificación enviada a usuario ${userId}:`, event, data);
+      console.log(`📢 Notificación enviada a usuario ${userId}:`);
     } else {
-      console.warn(`⚠️ Usuario ${userId} no está conectado. No se pudo enviar:`, event, data);
+      console.warn(`⚠️ Usuario ${userId} no está conectado. No se pudo enviar:`);
     }
   }
   notifyAll(event: string, data: any) {
     if (this.io) {
       this.io.emit(event, data);
-      console.log(`📢 Notificación enviada a todos los usuarios:`, event, data);
+      console.log(`📢 Notificación enviada a todos los usuarios:`);
     }
   }
 

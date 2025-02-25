@@ -1,3 +1,4 @@
+//front\src\app\shared\shop\shop.component.ts
 import { Component, Input, SimpleChanges ,  OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Character, Item } from "../../core/models/character.models";

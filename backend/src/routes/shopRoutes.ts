@@ -36,10 +36,7 @@ router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMid
       return;
     }
     character.buyItem(item);
-    webSocketService.characterRefresh(character.userId, {
-      ...character.wsrCurrencies(),
-      ...character.inventory.wsrBackpack(),
-    });
+    webSocketService.characterRefresh(character.userId, {...character.wsr()});
     res.status(200).json({ message: "Ítem comprado con éxito" });
   } catch (error:any) {
     console.error("❌ Error al comprar ítem:", error);

@@ -11,21 +11,22 @@ export class ItemInstance {
     Object.assign(this, data);
   }
 
-  wsr(){
+  wsr(): any {
     const databaseItem = CacheDataService.getItemDefinitionById(this.itemId);
-    if(databaseItem){
-      const result = {
-        [this.id]: {
-          ...databaseItem.wsr(),
-          characterId: this.characterId,
-          equipped: this.equipped,
-          stock: this.stock,
-        }
-      };
-      return result
-      
-    }else{
-      return {};
-    }
+    if (!databaseItem) return null;
+
+    return {
+      id: this.itemId,
+      name: databaseItem.name,
+      itemType: databaseItem.itemType,
+      levelRequired: databaseItem.levelRequired,
+      stock: this.stock,
+      priceBuy: databaseItem.price,
+      priceSell: Math.floor(databaseItem.price / 2),
+      equipType: databaseItem.equipType,
+      equipPositionType: databaseItem.equipPositionType,
+      effects: databaseItem.effects || [],
+      equipped: this.equipped,
+    };
   }
 }

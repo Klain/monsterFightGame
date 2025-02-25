@@ -1,4 +1,4 @@
-//src\app\components\common\Item-Icon-display\ItemIcon.component.ts
+//front\src\app\shared\item-icon\item-icon.component.ts
 import { Component, Input, OnInit, SimpleChanges, OnChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ItemIconTooltipComponent } from '../Item-icon-tooltip/item-icon-tooltip.component';

@@ -1,4 +1,5 @@
 import { ActivityType } from "../enums/activity.enum";
+
 export interface Character {
   name: string;
   faction: string;
@@ -8,13 +9,15 @@ export interface Character {
   attributesUpgradeCost: Attributes;
   status: Status;
   currencies: Currencies;
-  lair : Lair;
-  backpack: Item[]; 
+  lair: Lair;
+  lairCost: Lair;
+  backpack: Map<number, Item[]>; 
   equip: Item[]; 
   shop: Item[];
   activity: Activity | null;
-  maxActivityDuration: number[];
-  
+  maxActivityDuration: { [key in ActivityType]: number };
+  friendships: Friendships;
+  messages: Message[];
   lastFight?: Date;
 }
 
@@ -53,23 +56,28 @@ export interface Activity {
   duration: number;
 }
 
-export interface Message {
-  sender: string;
-  receiver: string;
-  subject: string;
-  body: string;
-  timestamp: Date;
+export interface Lair {
+  goldChest: number;
+  warehouse: number;
+  enviroment: number;
+  traps: number;
+}
+
+export interface Inventory {
+  backpack: Map<number, Item[]>; 
+  equip: Item[];
+  shop: Item[];
 }
 
 export interface Item {
-  id : number;
-  name : string;
-  itemType : number;
-  levelRequired : number;
-  stock : number; // Número de veces que lo tiene en inventario
-  priceBuy : number;
-  priceSell : number;
-  imageUrl? : string;
+  id: number;
+  name: string;
+  itemType: number;
+  levelRequired: number;
+  stock: number;
+  priceBuy: number;
+  priceSell: number;
+  imageUrl?: string;
 
   equipType?: number;
   equipPositionType?: number;
@@ -77,9 +85,20 @@ export interface Item {
   equipped?: boolean;
 }
 
-export interface Lair {
-  goldChest:number,
-  warehouse:number,
-  enviroment:number,
-  traps:number,
+export interface Friendships {
+  friends: Friend[];
+  request: Friend[];
+}
+
+export interface Friend {
+  id: number;
+  name: string;
+}
+
+export interface Message {
+  sender: string;
+  receiver: string;
+  subject: string;
+  body: string;
+  timestamp: Date;
 }

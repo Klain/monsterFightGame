@@ -22,6 +22,7 @@ export class ItemDefinition {
       priceBuy: this.price,
       priceSell: this.price/2
     }
+    
   }
 
   canBeUsedBy(characterLevel: number): boolean {

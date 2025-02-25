@@ -15,14 +15,16 @@ export class CharacterService {
 
   constructor(private api: ApiService, private webSocketService: WebSocketService) {
     this.refreshCharacter().subscribe();
+        this.webSocketService.on('characterRefresh').subscribe((partialCharacter: Partial<Character>) => {
+      this.updateCharacterWithPartial(partialCharacter);
+    });
     this.webSocketService.isConnected$.subscribe((connected: any) => {
       if (connected) {
-        this.webSocketService.on('characterRefresh').subscribe((partialCharacter: Partial<Character>) => {
-          this.updateCharacterWithPartial(partialCharacter);
-        });
+        console.log("🔄 WebSocket conectado, asegurando suscripción a characterRefresh...");
       }
     });
   }
+  
 
   private refreshCharacter(): Observable<Character> {
     return this.api.get<Character>('characters').pipe(

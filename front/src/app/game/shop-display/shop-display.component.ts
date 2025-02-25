@@ -1,3 +1,4 @@
+//front\src\app\game\shop-display\shop-display.component.ts
 import {  Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Observable } from "rxjs";
@@ -45,9 +46,16 @@ export class ShopDisplayComponent implements OnInit {
   }
 
    /*ITEM SHOWABLE PROPERTIES*/
-   precioCompra = (item: Item): string => { if (item) { return item.priceBuy.toString();  } else { return ""; } };
-   precioVenta = (item: Item): string => { if (item) {  return item.priceSell.toString() } else { return ""; }}
-   unidades = (item: Item): string => { if (item) { return item.stock.toString();  } else { return ""; } };
+   precioCompra = (item: Item | null | undefined): string => { 
+    return item?.priceBuy !== undefined ? item.priceBuy.toString() : "";
+    };
+     precioVenta = (item: Item | null | undefined): string => { 
+    return item?.priceSell !== undefined ? item.priceSell.toString() : "";
+    };
+     unidades = (item: Item | null | undefined): string => { 
+    return item?.stock !== undefined ? item.stock.toString() : "";
+    };
+  
    buyItem = (item: Item, position : number): void => {
      if (item && this.character) {
        this.shopService.buyItem(item.id??0).subscribe(() => this.loadShopItems());

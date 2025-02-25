@@ -1,5 +1,6 @@
+
 //front\monsterGameFight\src\app\shared\activity-widget\activity-widget.component .ts
-import { Component, Input, OnInit, OnDestroy} from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -33,9 +34,11 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
 
   public getActivityName = getActivityName;
   private destroy$ = new Subject<void>();
+  private countdownDestroy$ = new Subject<void>();
+
 
   constructor(
-    private characterService: CharacterService,
+    private characterService: CharacterService
     ) {}
 
   ngOnInit() {
@@ -64,8 +67,14 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
     }
   }
   
+  ensureValidDuration(value: number) {
+    if (value < 1) {
+      this.duration = 1;
+    } else {
+      this.duration = value;
+    }
+  }
   
-
   private startCountdown() {
     if (!this.activity) return;
   
@@ -75,24 +84,28 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
     const totalSeconds = this.activity.duration;
   
     this.remainingTime = Math.max(totalSeconds - elapsedSeconds, 0);
-  
     this.updateProgress();
   
     if (this.remainingTime > 0) {
+      // 🔥 Cancela cualquier anterior ejecución del intervalo
+      this.countdownDestroy$.next(); 
+  
       interval(1000)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntil(this.countdownDestroy$))
         .subscribe(() => {
           if (this.remainingTime > 0) {
             this.remainingTime--;
             this.updateProgress();
           } else {
             this.completeActivity();
+            this.countdownDestroy$.next();
           }
         });
     } else {
       this.completeActivity();
     }
   }
+  
   
   private updateProgress() {
     if (!this.activity) return;
@@ -120,14 +133,19 @@ export class ActivityWidgetComponent implements OnInit, OnDestroy {
   }
 
   private resetActivityState() {
+    this.countdownDestroy$.next();
     this.activity = null;
     this.progress = 0;
     this.remainingTime = 0;
     this.isCompleted = false;
   }
+  
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.countdownDestroy$.next();
+    this.countdownDestroy$.complete();
   }
+  
 }

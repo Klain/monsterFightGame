@@ -1,4 +1,4 @@
-import { ActivityType, StatusEffect } from "../constants/enums";
+import { ActivityType, EquipPositionType, ItemType, StatusEffect } from "../constants/enums";
 import CacheDataService from "../services/cache/CacheDataService";
 import { Activity } from "./activity.model";
 import { ActivityReward } from "./activityReward.model";
@@ -59,18 +59,80 @@ export class Character {
   //Equipo
   static async getEquippedStats(id:number){
   }
-  equipItem(itemId: number): void {
-    this._inventory.items = this._inventory.items.map((ci) =>
-      ci.itemId === itemId ? new ItemInstance({ ...ci, equipped: true }) : ci
-    );
+  equipItem(itemId: number): string {
+    const item = this._inventory.items.find(i => i.itemId === itemId && !i.equipped);
+    if (!item) return "El ítem no está en el inventario o ya está equipado.";
+  
+    const databaseItem = CacheDataService.getItemDefinitionById(item.itemId);
+    if (!databaseItem) return "Definición del ítem no encontrada.";
+  
+    // 1️⃣ Verificar si es un ítem equipable
+    if (databaseItem.itemType !== ItemType.EQUIPMENT) return "Este ítem no es equipable.";
+  
+    // 2️⃣ Verificar si el personaje cumple el nivel requerido
+    if (this.level < databaseItem.levelRequired) return "Nivel insuficiente para equipar este ítem.";
+  
+    // 3️⃣ Verificar si la posición de equipo es válida
+    if (!databaseItem.equipPositionType) return "El ítem no tiene una posición válida para equiparse.";
+  
+    // Buscar si hay un ítem ya equipado en la misma posición
+    const equippedItem = this._inventory.items.find(i => i.equipped && i.itemId !== itemId && i.itemId !== 0 &&
+      CacheDataService.getItemDefinitionById(i.itemId)?.equipPositionType === databaseItem.equipPositionType);
+  
+    // 4️⃣ Manejo de posiciones dobles
+    let alternativePosition: EquipPositionType | null = null;
+    switch (databaseItem.equipPositionType) {
+      case EquipPositionType.RING1:
+        alternativePosition = EquipPositionType.RING2;
+        break;
+      case EquipPositionType.TRINKET1:
+        alternativePosition = EquipPositionType.TRINKET2;
+        break;
+      case EquipPositionType.MAINHAND:
+        alternativePosition = EquipPositionType.OFFHAND;
+        break;
+    }
+  
+    if (equippedItem) {
+      if (!alternativePosition) {
+        // Si no hay segunda posición, intercambiamos el ítem actual con el equipado
+        equippedItem.equipped = false;
+      } else {
+        // Si la alternativa está vacía, equipamos allí
+        const alternativeEquipped = this._inventory.items.find(i => i.equipped &&
+          CacheDataService.getItemDefinitionById(i.itemId)?.equipPositionType === alternativePosition);
+  
+        if (!alternativeEquipped) {
+          databaseItem.equipPositionType = alternativePosition; // Equipamos en la posición alternativa
+        } else {
+          equippedItem.equipped = false; // Si ambas posiciones están ocupadas, intercambiamos
+        }
+      }
+    }
+  
+    // 5️⃣ Equipar el ítem
+    item.equipped = true;
     CacheDataService.updateInventory(this._id, this._inventory.items);
+    return `Ítem ${databaseItem.name} equipado correctamente.`;
   }
-  unequipItem(itemId: number): void {
-    this._inventory.items = this._inventory.items.map((ci) =>
-      ci.itemId === itemId ? new ItemInstance({ ...ci, equipped: false }) : ci
-    );
+  
+  unequipItem(itemId: number): string {
+    const item = this._inventory.items.find(i => i.itemId === itemId && i.equipped);
+    if (!item) return "El ítem no está equipado.";
+  
+    const databaseItem = CacheDataService.getItemDefinitionById(item.itemId);
+    if (!databaseItem) return "Definición del ítem no encontrada.";
+  
+    // 1️⃣ Verificar si hay espacio en la mochila antes de desequipar
+    const backpackItems = this._inventory.items.filter(i => !i.equipped);
+    if (backpackItems.length >= 30) return "No hay espacio en la mochila para desequipar el ítem.";
+  
+    // 2️⃣ Desequipar
+    item.equipped = false;
     CacheDataService.updateInventory(this._id, this._inventory.items);
+    return `Ítem ${databaseItem.name} desequipado correctamente.`;
   }
+  
 
   //Actividades
   async startActivity(activityType: ActivityType, duration: number): Promise<Activity | null> {
@@ -96,7 +158,14 @@ export class Character {
     this.currentStamina = Math.min(this.totalStamina, this.currentStamina + (rewards.stamina ?? 0) - (rewards.costStamina ?? 0));
     this.currentMana = Math.min(this.totalMana, this.currentMana + (rewards.mana ?? 0) - (rewards.costMana ?? 0));
     this.activities[0].completed = true;
-    return await CacheDataService.deleteActivity(this.activities[0])
+    const result = await CacheDataService.deleteActivity(this.activities[0]);
+    if(result){
+      this.activities=[];
+      return true;
+    }else{
+      return false;
+    }
+    
   }
 
   //Shop
@@ -154,7 +223,6 @@ export class Character {
     return result;
   }
 
-
   calculateUpgradeCost(attributeValue: number): number {
     return 100 + attributeValue * 10;
   }
@@ -183,9 +251,9 @@ export class Character {
     return damage;
   }
 
-  // OUTPUTS AL FRONT
-  wsr():any{
-    return{
+  // OUTPUTS AL FRONTEND
+  wsr(): any {
+    return {
       name: this.name,
       faction: this.faction,
       class: this.class,
@@ -198,13 +266,14 @@ export class Character {
       ...this.wsrLairCost(),
       ...this.wsrActivitiesDuration(),
       ...this.wsrActivities(),
-      ...this.wsrInventory(),
+      ...this.wsrInventory(), // Inventario ajustado a Map<number, Item[]>
       ...this.wsrFriendship(),
-    }
+      lastFight: this.lastFight,
+    };
   }
-  wsrAttributes():any{
+  wsrAttributes(): any {
     return {
-      attributes:{
+      attributes: {
         strength: this.strength,
         endurance: this.endurance,
         constitution: this.constitution,
@@ -214,12 +283,12 @@ export class Character {
         spirit: this.spirit,
         willpower: this.willpower,
         arcane: this.arcane,
-      }
-    }
+      },
+    };
   }
-  wsrAttributesUpgradeCost():any{
+  wsrAttributesUpgradeCost(): any {
     return {
-      attributesUpgradeCost:{
+      attributesUpgradeCost: {
         strength: this.calculateUpgradeCost(this.strength),
         endurance: this.calculateUpgradeCost(this.endurance),
         constitution: this.calculateUpgradeCost(this.constitution),
@@ -229,95 +298,88 @@ export class Character {
         spirit: this.calculateUpgradeCost(this.spirit),
         willpower: this.calculateUpgradeCost(this.willpower),
         arcane: this.calculateUpgradeCost(this.arcane),
-      }
-    }
+      },
+    };
   }
-  wsrStatus():any{
+  wsrStatus(): any {
     return {
-      status:{
+      status: {
         currentHealth: Math.floor(this.currentHealth),
-        totalHealth:Math.floor( this.totalHealth),
+        totalHealth: Math.floor(this.totalHealth),
         currentStamina: Math.floor(this.currentStamina),
         totalStamina: Math.floor(this.totalStamina),
         currentMana: Math.floor(this.currentMana),
         totalMana: Math.floor(this.totalMana),
-      }
-    }
+      },
+    };
   }
-  wsrCurrencies():any{
+  wsrCurrencies(): any {
     return {
-      currencies:{
+      currencies: {
         currentXp: Math.floor(this.currentXp),
         totalXp: Math.floor(this.totalXp),
         currentGold: Math.floor(this.currentGold),
         totalGold: Math.floor(this.totalGold),
         upgradePoints: Math.floor(this.upgradePoints),
-      }
-    }
+      },
+    };
   }
-  wsrLair():any{
-    return{
+  wsrLair(): any {
+    return {
       lair: {
         goldChest: this.goldChest,
-        warehouse : this.warehouse,
-        enviroment : this.enviroment,
-        traps : this.traps
-      }
-    }
+        warehouse: this.warehouse,
+        enviroment: this.enviroment,
+        traps: this.traps,
+      },
+    };
   }
-  wsrLairCost():any{
+  wsrLairCost(): any {
     return {
-      lairCost:{
+      lairCost: {
         goldChest: this.calculateUpgradeCost(this.goldChest),
         warehouse: this.calculateUpgradeCost(this.warehouse),
         enviroment: this.calculateUpgradeCost(this.enviroment),
         traps: this.calculateUpgradeCost(this.traps),
-      }
-    }
+      },
+    };
   }
   wsrActivitiesDuration(): any {
-    const maxActivityDuration = {
-      [ActivityType.EXPLORE] : Math.floor(this.exploracionMaxDuration()),
-      [ActivityType.HEAL] : Math.floor(this.sanarMaxDuration()),
-      [ActivityType.REST] : Math.floor(this.descansarMaxDuration()),
-      [ActivityType.MEDITATE] : Math.floor(this.meditarMaxDuration()),
-    };
-  
     return {
-      maxActivityDuration:maxActivityDuration,
+      maxActivityDuration: {
+        [ActivityType.EXPLORE]: Math.floor(this.exploracionMaxDuration()),
+        [ActivityType.HEAL]: Math.floor(this.sanarMaxDuration()),
+        [ActivityType.REST]: Math.floor(this.descansarMaxDuration()),
+        [ActivityType.MEDITATE]: Math.floor(this.meditarMaxDuration()),
+      },
     };
   }
   wsrActivities(): any {
-    return this.activities[0]?.wsr() || {};
+    return this.activities[0]?.wsr() || { activity: null };
   }
   wsrInventory():any{
     return this.inventory.wsr()
   }
-  wsrFriendship():any{
+  wsrFriendship(): any {
     return {
-      friendships:{
-        friends: this.friendships.filter(
-            friendship=>friendship.active==true
-            ).map(
-              friendship=>{
-                const friendId = friendship.idUser1 == this.userId ? friendship.idUser2 : friendship.idUser1;
-                const name = CacheDataService.getUserById(friendId)?.username;
-                if(!friendId && !name){return;}
-                return { id:friendId , name : name }
-                }),
-        request: this.friendships.filter(
-          friendship=>friendship.active==false
-          ).map(
-            friendship=>{
-              const friendId = friendship.idUser1 == this.userId ? friendship.idUser2 : friendship.idUser1;
-              const name = CacheDataService.getUserById(friendId)?.username;
-              if(!friendId && !name){return;}
-              return { id:friendId , name : name }
-              }),
-      }
-    }
+      friendships: {
+        friends: this.friendships
+          .filter(friendship => friendship.active)
+          .map(friendship => {
+            const friendId = friendship.idUser1 === this.userId ? friendship.idUser2 : friendship.idUser1;
+            const name = CacheDataService.getUserById(friendId)?.username || "Desconocido";
+            return { id: friendId, name };
+          }),
+        request: this.friendships
+          .filter(friendship => !friendship.active)
+          .map(friendship => {
+            const friendId = friendship.idUser1 === this.userId ? friendship.idUser2 : friendship.idUser1;
+            const name = CacheDataService.getUserById(friendId)?.username || "Desconocido";
+            return { id: friendId, name };
+          }),
+      },
+    };
   }
-
 
   exploracionMaxDuration(){ return this.currentStamina }
   sanarMaxDuration(){ return (this.totalHealth-this.currentHealth)*1 }
