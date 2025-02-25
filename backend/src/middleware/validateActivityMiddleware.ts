@@ -7,7 +7,6 @@ export const validateActivityMiddleware = (
   res: Response,
   next: NextFunction
 ): void => {
-  // Obtener el activityType desde req.body o req.params según el método
   const activityType: number = +(req.body?.activityType || req.params?.activityType);
 
   if (!isActivity(activityType)) {

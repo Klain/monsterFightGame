@@ -2,8 +2,10 @@
 import NodeCache from "node-cache";
 import jwt from "jsonwebtoken";
 
+export const SESSION_STDTTL = 604800;
+
 const sessionCache = new NodeCache({
-  stdTTL: 604800, 
+  stdTTL: SESSION_STDTTL, 
   checkperiod: 3600,
 });
 export const registerSession = (userId: number, refreshToken: string): void => {
@@ -27,9 +29,9 @@ export const logoutUser = (userId: number): void => {
     throw new Error("No se pudo cerrar la sesión.");
   }
 };
-export const isSessionValid = async (userId: number, token: string): Promise<boolean> => {
+export const isSessionValid = async (userId: number, accessToken: string): Promise<boolean> => {
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_SECRET!) as jwt.JwtPayload;
+    const decoded = jwt.verify(accessToken, process.env.ACCESS_SECRET!) as jwt.JwtPayload;
     return decoded.id === userId;
   } catch (error) {
     console.error("❌ [SessionManager] Error al validar la sesión:", error);

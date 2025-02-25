@@ -27,7 +27,6 @@ export class AuthService {
     return this.authStateSubject.getValue();
   }
 
-  // Iniciar sesión
   login(username: string, password: string): Observable<any> {
     return this.api.post('auth/login', { username, password }).pipe(
       tap((response: any) => {
@@ -39,21 +38,19 @@ export class AuthService {
     );
   }
 
-  // Registro
   register(username: string, password: string): Observable<any> {
     return this.api.post('auth/register', { username, password }).pipe(
       catchError(this.handleAuthError.bind(this))
     );
   }
 
-  // Cerrar sesión
   logout(): void {
     this.tokenService.clearTokens();
     this.updateAuthState(false);
+    this.refreshTimer$ = undefined; 
     this.router.navigate(['/auth/login']);
   }
 
-  // Renovar el token automáticamente antes de que expire
   refreshToken(): Observable<string> {
     const refreshToken = this.tokenService.getRefreshToken();
     if (!refreshToken) {
@@ -94,6 +91,10 @@ export class AuthService {
 
   // Iniciar temporizador para renovar el token antes de que expire
   private startTokenRefreshTimer(): void {
+    if (this.refreshTimer$) {
+      console.warn("⏳ Cancelando temporizador previo de renovación.");
+      this.refreshTimer$ = undefined;
+    }
     const expiration = this.tokenService.getTokenExpiration();
     if (!expiration) return;
   

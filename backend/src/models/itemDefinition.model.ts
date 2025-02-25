@@ -1,4 +1,6 @@
 import { EquipPositionType, EquipType, ItemType, EffectType } from "../constants/enums";
+import { Effect } from "./effect.model";
+import { ItemEffect } from "./itemEffect.model";
 
 export class ItemDefinition {
   id: number = 0;
@@ -8,7 +10,7 @@ export class ItemDefinition {
   equipPositionType?: EquipPositionType;
   levelRequired: number = 1;
   price: number = 0;
-  effects: Record<string, number> = {}; // Almacenará { "STRENGTH": 10, "AGILITY": 5, ... }
+  effects : {effectId:number , value:number}[] = []
 
   constructor(data: Partial<ItemDefinition>) {
     Object.assign(this, data);

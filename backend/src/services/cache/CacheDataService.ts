@@ -2,7 +2,6 @@ import DatabaseService from "../database/databaseService";
 import { Character } from "../../models/character.model";
 import { ItemDefinition } from "../../models/itemDefinition.model";
 import { Activity } from "../../models/activity.model";
-import { BattleLog } from "../../models/battleLog.model";
 import { ItemEffect } from "../../models/itemEffect.model";
 import { Effect } from "../../models/effect.model";
 import { ItemInstance } from "../../models/itemInstance.model";
@@ -13,10 +12,9 @@ import { Friendship } from "../../models/friendship.model";
 
 class CacheDataService {
   static cacheActivities: Map<number, Activity[]> = new Map();
-  static cacheBattleLogs: Map<number, BattleLog[]> = new Map();
   static cacheCharacters: Map<number, Character> = new Map();
-  static cacheFriendships: Map<number, Friendship[]> = new Map();
   static cacheUserCharacter : Map<number, number> = new Map();
+  static cacheFriendships: Map<number, Friendship[]> = new Map();
   static cacheEffects: Map<number, Effect> = new Map();
   static cacheItemDefinitions: Map<number, ItemDefinition> = new Map();
   static cacheInventories: Map<number, ItemInstance[]> = new Map();
@@ -25,7 +23,6 @@ class CacheDataService {
   static cacheUsers: Map<number, User> = new Map();
 
   static pendingActivities: Set<number> = new Set();
-  static pendingBattleLogs: Set<number> = new Set();
   static pendingCharacters: Set<number> = new Set();
   static pendingEffects: Set<number> = new Set();
   static pendingItemDefinitions: Set<number> = new Set();
@@ -58,9 +55,11 @@ class CacheDataService {
       console.log(`📨 Se encontraron ${dbMessages.length} mensajes.`);
 
       // Cargar datos en caché
-      dbItemsDefinitions.forEach(itemDefinition=>{
+      for ( const itemDefinition of dbItemsDefinitions){
+        const effects = await DatabaseService.getEffectsByItemId(itemDefinition.id);
+        itemDefinition.effects = effects.map(effect => ({ effectId: effect.effectId, value: effect.value }));
         this.cacheItemDefinitions.set(itemDefinition.id,itemDefinition);
-      });
+      }
       dbUsers.forEach(user=>{
         this.cacheUsers.set(user.id,user);
       });
@@ -138,49 +137,6 @@ class CacheDataService {
     );
     return result;
   }
-  
-  // ✅ BATTLE LOG CACHE MANAGEMENT
-  static getBattleLogById(battleId: number): BattleLog | null {
-    for (const battles of this.cacheBattleLogs.values()) {
-      const battle = battles.find(b => b.id === battleId);
-      if (battle) return battle;
-    }
-    return null;
-  }
-  static getBattleLogsByCharacterId(characterId: number): BattleLog[] {
-    return this.cacheBattleLogs.get(characterId) || [];
-  }
-  static async createBattleLog(battle: BattleLog): Promise<BattleLog> {
-    const newBattleLogId = await DatabaseService.createBattleLog(battle);
-    const newBattleLog = (await DatabaseService.getBattleLogsByCharacterId(battle.attackerId)).filter(battleLog=>battleLog.id==newBattleLogId)[0];
-    if (!newBattleLog) {throw new Error("Error durante la creacion de BattleLog")}
-    const battleLogs = this.cacheBattleLogs.get(battle.attackerId) ?? [];
-    battleLogs.push(newBattleLog);
-    this.cacheBattleLogs.set(battle.attackerId, battleLogs);
-    return newBattleLog;
-
-  }
-  static updateBattleLog(updatedBattle: BattleLog): void {
-    const battleLogs = this.cacheBattleLogs.get(updatedBattle.attackerId);
-    if (!battleLogs) return;
-    const index = battleLogs.findIndex(a => a.id === updatedBattle.id);
-    if (index === -1) return;
-    battleLogs[index] = updatedBattle;
-    this.cacheBattleLogs.set(updatedBattle.attackerId, battleLogs); 
-    this.pendingBattleLogs.add(updatedBattle.attackerId);
-  }
-  static async deleteBattleLog(battle: BattleLog): Promise<boolean> {
-    const result = await DatabaseService.deleteBattleLog(battle.id)
-    if(!result){throw new Error("Error durante la eliminacion del BattleLog")}
-    const battleLogs = this.cacheBattleLogs.get(battle.attackerId);
-    if (!battleLogs) return false;
-    this.cacheBattleLogs.set(
-      battle.attackerId,
-      battleLogs.filter(a => a.id !== battle.id)
-    );
-    return result;   
-  }
- 
   // ✅ CHARACTER CACHE MANAGEMENT
   static getCharacterById(characterId: number): Character | null {
     return this.cacheCharacters.get(characterId) || null;
@@ -194,10 +150,24 @@ class CacheDataService {
     return Array.from(this.cacheCharacters.values());
   }
   static async createCharacter(character: Character): Promise<void> {
-    const newCharacter = await DatabaseService.createCharacter(character);
-    if(newCharacter){
-      this.cacheCharacters.set(newCharacter.id, newCharacter);
-      this.cacheUserCharacter.set(newCharacter.userId,newCharacter.id)
+    const newCharacterId = await DatabaseService.createCharacter(character);
+    character.id = newCharacterId;
+    const newCharacterItems = character.inventory?.items || [];
+    for(let item of newCharacterItems){
+      await DatabaseService.createItemInstance(item);
+      
+    }
+    const newCharacterActivities = character.activities || [];
+    for(let activity of newCharacterActivities){
+      await DatabaseService.createActivity(activity);
+    }
+    const newCharacterFriendships = character.friendships || [];
+    for(let friendship of newCharacterFriendships){
+      await DatabaseService.createFriendship(friendship);
+    }
+    if(newCharacterId){
+      this.cacheCharacters.set(character.id, character);
+      this.cacheUserCharacter.set(character.userId,character.id)
     }
   }
   static updateCharacter(updatedCharacter: Character): void {
@@ -222,30 +192,12 @@ class CacheDataService {
   static getAllEffects(): Effect[] {
     return Array.from(this.cacheEffects.values());
   }
-  static async createEffect(effect: Effect): Promise<Effect> {
-    const newEffectId = await DatabaseService.createEffect(effect);
-    const newEffect =  await DatabaseService.getEffectById(newEffectId);
-    if(!newEffect){ throw new Error ("Error durante la creacion de Effect:"); }
-    this.cacheEffects.set(newEffect.id, newEffect);
-    return newEffect;
-  }
-  static updateEffect(updatedEffect: Effect): void {
-    if (this.cacheEffects.has(updatedEffect.id)) {
-      this.cacheEffects.set(updatedEffect.id, updatedEffect);
-      this.pendingEffects.add(updatedEffect.id);
-    }
-  }
-  static async deleteEffect(effectId: number): Promise<boolean> {
-    const result = await DatabaseService.deleteEffect(effectId);
-    if(!result){throw new Error("Error durante la eliminacion del Efecto")}
-    this.cacheEffects.delete(effectId);
-    return result;
-  }
 
   // ✅ FRIENDSHIP CACHE MANAGEMENT
   static async createFriendship(friendship: Friendship): Promise<boolean> {
-    const result = await DatabaseService.createFriendship(friendship);
-    if (!result) {throw new Error("Error durante la creacion de la solicitud de amistad")}
+    const newFriendshipId = await DatabaseService.createFriendship(friendship);
+    friendship.id=newFriendshipId;
+    if (!newFriendshipId) {throw new Error("Error durante la creacion de la solicitud de amistad")}
     const user1Friendships = this.cacheFriendships.get(friendship.idUser1) ?? [];
     user1Friendships.push(friendship);
     this.cacheFriendships.set(friendship.idUser1, user1Friendships);
@@ -292,23 +244,6 @@ class CacheDataService {
   static getAllItemDefinitions(): ItemDefinition[] {
     return Array.from(this.cacheItemDefinitions.values());
   }
-  static async createItemDefinition(item: ItemDefinition): Promise<ItemDefinition> {
-    const itemDefinitionId = await DatabaseService.createItemDefinition(item);
-    const itemDefinition = await  DatabaseService.getItemDefinitionById(itemDefinitionId);
-    if(!itemDefinition){throw new Error("Error al crear el itemDefinition")}
-    this.cacheItemDefinitions.set(itemDefinition.id, itemDefinition);
-    return itemDefinition;
-  }
-  static updateItemDefinition(updatedItem: ItemDefinition): void {
-    this.cacheItemDefinitions.set(updatedItem.id, updatedItem);
-    this.pendingItemDefinitions.add(updatedItem.id);
-  }
-  static async deleteItemDefinition(itemId: number): Promise<boolean> {
-    const result = await DatabaseService.deleteItemDefinition(itemId);
-    if(!result){throw new Error("Error durante la eliminacion del ItemDefinition")}
-    this.cacheItemDefinitions.delete(itemId);
-    return result;
-  }
 
   // ✅ ITEM INSTANCES CACHE MANAGEMENT
   static getItemInstanceById(instanceId: number): ItemInstance | null {
@@ -325,7 +260,7 @@ class CacheDataService {
     const newItemInstanceId = await DatabaseService.createItemInstance(itemInstance);
     const newItemInstance = await DatabaseService.getItemInstanceById(newItemInstanceId);
     if (!newItemInstance) {throw new Error("Error durante la creacion del ItemInstance")}
-    this.cacheCharacters.get(itemInstance.characterId)?.inventory.items.push(itemInstance);
+    this.cacheCharacters.get(itemInstance.characterId)?.inventory.items.push(newItemInstance);
     return newItemInstance;
   }
   static updateItemInstance(updatedInstance: ItemInstance): void {
@@ -356,26 +291,6 @@ class CacheDataService {
   // ITEM EFFECTS CACHE MANAGEMENT
   static getEffectsByItemId(itemId: number): ItemEffect[] {
     return this.cacheItemEffects.get(itemId) || [];
-  }
-  static addEffectToItem(itemEffect: ItemEffect): void {
-    if (!this.cacheItemEffects.has(itemEffect.itemId)) {
-      this.cacheItemEffects.set(itemEffect.itemId, []);
-    }
-    this.cacheItemEffects.get(itemEffect.itemId)!.push(itemEffect);
-    this.pendingItemEffects.add(itemEffect.itemId);
-  }
-  static removeEffectFromItem(itemEffect:ItemEffect): void {
-    if (this.cacheItemEffects.has(itemEffect.itemId)) {
-      this.cacheItemEffects.set(
-        itemEffect.itemId,
-        this.cacheItemEffects.get(itemEffect.itemId)!.filter(effect => effect.effectId !== itemEffect.effectId)
-      );
-      this.pendingItemEffects.add(itemEffect.itemId);
-    }
-  }
-  static removeAllEffectsFromItem(itemId: number): void {
-    this.cacheItemEffects.delete(itemId);
-    this.pendingItemEffects.add(itemId);
   }
 
   // ✅ MESSAGE CACHE MANAGEMENT
@@ -446,8 +361,8 @@ class CacheDataService {
   }
   static updateUser(updatedUser: User):void {
     if (this.cacheUsers.has(updatedUser.id)) {
-      const existingCharacter = this.cacheUsers.get(updatedUser.id)!;
-      const updated = new User({ ...existingCharacter, ...updatedUser });
+      const existingUser = this.cacheUsers.get(updatedUser.id)!;
+      const updated = new User({ ...existingUser, ...updatedUser });
       this.cacheUsers.set(updatedUser.id, updated);
       this.pendingUsers.add(updatedUser.id);
     }
@@ -462,7 +377,6 @@ class CacheDataService {
 
   static syncLog():boolean{
     let changes = {
-      pendingBattleLogs: this.pendingBattleLogs.size,
       pendingCharacters: this.pendingCharacters.size,
       pendingMessages: this.pendingMessages.size,
       pendingUsers: this.pendingUsers.size
@@ -487,17 +401,6 @@ class CacheDataService {
   static async syncPendingUpdates(): Promise<void> {
     try {
       if (!this.syncLog()) return;
-
-      // Procesar batallas
-      await Promise.all(
-        Array.from(this.pendingBattleLogs.values()).map(async (pendingBattleLog) => {
-          const battleLogs = this.cacheBattleLogs.get(pendingBattleLog);
-          if (battleLogs) {
-            await Promise.all(battleLogs.map(battleLog => DatabaseService.updateBattleLog(battleLog)));
-          }
-        })
-      );
-
       // Procesar personajes
       await Promise.all(
         Array.from(this.pendingCharacters.values()).map(async (pendingCharacterId) => {
@@ -515,7 +418,6 @@ class CacheDataService {
           }
         })
       );
-
       // Procesar mensajes
       await Promise.all(
         Array.from(this.pendingMessages.values()).map(async (pendingMessageId) => {
@@ -529,7 +431,6 @@ class CacheDataService {
           }
         })
       );
-
       // Procesar usuarios
       await Promise.all(
         Array.from(this.pendingUsers.values()).map(async (pendingUserId) => {
@@ -545,7 +446,6 @@ class CacheDataService {
       );
 
       // Limpiar listas de pendientes
-      this.pendingBattleLogs.clear();
       this.pendingCharacters.clear();
       this.pendingMessages.clear();
       this.pendingUsers.clear();

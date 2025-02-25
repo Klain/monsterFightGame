@@ -38,16 +38,15 @@ export class LoginComponent {
 
   login() {
     if (this.isLoading) return;
-
     this.isLoading = true;
 
     this.authService.login(this.username, this.password).subscribe({
-      next: (response: { token: string; }) => {
-        localStorage.setItem('token', response.token);
+      next: () => {
         this.showToast('Inicio de sesión exitoso!', 'success');
         this.router.navigate(['/game']);
       },
-      error: (error: { error: { message: string; }; }) => {
+      error: (error:any) => {
+        this.isLoading = false;
         this.errorMessage = error.error?.message || 'Error al iniciar sesión';
         this.showToast(this.errorMessage, 'error');
       },

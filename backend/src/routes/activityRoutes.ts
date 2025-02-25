@@ -1,11 +1,10 @@
-import express, { Request, response, Response } from "express";
+import express, { Request, Response } from "express";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateActivityMiddleware } from "../middleware/validateActivityMiddleware";
 import webSocketService from "../services/webSocketService";
 import { ActivityType } from "../constants/enums";
 import { Character } from "../models/character.model";
-import CacheDataService from "../services/cache/CacheDataService";
 
 const router = express.Router();
 

@@ -2,8 +2,6 @@ import CacheDataService from "./cache/CacheDataService";
 import { Character } from "../models/character.model";
 import { Message } from "../models/message.model";
 import ServerConfig from "../constants/serverConfig";
-import { BattleLog } from "../models/battleLog.model";
-
 
 class CombatService {
   static getOpponentList(character: Character, range: number = 5): Character[] {
@@ -237,18 +235,7 @@ class CombatService {
       attacker.sendMessage(attackerMessage);
       defender.sendMessage(defenderMessage);
       console.log(`✅ Mensajes enviados a ${attacker.name} y ${defender.name}`);
-  
-      CacheDataService.createBattleLog(new BattleLog({
-        attackerId: attacker.id,
-        defenderId: defender.id,
-        winnerId: winner?.id??0,
-        goldWon: goldWon,
-        xpWon: xpWon,
-        lastAttack:new Date(),
-      }))
-
-      console.log("✅ Registro guardado en la base de datos.");
-    } catch (error) {
+      } catch (error) {
       console.error("❌ Error al guardar registro:", error);
       throw new Error("Error al guardar el registro.");
     }

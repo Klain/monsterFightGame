@@ -11,11 +11,9 @@ import { User } from "../models/user.model";
 
 const router = express.Router();
 
-// Ruta: Registro
 router.post("/register", async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
-    // Validación de entrada
     if (!username || !password) {
       res.status(400).json({ error: "Todos los campos son obligatorios." });
       return;
@@ -42,7 +40,6 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Ruta: Inicio de sesión
 router.post("/login", async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
@@ -59,6 +56,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     const accessToken = jwt.sign({ id: user.id, username: user.username }, process.env.ACCESS_SECRET!, { expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET!, { expiresIn: "7d" });
     registerSession(user.id, refreshToken);
+
     res.json({ accessToken, refreshToken });
   } catch (error) {
     console.error("Error en el inicio de sesión:", error);
@@ -66,7 +64,6 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Ruta: Cerrar sesión
 router.post("/logout", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.locals.user?.id || 0;

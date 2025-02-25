@@ -1,5 +1,4 @@
 import ActivityService, { dbActivity } from "./activity.service";
-import BattleLogService, { dbBattleLog } from "./battleLog.service";
 import CharacterService, { dbCharacter } from "./character.service";
 import FriendshipService, { dbFriendship } from "./friendhip.service";
 import EffectService,{dbEffect} from "./effect.service";
@@ -10,7 +9,6 @@ import MessageService,{dbMessage} from "./message.service";
 import UserService, {dbUser} from "./user.services";
 
 import { Activity } from "../../models/activity.model";
-import { BattleLog } from "../../models/battleLog.model";
 import { Character } from "../../models/character.model";
 import { ItemEffect } from "../../models/itemEffect.model"; 
 import { Effect } from "../../models/effect.model"; 
@@ -58,43 +56,9 @@ class DatabaseService {
   static async deleteActivity(activityId: number): Promise<boolean> {
     return ActivityService.deleteActivity(activityId);
   }
-
-  // BATTLE LOGS ✅ 
-  static async createBattleLog(battle: BattleLog): Promise<number> {
-    return BattleLogService.createBattle({
-      attacker_id: battle.attackerId,
-      defender_id: battle.defenderId,
-      winner_id: battle.winnerId,
-      gold_won: battle.goldWon,
-      xp_won: battle.xpWon,
-      last_attack: battle.lastAttack.toISOString(),
-    });
-  }
-  static async getBattleLogById(battleId: number): Promise<BattleLog | null> {
-    const dbBattle = await BattleLogService.getBattleById(battleId);
-    return dbBattle ? this.mapDbBattleLog(dbBattle) : null;
-  }
-  static async getBattleLogsByCharacterId(characterId: number): Promise<BattleLog[]> {
-    const dbBattles = await BattleLogService.getBattlesByCharacterId(characterId);
-    return dbBattles.map(this.mapDbBattleLog);
-  }
-  static async updateBattleLog(updatedBattle: BattleLog): Promise<boolean> {
-    return BattleLogService.updateBattle({
-      attacker_id: updatedBattle.attackerId!,
-      defender_id: updatedBattle.defenderId!,
-      winner_id: updatedBattle.winnerId!,
-      gold_won: updatedBattle.goldWon!,
-      xp_won: updatedBattle.xpWon!,
-      last_attack: updatedBattle.lastAttack!.toISOString(),
-    });
-  }
-  static async deleteBattleLog(battleId: number): Promise<boolean> {
-    return BattleLogService.deleteBattle(battleId);
-  }
-
   // ✅ CHARACTERS
-  static async createCharacter(character: Character): Promise<Character | null> {
-    const lastId = await CharacterService.createCharacter({
+  static async createCharacter(character: Character): Promise<number> {
+    return CharacterService.createCharacter({
       id : character.id,
       userId: character.userId!,
       name: character.name!,
@@ -127,7 +91,6 @@ class DatabaseService {
       upgradePoints: character.upgradePoints!,
       lastFight: character.lastFight || undefined
     });
-    return await this.getCharacterById(lastId);
   }
   static async getCharacterById(characterId: number): Promise<Character | null> {
     const dbCharacter = await CharacterService.getCharacterById(characterId);
@@ -403,17 +366,6 @@ class DatabaseService {
       completed: dbActivity.completed,
     });
   }
-  private static mapDbBattleLog(dbBattle: dbBattleLog): BattleLog {
-    return new BattleLog({
-      id: dbBattle.id!,
-      attackerId: dbBattle.attacker_id,
-      defenderId: dbBattle.defender_id,
-      winnerId: dbBattle.winner_id,
-      goldWon: dbBattle.gold_won,
-      xpWon: dbBattle.xp_won,
-      lastAttack: new Date(dbBattle.last_attack),
-    });
-  }
   private static mapDbCharacter(dbCharacter: dbCharacter): Character {
     return new Character({
       _id: dbCharacter.id,
@@ -461,8 +413,6 @@ class DatabaseService {
       active: dbFriendship.active,
     });
   }
-      
-  
   private static mapDbEffect(dbEffect: dbEffect): Effect {
     return new Effect({
       id: dbEffect.id!,
@@ -485,7 +435,7 @@ class DatabaseService {
       equipPositionType: dbItem.equipPositionType ?? undefined,
       levelRequired: dbItem.levelRequired,
       price: dbItem.price,
-      effects: {}, // Se inicializa vacío, ya que los efectos provienen de otra tabla
+      effects: [], // Se inicializa vacío, ya que los efectos provienen de otra tabla
     });
   }
   private static mapDbItemInstance(dbInstance: dbItemInstance): ItemInstance {

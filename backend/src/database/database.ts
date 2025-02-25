@@ -27,6 +27,20 @@ function runTables(): Promise<void> {
   console.log("🛠 Creando tablas...");
   return new Promise((resolve, reject) => {
     db.serialize(() => {
+      db.run("DROP TABLE IF EXISTS activities;");  
+      db.run(`
+      CREATE TABLE IF NOT EXISTS activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        character_id INTEGER NOT NULL,
+        type INTEGER NOT NULL,
+        start_time TIMESTAMP NOT NULL,
+        duration INTEGER NOT NULL,
+        completed BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+        )
+      `);
+
+
       //db.run("DROP TABLE IF EXISTS users;");
       db.run(`
         CREATE TABLE IF NOT EXISTS users (
@@ -115,60 +129,35 @@ function runTables(): Promise<void> {
           PRIMARY KEY (item_id, effect_id)
         )
       `);
-      db.run("DROP TABLE IF EXISTS activities;");  
+      db.run("DROP TABLE IF EXISTS messages;");  
       db.run(`
-      CREATE TABLE IF NOT EXISTS activities (
+        CREATE TABLE IF NOT EXISTS messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sender_id INTEGER NOT NULL,
+          sender_name TEXT NOT NULL,
+          receiver_id INTEGER NOT NULL,
+          receiver_name TEXT NOT NULL,
+          subject TEXT NOT NULL,
+          body TEXT NOT NULL,
+          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          read BOOLEAN DEFAULT FALSE,
+          FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `);
+      db.run("DROP TABLE IF EXISTS friendship;");  
+      db.run(`
+        CREATE TABLE IF NOT EXISTS friendship (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        character_id INTEGER NOT NULL,
-        type INTEGER NOT NULL,
-        start_time TIMESTAMP NOT NULL,
-        duration INTEGER NOT NULL,
-        completed BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
-      )
-    `);
-    db.run("DROP TABLE IF EXISTS battle_logs;");  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS battle_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        attacker_id INTEGER NOT NULL,
-        defender_id INTEGER NOT NULL,
-        winner_id INTEGER NOT NULL,
-        gold_won INTEGER,
-        xp_won INTEGER,
-        last_attack TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (attacker_id) REFERENCES characters(id),
-        FOREIGN KEY (defender_id) REFERENCES characters(id),
-        FOREIGN KEY (winner_id) REFERENCES characters(id)
-      )
-    `);
-    db.run("DROP TABLE IF EXISTS messages;");  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER NOT NULL,
-        sender_name TEXT NOT NULL,
-        receiver_id INTEGER NOT NULL,
-        receiver_name TEXT NOT NULL,
-        subject TEXT NOT NULL,
-        body TEXT NOT NULL,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        read BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
-      )`, resolve);
-    });
-    db.run("DROP TABLE IF EXISTS friendship;");  
-    db.run(`
-      CREATE TABLE IF NOT EXISTS friendship (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id_1 INTEGER NOT NULL,
-      user_id_2 INTEGER NOT NULL,
-      active INTEGER DEFAULT 0,
-      FOREIGN KEY (user_id_1) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id_2) REFERENCES users(id) ON DELETE CASCADE
-      )
-  `);
+        user_id_1 INTEGER NOT NULL,
+        user_id_2 INTEGER NOT NULL,
+        active INTEGER DEFAULT 0,
+        FOREIGN KEY (user_id_1) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id_2) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `, resolve);
+      });
+
   });
 }
 function populateEffects(): Promise<void> {
