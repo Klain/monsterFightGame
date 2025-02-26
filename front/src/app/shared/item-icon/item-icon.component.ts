@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ItemIconTooltipComponent } from '../Item-icon-tooltip/item-icon-tooltip.component';
 import { Item } from '../../core/models/character.models';
 import { formatMoney } from '../../core/pipes/format-money';
-import { EquipType } from '../../core/constants/enums';
+import { EquipPositionType, EquipType } from '../../core/constants/enums';
 
 @Component({
   selector: 'ItemIcon',
@@ -58,12 +58,31 @@ export class ItemIconComponent implements OnInit , OnChanges  {
   }
 
   get itemIcon(): string {
-    if(this.item){
-      return 'assets/drawable/ui/icons/weapon/icon_weapon_gunpowder.png';
-    }else{
+    if (!this.item || !this.item.equipPositionType) {
       return 'assets/drawable/icon_empty.png';
     }
+    const iconBasePath = 'assets/drawable/ui/icons/';
+      const equipIcons: Record<number, string> = {
+      [EquipPositionType.HEAD]: 'armor/icon_armor_leather_head.png',
+      [EquipPositionType.CHEST]: 'armor/icon_armor_leather_chest.png',
+      [EquipPositionType.SHOULDER]: 'armor/icon_armor_leather_shoulders.png',
+      [EquipPositionType.WRIST]: 'armor/icon_armor_leather_wrist.png',
+      [EquipPositionType.LEGS]: 'armor/icon_armor_leather_legs.png',
+      [EquipPositionType.NECKLACE]: 'armor/icon_armor_amulet.png',
+      [EquipPositionType.RING1]: 'armor/icon_armor_ring.png',
+      [EquipPositionType.RING2]: 'armor/icon_armor_ring.png', 
+      [EquipPositionType.HANDS]: 'armor/icon_armor_leather_hands.png',
+      [EquipPositionType.WAIST]: 'armor/icon_armor_leather_waist.png',
+      [EquipPositionType.FEET]: 'armor/icon_armor_leather_feets.png',
+      [EquipPositionType.BACK]: 'armor/icon_armor_leather_cloak.png',
+      [EquipPositionType.TRINKET1]: 'armor/icon_armor_trinket.png',
+      [EquipPositionType.TRINKET2]: 'armor/icon_armor_trinket.png',
+      [EquipPositionType.MAINHAND]: 'weapon/icon_weapon_axe.png', 
+      [EquipPositionType.OFFHAND]: 'weapon/icon_weapon_axe.png', 
+    };
+    return `${iconBasePath}${equipIcons[this.item.equipPositionType] || 'icon_empty.png'}`;
   }
+  
   get frameIcon(): string {
     return 'assets/drawable/ui/icons/frames/icon_frame_1.png';
   }

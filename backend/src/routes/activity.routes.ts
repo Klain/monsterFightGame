@@ -3,8 +3,8 @@ import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateActivityMiddleware } from "../middleware/validateActivityMiddleware";
 import webSocketService from "../services/webSocketService";
-import { ActivityType } from "../constants/enums";
 import { Character } from "../models/character.model";
+import { CharacterService } from "../services/character.service";
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.post( "/start", authMiddleware, validateCharacterMiddleware, validateActi
         res.status(400).json({ error: `Duración inválida. Máximo permitido: ${maxDuration} minutos.` });
         return;
       }
-      const activity = await character.startActivity(activityType, duration);
+      const activity = await CharacterService.startActivity(character, activityType, duration);
       if(!activity){res.status(500).json({ error: `Error al iniciar la actividad` }); }
       webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);
@@ -37,7 +37,6 @@ router.post( "/start", authMiddleware, validateCharacterMiddleware, validateActi
     }
   }
 );
-
 router.post( "/claim", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = req.locals.user!.id;
@@ -45,15 +44,14 @@ router.post( "/claim", authMiddleware, validateCharacterMiddleware, async (req: 
       if (!character.getActivityStatus()) {
         res.status(404).json({ error: "No hay actividad en curso." });
       }
-      if (character.getActivityStatus()!.getRemainingTime() > 0) {
+      if (character.getActivityStatus()!.isComplete()) {
         res.status(404).json({ error: "La actividad aún no está completada." });
       }
-      const result = await character.claimActivityReward();
+      const result = await CharacterService.claimActivityReward(character);
       if(!result){ 
         res.status(500).json({ error: "Error interno." });
         return;
       }
-      const activity = character.getActivityStatus();
       webSocketService.characterRefresh(userId,{...character.wsr()});
       res.status(200);
     } catch (error) {

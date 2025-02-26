@@ -1,12 +1,12 @@
 export class Message {
-	id: number = 0;
-	senderId: number = 0;
-	senderName: string = "";
-	receiverId: number = 0;
-	receiverName: string = "";
-	subject: string = "";
-	body: string = "";
-	timestamp: Date = new Date();
+	readonly id: number = 0;
+	readonly senderId: number = 0;
+	readonly senderName: string = "";
+	readonly receiverId: number = 0;
+	readonly receiverName: string = "";
+	readonly subject: string = "";
+	readonly body: string = "";
+	readonly timestamp: Date = new Date();
 	read: boolean = false;
   
 	constructor(data: Partial<Message>) {

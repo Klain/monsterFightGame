@@ -13,7 +13,6 @@ const router = express.Router();
 router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessageMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { receiver_id } = req.body;
-    const userId = req.locals.user?.id || 0;
     const sender : Character = req.locals.character;
     const { subject , body } = req.locals.message!;
 
@@ -26,7 +25,6 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
       res.status(404).json({ error: "Destinatario no encontrado." });
       return;
     }
-
     const newMessage : Message = new Message({
       id: 0,
       senderId: sender.id,
@@ -38,10 +36,10 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
       timestamp: new Date(),
       read: false
     });
+    CacheDataService.createMessage(newMessage);
 
-    sender.sendMessage(newMessage);
-
-    if( receiver.id != sender.id){webSocketService.characterNewMessageSend(sender.userId,{
+    if( receiver.id != sender.id){
+      webSocketService.characterNewMessageSend(sender.userId,{
       ...newMessage.wsr()
     });}
     webSocketService.characterNewMessageRecived(receiver.userId,{

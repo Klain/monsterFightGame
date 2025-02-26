@@ -4,9 +4,11 @@ import { RouterModule } from '@angular/router';
 import { CharacterAttributesComponent } from "../../shared/character-attributes/character-attributes.component";
 import { CharacterService } from "../../core/services/character.service";
 import { Observable } from "rxjs";
-import { Character } from "../../core/models/character.models";
+import { Character, Item } from "../../core/models/character.models";
 import { ItemGridComponent } from "../../shared/item-grid/item-grid.component";
 import { ItemEquipmentComponent } from "../../shared/item-equipment/item-equipment.component";
+import { InventoryService } from "src/app/core/services/inventory.service";
+import { unidades } from "src/app/shared/utils";
 
 @Component({
   selector: "app-character",
@@ -24,9 +26,11 @@ import { ItemEquipmentComponent } from "../../shared/item-equipment/item-equipme
 export class CharacterComponent {
   character$: Observable<Character | null>;
   character!:Character;
+  unidades=unidades;
 
   constructor(
-    private characterService : CharacterService
+    private characterService : CharacterService,
+    private inventoryService : InventoryService,
   ){
     this.character$ = this.characterService.character$;
     this.character$.subscribe({
@@ -39,4 +43,15 @@ export class CharacterComponent {
     });
   }
 
+  equipItem = (item: Item, position: number): void => {
+    if (item && this.character) {
+      this.inventoryService.equipItem(item.id ?? 0).subscribe();
+    }
+  };
+  
+  unequipItem = (item: Item, position: number): void => {
+      if (item && this.character) {
+          this.inventoryService.unequipItem(item.id ?? 0).subscribe();
+      }
+  };
 }

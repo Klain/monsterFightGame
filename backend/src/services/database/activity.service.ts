@@ -6,22 +6,20 @@ export interface dbActivity {
   type: number;
   start_time: string; 
   duration: number;
-  completed: boolean;
 }
 
 class ActivityService {
   static async createActivity(activity: dbActivity): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
-        INSERT INTO activities (character_id, type, start_time, duration, completed)
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO activities (character_id, type, start_time, duration)
+        VALUES (?, ?, ?, ?);
       `;
       const params = [
         activity.character_id,
         activity.type,
         activity.start_time,
         activity.duration,
-        activity.completed ? 1 : 0
       ];
       db.run(query, params, function (err) {
         if (err) {
@@ -60,7 +58,7 @@ class ActivityService {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE activities SET
-          type = ?, start_time = ?, duration = ?, completed = ?
+          type = ?, start_time = ?, duration = ?
         WHERE id = ?;
       `;
 
@@ -68,7 +66,6 @@ class ActivityService {
         updatedActivity.type,
         updatedActivity.start_time,
         updatedActivity.duration,
-        updatedActivity.completed ? 1 : 0,
         updatedActivity.id
       ];
 

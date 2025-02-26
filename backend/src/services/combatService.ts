@@ -232,8 +232,8 @@ class CombatService {
           `,
         });
       }
-      attacker.sendMessage(attackerMessage);
-      defender.sendMessage(defenderMessage);
+      CacheDataService.createMessage(attackerMessage);
+      CacheDataService.createMessage(defenderMessage);
       console.log(`✅ Mensajes enviados a ${attacker.name} y ${defender.name}`);
       } catch (error) {
       console.error("❌ Error al guardar registro:", error);

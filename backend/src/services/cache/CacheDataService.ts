@@ -11,10 +11,11 @@ import { User } from "../../models/user.model";
 import { Friendship } from "../../models/friendship.model";
 
 class CacheDataService {
-  static cacheActivities: Map<number, Activity[]> = new Map();
+
+  static cacheActivities: Map<number, Activity> = new Map();
   static cacheCharacters: Map<number, Character> = new Map();
   static cacheUserCharacter : Map<number, number> = new Map();
-  static cacheFriendships: Map<number, Friendship[]> = new Map();
+  static cacheFriendships: Map<number, Friendship> = new Map();
   static cacheEffects: Map<number, Effect> = new Map();
   static cacheItemDefinitions: Map<number, ItemDefinition> = new Map();
   static cacheInventories: Map<number, ItemInstance[]> = new Map();
@@ -25,6 +26,7 @@ class CacheDataService {
   static pendingActivities: Set<number> = new Set();
   static pendingCharacters: Set<number> = new Set();
   static pendingEffects: Set<number> = new Set();
+  static pendingFriendships: Set<number> = new Set();
   static pendingItemDefinitions: Set<number> = new Set();
   static pendingInventories: Set<number> = new Set();
   static pendingItemEffects: Set<number> = new Set();
@@ -99,45 +101,49 @@ class CacheDataService {
 
   // ✅ ACTIVITY CACHE MANAGEMENT
   static getActivityById(activityId: number): Activity | null {
-    for (const activities of this.cacheActivities.values()) {
-      const activity = activities.find(a => a.id === activityId);
-      if (activity) return activity;
+    const activity =  this.cacheActivities.get(activityId) || null;
+    if(activity){
+      return activity
     }
     return null;
   }
   static getActivitiesByCharacterId(characterId: number): Activity[] {
-    return this.cacheActivities.get(characterId) || [];
+    const character = this.cacheCharacters.get(characterId) || null;
+    if(character){
+      return character.activities;
+    }
+    return [];
   }
-  static async createActivity(activity: Activity): Promise<Activity> {
-    const newActivityId = await DatabaseService.createActivity(activity);
-    const newActivity = await DatabaseService.getActivityById(newActivityId);
-    if (!newActivity) {throw new Error("Error durante la creacion de Actividad")}
-    const activities = this.cacheActivities.get(activity.characterId) ?? [];
-    activities.push(newActivity);
-    this.cacheActivities.set(activity.characterId, activities);
-    return newActivity;
+  static async createActivity(newActivity: Activity): Promise<number> {
+    //creamos la actividad, le asignamos el nuevo id y la añadimos a la cache de actividades y de character.
+    const newActivityId = await DatabaseService.createActivity(newActivity);
+    if (!newActivityId) {throw new Error("Error durante la creacion de Actividad")}
+    const createdActivity = new Activity({ ...newActivity,id: newActivityId, });
+    this.cacheActivities.set(createdActivity.id, createdActivity);
+    const character = this.cacheCharacters.get(createdActivity.characterId);
+    if (!character) {throw new Error("Error durante la creacion de Actividad")}
+    character.activities.push(createdActivity);
+    return newActivityId;
   }
   static updateActivity(updatedActivity: Activity): void {
-    const activities = this.cacheActivities.get(updatedActivity.characterId);
-    if (!activities) return;
-    const index = activities.findIndex(a => a.id === updatedActivity.id);
-    if (index === -1) return;
-    activities[index] = updatedActivity;
-    this.cacheActivities.set(updatedActivity.characterId, activities); 
-    this.pendingActivities.add(updatedActivity.characterId);
-  }  
+    const character = this.cacheCharacters.get(updatedActivity.characterId);
+    if (!character) {throw new Error("Error durante la actualizacion de Actividad")}
+    const index = character.activities.findIndex(a => a.id === updatedActivity.id);
+    if (index === -1) {throw new Error("Error durante la actualizacion de Actividad")}
+    character.activities[index] = updatedActivity;
+    this.cacheActivities.set(updatedActivity.id, updatedActivity); 
+    this.pendingActivities.add(updatedActivity.id);
+  }
   static async deleteActivity(activity: Activity): Promise<boolean> {
+    const character = this.cacheCharacters.get(activity.characterId);
+    if (!character) {throw new Error("Error durante la eliminacion de Actividad")}
     const result = await DatabaseService.deleteActivity(activity.id)
     if(!result){throw new Error("Error durante la eliminacion de la Actividad")}
-    const activities = this.cacheActivities.get(activity.characterId);
-    if (!activities) return false;
-    
-    this.cacheActivities.set(
-      activity.characterId,
-      activities.filter(a => a.id !== activity.id)
-    );
+    this.cacheActivities.delete(activity.id);
+    character.activities =  character.activities.filter(a=>a.id!=activity.id);
     return result;
   }
+
   // ✅ CHARACTER CACHE MANAGEMENT
   static getCharacterById(characterId: number): Character | null {
     return this.cacheCharacters.get(characterId) || null;
@@ -197,45 +203,66 @@ class CacheDataService {
   // ✅ FRIENDSHIP CACHE MANAGEMENT
   static async createFriendship(friendship: Friendship): Promise<boolean> {
     const newFriendshipId = await DatabaseService.createFriendship(friendship);
-    friendship.id=newFriendshipId;
+    const newFriendship = new Friendship({ ...friendship,id: newFriendshipId, });
     if (!newFriendshipId) {throw new Error("Error durante la creacion de la solicitud de amistad")}
-    const user1Friendships = this.cacheFriendships.get(friendship.idUser1) ?? [];
-    user1Friendships.push(friendship);
-    this.cacheFriendships.set(friendship.idUser1, user1Friendships);
-    const user2Friendships = this.cacheFriendships.get(friendship.idUser2) ?? [];
-    user2Friendships.push(friendship);
-    this.cacheFriendships.set(friendship.idUser2, user2Friendships);
+    this.cacheFriendships.set(newFriendship.id, newFriendship);
+    this.cacheCharacters.get(newFriendship.idUser1)?.friendships.push(newFriendship);
+    this.cacheCharacters.get(newFriendship.idUser2)?.friendships.push(newFriendship);
     return true;
   }
-  static getFriendshipById(userId:number, friendshipId: number): Friendship | null {
-    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.id==friendshipId)[0] || null;
+  static getFriendshipById(friendshipId: number): Friendship | null {
+    return this.cacheFriendships.get(friendshipId) || null;
   }
   static getUserFriendships(userId: number): Friendship[] {
-    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==true) || [];
+    const characterId = this.cacheUserCharacter.get(userId) || null;
+    if(!characterId){throw new Error("No existe character asociado al user.")}
+    return this.cacheCharacters.get(characterId)?.friendships || [];
   }
   static getUserFriendsRequest(userId: number): Friendship[] {
-    return this.cacheFriendships.get(userId)?.filter(friendship=>friendship.active==false) || [];
+    const characterId = this.cacheUserCharacter.get(userId) || null;
+    if(!characterId){throw new Error("No existe character asociado al user.")}
+    return this.cacheCharacters.get(characterId)?.friendships.filter(friendship=>friendship.active==false) || [];
   }
-  static async updateFriendship(updatedFriendship: Friendship): Promise<void> {
-      const user1Friendships = this.cacheFriendships.get(updatedFriendship.idUser1) ?? [];
-      const user2Friendships = this.cacheFriendships.get(updatedFriendship.idUser2) ?? [];
-      const indexFriendship12 = user1Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
-      const indexFriendship21 = user2Friendships.findIndex(friendship => friendship.id == updatedFriendship.id );
-      if(indexFriendship12==-1 || indexFriendship21==-1){ throw new Error("Error al actualizar la solicitud de amistad"); }
-      user1Friendships[indexFriendship12].active=updatedFriendship.active;
-      user1Friendships[indexFriendship12].active=updatedFriendship.active;
-      this.cacheFriendships.set(updatedFriendship.idUser1, user1Friendships); 
-      this.cacheFriendships.set(updatedFriendship.idUser2, user2Friendships); 
-      const result = await DatabaseService.updateFriendship(updatedFriendship);
+  static async updateFriendship(updatedFriendship: Friendship): Promise<boolean> {
+    const characterId1 = this.cacheUserCharacter.get(updatedFriendship.idUser1) || null;
+    const characterId2 = this.cacheUserCharacter.get(updatedFriendship.idUser2) || null;
+    if (!characterId1 || !characterId2) {
+        throw new Error("updateFriendship: No existe uno de los user asociado a la solicitud.");
+    }
+    const character1 = this.cacheCharacters.get(characterId1);
+    const character2 = this.cacheCharacters.get(characterId2);
+    if ((character1 && character1.friendships) && (character2 && character2.friendships)) {
+        character1.friendships = character1.friendships.map(friendship => 
+            friendship.id === updatedFriendship.id ? updatedFriendship : friendship
+        );
+        character2.friendships = character2.friendships.map(friendship => 
+          friendship.id === updatedFriendship.id ? updatedFriendship : friendship
+        );
+        this.cacheFriendships.set(updatedFriendship.id, updatedFriendship);
+        this.pendingFriendships.add(updatedFriendship.id);
+    }else{
+      throw new Error("updateFriendship: Uno de los friendship no existe");
+    }
+    return true;
   }  
   static async deleteFriendship(deletedFriendship: Friendship): Promise<boolean> {
     const result = await DatabaseService.deleteFriendship(deletedFriendship);
     if(!result){throw new Error("Error durante la eliminacion de la solicitud de amistad")}
-    const user1Friendships = this.cacheFriendships.get(deletedFriendship.idUser1)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
-    const user2Friendships = this.cacheFriendships.get(deletedFriendship.idUser2)?.filter(friendship=>friendship.id != deletedFriendship.id) || [];
-    this.cacheFriendships.set(deletedFriendship.idUser1, user1Friendships); 
-    this.cacheFriendships.set(deletedFriendship.idUser2, user2Friendships); 
-    return result;
+    const characterId1 = this.cacheUserCharacter.get(deletedFriendship.idUser1) || null;
+    const characterId2 = this.cacheUserCharacter.get(deletedFriendship.idUser2) || null;
+    if (!characterId1 || !characterId2) {
+        throw new Error("updateFriendship: No existe uno de los user asociado a la solicitud.");
+    }
+    const character1 = this.cacheCharacters.get(characterId1);
+    const character2 = this.cacheCharacters.get(characterId2);
+    if ((character1 && character1.friendships) && (character2 && character2.friendships)) {
+        character1.friendships = character1.friendships.filter(friendship => friendship.id != deletedFriendship.id );
+        character2.friendships = character2.friendships.filter(friendship => friendship.id != deletedFriendship.id );
+        this.cacheFriendships.delete(deletedFriendship.id);
+    }else{
+      throw new Error("updateFriendship: Uno de los friendship no existe");
+    }
+    return true;
   }
 
   // ✅ ITEM DEFINITIONS CACHE MANAGEMENT
@@ -322,11 +349,16 @@ class CacheDataService {
   static getCharacterMessagesInboxCount(characterId: number){
     return this.getCharacterMessagesInbox(characterId).length || 0;
   }
-  static async createMessage(message: Message): Promise<void> {
-    const newMessage = await DatabaseService.createMessage(message);
+  static async createMessage(message: Message): Promise<boolean> {
+    const newMessageId = await DatabaseService.createMessage(message);
+    if(!newMessageId){throw new Error("createMessage: Error al crear el mensaje ")}
+    const newMessage = await DatabaseService.getMessageById(newMessageId);
+    if(!newMessage){throw new Error("createMessage: Error al obtener el nuevo mensaje ")}
     if(newMessage){
       this.cacheMessages.set(newMessage.id, newMessage);
+      return true;
     }
+    return false;
   }
   static markMessageAsRead(messageId: number): void {
     const message = this.getMessageById(messageId);
@@ -411,10 +443,35 @@ class CacheDataService {
               await DatabaseService.updateCharacter(pendingCharacter);
               await Promise.all([
                 ...pendingCharacter.inventory.items.map(item => DatabaseService.updateItemInstance(item)),
-                ...pendingCharacter.activities.map(activity => DatabaseService.updateActivity(activity))
               ]);
             } catch (error) {
               console.error(`❌ Error al actualizar personaje ID ${pendingCharacterId}:`, error);
+            }
+          }
+        })
+      );
+      // Procesar actividades
+      await Promise.all(
+        Array.from(this.pendingActivities.values()).map(async (pendingActivityId) => {
+          const pendingActivity = this.cacheActivities.get(pendingActivityId);
+          if (pendingActivity) {
+            try {
+              await DatabaseService.updateActivity(pendingActivity);
+            } catch (error) {
+              console.error(`❌ Error al actualizar la actividad ID ${pendingActivity.id}:`, error);
+            }
+          }
+        })
+      );
+      // Procesar amistades
+      await Promise.all(
+        Array.from(this.pendingFriendships.values()).map(async (pendingFriendshipId) => {
+          const pendingFriendship = this.cacheFriendships.get(pendingFriendshipId);
+          if (pendingFriendship) {
+            try {
+              await DatabaseService.updateFriendship(pendingFriendship);
+            } catch (error) {
+              console.error(`❌ Error al actualizar la amistad ID ${pendingFriendship.id}:`, error);
             }
           }
         })
@@ -447,6 +504,9 @@ class CacheDataService {
       );
 
       // Limpiar listas de pendientes
+      this.pendingActivities.clear();
+      this.pendingFriendships.clear();
+
       this.pendingCharacters.clear();
       this.pendingMessages.clear();
       this.pendingUsers.clear();

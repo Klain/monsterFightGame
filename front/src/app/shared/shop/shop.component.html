@@ -1,23 +1,43 @@
-<!-- front\src\app\shared\shop\shop.component.html -->
 <div class="shopContainer">
-  <div *ngIf="shopList">
-      <ItemGrid *ngIf="shopList" [shopList]="shopList"
-      [cols]="cols" [rows]="rows" width="64px" heigth="64px" 
+  <!-- Filtro de categorías -->
+  <div class="filterContainer">
+    <label for="itemType">Categoría:</label>
+    <select id="itemType" [(ngModel)]="selectedItemType" (change)="applyFilter()">
+      <option *ngFor="let type of itemTypes" [ngValue]="type.id">{{ type.name }}</option>
+    </select>
+
+    <!-- Filtro de tipo de equipamiento (solo si la categoría es equipamiento) -->
+    <label for="equipType" *ngIf="selectedItemType === ItemType.EQUIPMENT">Tipo:</label>
+    <select id="equipType" [(ngModel)]="selectedEquipType" (change)="applyFilter()" *ngIf="selectedItemType === ItemType.EQUIPMENT">
+      <option *ngFor="let type of equipTypes" [ngValue]="type.id">{{ type.name }}</option>
+    </select>    
+
+    <!-- Filtro de posición de equipamiento (solo si la categoría es equipamiento) -->
+    <label for="equipPosition" *ngIf="selectedItemType === ItemType.EQUIPMENT">Posición:</label>
+    <select id="equipPosition" [(ngModel)]="selectedEquipPosition" (change)="applyFilter()" *ngIf="selectedItemType === ItemType.EQUIPMENT">
+      <option *ngFor="let pos of equipPositions" [ngValue]="pos.id">{{ pos.name }}</option>
+    </select>
+  </div>
+
+  <!-- Grilla de tienda con ítems filtrados -->
+  <div *ngIf="filteredShopList">
+    <ItemGrid *ngIf="filteredShopList.length > 0" [shopList]="filteredShopList"
+      [cols]="cols" [rows]="rows" width="64px" height="64px" 
       [action1]="shopAction1" [action2]="shopAction2"
       [topLeft]="shopTopLeft" [topRight]="shopTopRight"
-      [bottomLeft]="shopBottomLeft" [bottomRight]="shopBottomRight"
-      >
-      </ItemGrid>
+      [bottomLeft]="shopBottomLeft" [bottomRight]="shopBottomRight">
+    </ItemGrid>
+    <p *ngIf="filteredShopList.length === 0">No hay ítems disponibles para esta categoría.</p>
   </div>
-  <br/>
-  <br/>
+
+  <br/><br/>
+
   <div *ngIf="character">
-      <ItemGrid *ngIf="character" [character]="character"
-      [cols]="cols" [rows]="rows" width="64px" heigth="64px" 
+    <ItemGrid *ngIf="character" [character]="character"
+      [cols]="cols" [rows]="rows" width="64px" height="64px" 
       [action1]="charAction1" [action2]="charAction2"
       [topLeft]="charTopLeft" [topRight]="charTopRight"
-      [bottomLeft]="charBottomLeft" [bottomRight]="charBottomRight"
-      >
-      </ItemGrid>
+      [bottomLeft]="charBottomLeft" [bottomRight]="charBottomRight">
+    </ItemGrid>
   </div>
-</div>    
+</div>

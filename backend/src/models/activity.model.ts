@@ -1,49 +1,23 @@
 import { ActivityType } from "../constants/enums";
-import CacheDataService from "../services/cache/CacheDataService";
 
 export class Activity {
-  private _id: number = 0;
-  private _characterId: number = 0;
-  private _type: ActivityType = 0;
-  private _startTime: Date = new Date();
-  private _duration: number = 0;
-  private _completed: boolean = false;
-
+  readonly id: number = 0;
+  readonly characterId: number = 0;
+  readonly type: ActivityType = 0;
+  readonly startTime: Date = new Date();
+  readonly duration: number = 0;
+  
   constructor(data: Partial<Activity>) {
     Object.assign(this, data);
   }
-
-  private updateCache(): void {
-    if (this._characterId) {
-      CacheDataService.updateActivity(this);
-    }
+  isComplete():boolean{
+    return this.getRemainingTime()>0;
   }
-
-  // GETTERS Y SETTERS
-  get id() { return this._id; }
-  set id(value: number) { this._id = value; this.updateCache(); }
-
-  get characterId() { return this._characterId; }
-  set characterId(value: number) { this._characterId = value; this.updateCache(); }
-
-  get type() { return this._type; }
-  set type(value: ActivityType) { this._type = value; this.updateCache(); }
-
-  get startTime() { return this._startTime; }
-  set startTime(value: Date) { this._startTime = value; this.updateCache(); }
-
-  get duration() { return this._duration; }
-  set duration(value: number) { this._duration = value; this.updateCache(); }
-
-  get completed() { return this._completed; }
-  set completed(value: boolean) { this._completed = value; this.updateCache(); }
-
   getRemainingTime(): number {
     const now = new Date();
-    const elapsed = Math.floor((now.getTime() - this._startTime.getTime()) / 1000); // en segundos
-    return Math.max(this._duration - elapsed, 0);
+    const elapsed = Math.floor((now.getTime() - this.startTime.getTime()) / 1000); // en segundos
+    return Math.max(this.duration - elapsed, 0);
   }
-
   static calculateActivityReward(activityType: ActivityType, duration: number): Record<string, number> {
     let reward: Record<string, number> = {};
 
@@ -64,14 +38,12 @@ export class Activity {
 
     return reward;
   }
-
   wsr(): any {
     return {
       activity: {
-        type: this._type,
-        startTime: this._startTime,
-        duration: this._duration,
-        completed: this._completed,
+        type: this.type,
+        startTime: this.startTime,
+        duration: this.duration,
       }
     };
   }

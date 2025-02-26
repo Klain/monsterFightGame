@@ -1,8 +1,12 @@
 <app-character-attributes></app-character-attributes>
 <ItemGrid *ngIf="character"
 [character]="character"
+[bottomLeft]="unidades"
+[action2]="equipItem"
+
 >
 </ItemGrid>
 <ItemEquipment *ngIf="character"
 [character]="character"
+[action2]="unequipItem"
 ></ItemEquipment>

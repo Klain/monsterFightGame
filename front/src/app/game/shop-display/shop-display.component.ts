@@ -2,11 +2,11 @@
 import {  Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Observable } from "rxjs";
-
 import { ShopComponent } from "../../shared/shop/shop.component";
 import { ShopService } from "../../core/services/shop.service";
 import { Character, Item } from "../../core/models/character.models";
 import { CharacterService } from "../../core/services/character.service";
+import { unidades } from "../../shared/utils"; 
 
 @Component({
   selector: "app-shop-display",
@@ -19,6 +19,7 @@ export class ShopDisplayComponent implements OnInit {
   shopList:Item[]=[];
   character$: Observable<Character | null>;
   character!:Character;
+  unidades = unidades;
 
   constructor(
     private characterService : CharacterService,
@@ -46,24 +47,20 @@ export class ShopDisplayComponent implements OnInit {
   }
 
    /*ITEM SHOWABLE PROPERTIES*/
-   precioCompra = (item: Item | null | undefined): string => { 
+  precioCompra = (item: Item | null | undefined): string => { 
     return item?.priceBuy !== undefined ? item.priceBuy.toString() : "";
-    };
-     precioVenta = (item: Item | null | undefined): string => { 
+  };
+  precioVenta = (item: Item | null | undefined): string => { 
     return item?.priceSell !== undefined ? item.priceSell.toString() : "";
-    };
-     unidades = (item: Item | null | undefined): string => { 
-    return item?.stock !== undefined ? item.stock.toString() : "";
-    };
-  
-   buyItem = (item: Item, position : number): void => {
-     if (item && this.character) {
-       this.shopService.buyItem(item.id??0).subscribe(() => this.loadShopItems());
-     }
-   }
-   sellItem = (item: Item, position : number): void => {
-     if (item && this.character) {
-        this.shopService.sellItem(item.id??0).subscribe(() => this.loadShopItems());
-     }
-   }
+  };
+  buyItem = (item: Item,position : number): void => {
+    if (item && this.character) {
+      this.shopService.buyItem(item.id??0).subscribe(() => this.loadShopItems());
+    }
+  }
+  sellItem = (item: Item, position : number): void => {
+    if (item && this.character) {
+       this.shopService.sellItem(item.id??0).subscribe(() => this.loadShopItems());
+    }
+}
 }

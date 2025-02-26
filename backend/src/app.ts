@@ -9,13 +9,16 @@ import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import webSocketService from "./services/webSocketService";
 import CacheDataService from "./services/cache/CacheDataService";
-import authRouter from "./routes/authRoutes";
+
+import activitiesRoutes from "./routes/activity.routes";
+import authRouter from "./routes/auth.routes";
 import characterRoutes from "./routes/characterRoutes";
-import inventoryRoutes from "./routes/inventoryRoutes";
 import combatRoutes from "./routes/combatRoutes";
-import activitiesRoutes from "./routes/activityRoutes";
-import shopRoutes from "./routes/shopRoutes";
-import messageRoutes from "./routes/messageRoutes";
+import friendshipRoutes from "./routes/friendship.routes";
+import inventoryRoutes from "./routes/inventory.routes";
+import lairRoutes from "./routes/lair.routes";
+import messageRoutes from "./routes/messages.routes";
+import shopRoutes from "./routes/shop.routes";
 
 const PORT = process.env.PORT || 4000;
 const swaggerDocument = YAML.load("./src/swagger.yaml");
@@ -61,13 +64,15 @@ app.use(bodyParser.json());
 
 // Rutas públicas
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api/activities", activitiesRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/characters", characterRoutes);
-app.use("/api/inventory", inventoryRoutes);
 app.use("/api/combat", combatRoutes);
-app.use("/api/activities", activitiesRoutes);
-app.use("/api/shop", shopRoutes);
+app.use("/api/friendship", friendshipRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/lair", lairRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/shop", shopRoutes);
 
 // Rutas de desarrollo
 if (process.env.NODE_ENV === "development") {

@@ -32,7 +32,6 @@ class DatabaseService {
       type: activity.type!,
       start_time: activity.startTime!.toISOString(),
       duration: activity.duration!,
-      completed: activity.completed!,
     });
   }
   static async getActivityById(activityId: number): Promise<Activity | null> {
@@ -50,7 +49,6 @@ class DatabaseService {
       type : updatedActivity.type,
       start_time : updatedActivity.startTime.toISOString(),
       duration : updatedActivity.duration,
-      completed : updatedActivity.completed,
     }); 
   }
   static async deleteActivity(activityId: number): Promise<boolean> {
@@ -297,7 +295,7 @@ class DatabaseService {
     }
     return [];
   }
-  static async createMessage(message: Message): Promise<Message|null> {
+  static async createMessage(message: Message): Promise<number|null> {
     const lastId = await MessageService.createMessage({
       id: message.id,
       sender_id: message.senderId,
@@ -308,8 +306,8 @@ class DatabaseService {
       body: message.body,
       timestamp: message.timestamp.toISOString(),
       read: message.read,
-    });
-    return await this.getMessageById(lastId);
+    })|| null;
+    return lastId;
   }
   static async getMessageById(messageId: number): Promise<Message | null> {
     const dbMessage = await MessageService.getMessageById(messageId);
@@ -363,7 +361,6 @@ class DatabaseService {
       type: dbActivity.type,
       startTime: new Date(dbActivity.start_time),
       duration: dbActivity.duration,
-      completed: dbActivity.completed,
     });
   }
   private static mapDbCharacter(dbCharacter: dbCharacter): Character {

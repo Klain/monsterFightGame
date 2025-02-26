@@ -1,3 +1,4 @@
+import CacheDataService from "../services/cache/CacheDataService";
 import { ItemInstance } from "./itemInstance.model";
 
 export class Inventory {
@@ -35,8 +36,21 @@ export class Inventory {
 
   wsrEquip() {
     const equip = this.items.filter(item => item.equipped);
-    let equipMapped = equip.map(item => item.wsr());
-    equipMapped.length = 16;
+    const equipMapped = new Array(16).fill(null); 
+
+    equip.forEach(item => {
+      const itemDefinition =  CacheDataService.getItemDefinitionById(item.itemId);
+      if(!itemDefinition ||!itemDefinition.equipPositionType){throw new Error ("wsrEquip : Error al construir la respuesta de equipo para el front")}
+        let itemPosition = itemDefinition.equipPositionType-1;
+        if ([10, 12, 14].includes(itemPosition) && equipMapped[itemPosition] !== null) {
+          itemPosition += 1; 
+        }
+        if (itemPosition >= 0 && itemPosition < 16) {
+            equipMapped[itemPosition] = item.wsr();
+        }
+    });
+
     return equipMapped;
-  }
+}
+
 }

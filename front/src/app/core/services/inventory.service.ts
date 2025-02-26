@@ -20,8 +20,4 @@ export class InventoryService {
   unequipItem(itemId: number): Observable<any> {
     return this.api.post(`inventory/unequip/${itemId}`);
   }
-
-  sellItem(itemId: number): Observable<any> {
-    return this.api.post(`inventory/sell/${itemId}`);
-  }
 }

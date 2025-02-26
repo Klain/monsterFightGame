@@ -1,13 +1,12 @@
 import express, { Request, Response } from "express";
-import ShopService from "../services/shopService";
-import CacheDataService from "../services/cache/CacheDataService";
+import ShopService from "../services/shop.service";
 import authMiddleware from "../middleware/authMiddleware";
 import { validateCharacterMiddleware } from "../middleware/validateCharacterMiddleware";
 import { validateItemMiddleware } from "../middleware/validateItemMiddleware";
 import webSocketService from "../services/webSocketService";
 import { ItemDefinition } from "../models/itemDefinition.model";
 import { Character } from "../models/character.model";
-import { Inventory } from "../models/inventory.model";
+import { CharacterService } from "../services/character.service";
 
 const router = express.Router();
 
@@ -25,7 +24,6 @@ router.get("/",authMiddleware,validateCharacterMiddleware,async (req: Request, r
     res.status(500).json({ error: "Error al obtener la tienda." });
   }
 });
-
 router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMiddleware, async (req: Request, res: Response) => {
   try {
     const character : Character = req.locals.character!;
@@ -35,7 +33,7 @@ router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMid
       res.status(404).json({ error: "El personaje no dispone suficiente dinero." });
       return;
     }
-    character.buyItem(item);
+    CharacterService.buyItem(character, item);
     webSocketService.characterRefresh(character.userId, {...character.wsr()});
     res.status(200).json({ message: "Ítem comprado con éxito" });
   } catch (error:any) {
@@ -43,21 +41,19 @@ router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMid
     res.status(500).json({ error: error.message || "Error al comprar el ítem." });
   }
 });
-
- router.post("/sell", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
+router.post("/sell", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
     const character : Character = req.locals.character;
-    const { itemId } = req.params;
-
-    if(!(character.inventory.items.filter(item=>item.equipped==false && item.itemId==+itemId).length>0 )){
+    const { itemId } = req.body;
+    const itemToSell = character.inventory.items.find(item=>item.equipped==false && item.itemId==+itemId)
+    if(!itemToSell){
       res.status(404).json({ error: "El personaje no dispone del objeto para vender." });
       return;
     }
-    character.sellItem(+itemId);
+    CharacterService.sellItem(character, itemToSell);
     webSocketService.characterRefresh(character.userId, {
-      ...character.inventory.wsr(),
+      ...character.wsr(),
     });
-
     res.status(200).json({ message: "Ítem vendido con éxito" });
   } catch (error:any) {
     console.error("❌ Error al vender ítem:", error);

@@ -76,14 +76,4 @@ router.post("/lair/traps", authMiddleware , validateAttributeMiddleware, validat
   }
 });
 
-router.get("/", authMiddleware,validateCharacterMiddleware , async (req: Request, res: Response): Promise<void> => {
-  try {
-    const character : Character = req.locals.character;
-    res.status(200).json(character.wsr());
-  } catch (error) {
-    console.error("❌ Error al obtener personaje:", error);
-    res.status(500).json({ error: "Error interno al recuperar el personaje." });
-  }
-});
-
 export default router;

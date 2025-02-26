@@ -1,7 +1,7 @@
 export class Friendship {
-    id:number=0;
-    idUser1: number = 0;
-    idUser2: number = 0;
+    readonly id:number=0;
+    readonly idUser1: number = 0;
+    readonly idUser2: number = 0;
     active : boolean = false;
   
     constructor(data: Partial<Friendship>) {
