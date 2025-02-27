@@ -6,6 +6,7 @@ export interface dbItemDefinition {
   itemType: number;
   equipType?: number | null;
   equipPositionType?: number | null;
+  weaponType?:number | null;
   levelRequired: number;
   price: number;
 }
@@ -13,8 +14,8 @@ class ItemDefinitionService {
   static async createItem(item: dbItemDefinition): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
-        INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, levelRequired, price)
-        VALUES (?, ?, ?, ?, ?, ?);
+        INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, weaponType, levelRequired, price)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
       `;
 
       const params = [
@@ -22,6 +23,7 @@ class ItemDefinitionService {
         item.itemType,
         item.equipType || null,
         item.equipPositionType || null,
+        item.weaponType || null,
         item.levelRequired,
         item.price
       ];
@@ -63,7 +65,7 @@ class ItemDefinitionService {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE item_definitions SET
-          name = ?, itemType = ?, equipType = ?, equipPositionType = ?, 
+          name = ?, itemType = ?, equipType = ?, equipPositionType = ?, weaponType = ?,
           levelRequired = ?, price = ?
         WHERE id = ?;
       `;
@@ -73,6 +75,7 @@ class ItemDefinitionService {
         updatedItem.itemType,
         updatedItem.equipType || null,
         updatedItem.equipPositionType || null,
+        updatedItem.weaponType || null,
         updatedItem.levelRequired,
         updatedItem.price,
         updatedItem.id

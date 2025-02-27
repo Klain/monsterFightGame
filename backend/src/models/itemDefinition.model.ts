@@ -1,6 +1,4 @@
-import { EquipPositionType, EquipType, ItemType, EffectType } from "../constants/enums";
-import { Effect } from "./effect.model";
-import { ItemEffect } from "./itemEffect.model";
+import { EquipPositionType, EquipType, ItemType, WeaponType } from "../constants/enums";
 
 export class ItemDefinition {
   id: number = 0;
@@ -8,6 +6,7 @@ export class ItemDefinition {
   itemType: ItemType = ItemType.TRADEGOODS;
   equipType?: EquipType;
   equipPositionType?: EquipPositionType;
+  equipWeaponType?: WeaponType;
   levelRequired: number = 1;
   price: number = 0;
   effects : {effectId:number , value:number}[] = []

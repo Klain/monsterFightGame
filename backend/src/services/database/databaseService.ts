@@ -212,6 +212,7 @@ class DatabaseService {
       itemType: item.itemType,
       equipType: item.equipType || null,
       equipPositionType: item.equipPositionType || null,
+      weaponType: item.equipWeaponType || null,
       levelRequired: item.levelRequired,
       price: item.price,
     });
@@ -231,6 +232,7 @@ class DatabaseService {
       itemType: updatedItem.itemType!,
       equipType: updatedItem.equipType || null,
       equipPositionType: updatedItem.equipPositionType || null,
+      weaponType: updatedItem.equipWeaponType || null,
       levelRequired: updatedItem.levelRequired!,
       price: updatedItem.price!,
     });
@@ -447,6 +449,7 @@ class DatabaseService {
       itemType: dbItem.itemType,
       equipType: dbItem.equipType ?? undefined,
       equipPositionType: dbItem.equipPositionType ?? undefined,
+      equipWeaponType: dbItem.weaponType ?? undefined,
       levelRequired: dbItem.levelRequired,
       price: dbItem.price,
       effects: [], // Se inicializa vacío, ya que los efectos provienen de otra tabla

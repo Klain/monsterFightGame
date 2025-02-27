@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 import path from "path";
-import { EffectType, EquipPositionType, EquipType, ItemType } from "../constants/enums";
+import { EffectType, EquipPositionType, EquipType, ItemType, WeaponFamily, WeaponType } from "../constants/enums";
 import ServerConfig from "../constants/serverConfig";
 
 const dbPath = path.resolve(__dirname, "./monsterFight.db");
@@ -95,6 +95,7 @@ function runTables(): Promise<void> {
           itemType INTEGER NOT NULL, 
           equipType INTEGER DEFAULT NULL, 
           equipPositionType INTEGER DEFAULT NULL, 
+          WeaponType INTEGER DEFAULT NULL, 
           levelRequired INTEGER DEFAULT 1,
           price INTEGER NOT NULL
         )
@@ -210,20 +211,20 @@ async function populateWeapons(): Promise<void> {
       const levelRequired = i;
       const price = ServerConfig.weaponValue(i);
       const items = [
-        { name: "Sable", effects: [EffectType.STRENGTH] },
-        { name: "Daga", effects: [EffectType.PRECISION] },
-        { name: "Hacha", effects: [EffectType.AGILITY] },
-        { name: "Pistola", effects: [EffectType.STRENGTH, EffectType.PRECISION] },
-        { name: "Trabuco", effects: [EffectType.STRENGTH, EffectType.AGILITY] },
-        { name: "Arcabuz", effects: [EffectType.PRECISION, EffectType.AGILITY] },
+        { name: "Sable", effects: [EffectType.STRENGTH],weaponType:WeaponType.SABER },
+        { name: "Daga", effects: [EffectType.PRECISION],weaponType:WeaponType.DAGGER },
+        { name: "Hacha", effects: [EffectType.AGILITY],weaponType:WeaponType.AXE },
+        { name: "Pistola", effects: [EffectType.STRENGTH, EffectType.PRECISION],weaponType:WeaponType.PISTOL },
+        { name: "Trabuco", effects: [EffectType.STRENGTH, EffectType.AGILITY],weaponType:WeaponType.MUSKET  },
+        { name: "Arcabuz", effects: [EffectType.PRECISION, EffectType.AGILITY],weaponType:WeaponType.BOMBARD  },
       ];
 
-      for (const { name, effects } of items) {
+      for (const { name, effects,weaponType } of items) {
         try {
           const itemId = await runQuery(
-            `INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, levelRequired, price) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [name, itemType, equipType, equipPositionType, levelRequired, price]
+            `INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, weaponFamily, levelRequired, price) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [name, itemType, equipType, equipPositionType, weaponType, levelRequired, price]
           );
 
           for (const effectId of effects) {
