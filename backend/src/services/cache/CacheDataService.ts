@@ -3,10 +3,8 @@ import { Character } from "../../models/character.model";
 import { ItemDefinition } from "../../models/itemDefinition.model";
 import { Activity } from "../../models/activity.model";
 import { ItemEffect } from "../../models/itemEffect.model";
-import { Effect } from "../../models/effect.model";
 import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
-import { Inventory } from "../../models/inventory.model";
 import { User } from "../../models/user.model";
 import { Friendship } from "../../models/friendship.model";
 
@@ -16,79 +14,90 @@ class CacheDataService {
   static cacheCharacters: Map<number, Character> = new Map();
   static cacheUserCharacter : Map<number, number> = new Map();
   static cacheFriendships: Map<number, Friendship> = new Map();
-  static cacheEffects: Map<number, Effect> = new Map();
   static cacheItemDefinitions: Map<number, ItemDefinition> = new Map();
-  static cacheInventories: Map<number, ItemInstance[]> = new Map();
-  static cacheItemEffects: Map<number, ItemEffect[]> = new Map();
+  static cacheItemInstances: Map<number, ItemInstance> = new Map();
   static cacheMessages: Map<number, Message> = new Map();
   static cacheUsers: Map<number, User> = new Map();
 
   static pendingActivities: Set<number> = new Set();
   static pendingCharacters: Set<number> = new Set();
-  static pendingEffects: Set<number> = new Set();
   static pendingFriendships: Set<number> = new Set();
-  static pendingItemDefinitions: Set<number> = new Set();
-  static pendingInventories: Set<number> = new Set();
-  static pendingItemEffects: Set<number> = new Set();
+  static pendingItemInstances: Set<number> = new Set();
   static pendingMessages: Set<number> = new Set();
   static pendingUsers: Set<number> = new Set();
 
   static async initializeCache(): Promise<void> {
     try {
       console.log("🔄 Cargando caché...");
+
       const [
         dbItemsDefinitions,
+        dbEffects,
+        dbEffectsItems,
         dbUsers,
         dbCharacters,
-        dbMessages
+        dbItemsInstances,
+        dbActivities,
+        dbFriendships,
+        dbMessages,
+      
       ] = await Promise.all([
         DatabaseService.getAllItemDefinitions(),
+        DatabaseService.getAllEffects(),
+        DatabaseService.getAllEffectsItem(),
         DatabaseService.getAllUsers(),
         DatabaseService.getAllCharacters(),
+        DatabaseService.getAllItemInstances(),
+        DatabaseService.getAllActivities(),
+        DatabaseService.getAllFriendships(),
         DatabaseService.getAllMessages(),
+        
       ]);
 
-      if (!dbItemsDefinitions || !dbUsers || !dbCharacters || !dbMessages) {
+      if (!dbItemsDefinitions || !dbEffects || !dbEffectsItems || !dbUsers || !dbCharacters || !dbItemsInstances  || !dbActivities  || !dbFriendships || !dbMessages) {
         throw new Error("🚨 Error crítico: Datos incompletos en la carga inicial de la caché.");
       }
-      console.log(`📦 Se encontraron ${dbItemsDefinitions.length} ítems.`);
-      console.log(`✨ Se encontraron ${dbUsers.length} usuarios.`);
+      console.log(`📦 Se encontraron ${dbItemsDefinitions.length} definiciones de ítems.`);
+      console.log(`✨ Se encontraron ${dbEffects.length} efectos.`);
+      console.log(`✨ Se encontraron ${dbEffectsItems.length} efectos de objetos.`);
+      console.log(`🏷️ Se encontraron ${dbUsers.length} usuarios.`);
       console.log(`🏷️ Se encontraron ${dbCharacters.length} personajes.`);
+      console.log(`📦 Se encontraron ${dbItemsInstances.length} instancias de items.`);
+      console.log(`📦 Se encontraron ${dbActivities.length} actividades.`);
+      console.log(`📦 Se encontraron ${dbFriendships.length} relaciones.`);
+
       console.log(`📨 Se encontraron ${dbMessages.length} mensajes.`);
 
       // Cargar datos en caché
-      for ( const itemDefinition of dbItemsDefinitions){
-        const effects = await DatabaseService.getEffectsByItemId(itemDefinition.id);
-        itemDefinition.effects = effects.map(effect => ({ effectId: effect.effectId, value: effect.value }));
-        this.cacheItemDefinitions.set(itemDefinition.id,itemDefinition);
-      }
+      dbItemsDefinitions.forEach(definition=>{
+        const itemEffects : ItemEffect[] = dbEffectsItems.filter(itemEffect=>itemEffect.itemId==definition.id);
+        definition.effects = itemEffects;
+        this.cacheItemDefinitions.set(definition.id,definition);
+      });
       dbUsers.forEach(user=>{
         this.cacheUsers.set(user.id,user);
       });
-      for (const character of dbCharacters) { 
-        try {
-          const itemInstances = await DatabaseService.getInventoryByCharacterId(character.id);
-          const activities = await DatabaseService.getActivitiesByCharacterId(character.id);
-          const friendships = await DatabaseService.getUserFriendships(character.userId);
-          const friendshipsRequest = await DatabaseService.getUserFriendsRequest(character.userId);
-      
-          const loadedCharacter = new Character({
-            ...character,
-            inventory:new Inventory(itemInstances),
-            activities: activities,
-            friendships: [...friendships,...friendshipsRequest]
-          });
-          this.cacheCharacters.set(character.id, loadedCharacter)
-          this.cacheUserCharacter.set(character.userId, character.id);
-      
-        } catch (error) {
-          console.error(`Error cargando personaje ID ${character.id}:`, error);
-        }
-      }
-      dbMessages.forEach(message => {
-        this.cacheMessages.set(message.id,message );
+      dbCharacters.forEach(character=>{
+        this.cacheCharacters.set(character.id,character);
       });
-
+      dbItemsInstances.forEach(instance=>{
+        this.cacheItemInstances.set(instance.id,instance);
+        this.cacheCharacters.get(instance.characterId)?.inventory.items.push(instance.id);
+      });
+      dbActivities.forEach(activity=>{
+        this.cacheActivities.set(activity.id,activity);
+        this.cacheCharacters.get(activity.characterId)?.activities.push(activity.id);
+      });
+      dbFriendships.forEach(friendship=>{
+        this.cacheFriendships.set(friendship.id,friendship);
+        this.cacheCharacters.get(friendship.idUser1)?.friendships.push(friendship.id);
+        this.cacheCharacters.get(friendship.idUser2)?.friendships.push(friendship.id);
+      });
+      dbMessages.forEach(message => {
+        this.cacheMessages.set(message.id,message);
+        this.cacheCharacters.get(message.characterSenderId)?.messages.push(message.id);
+        this.cacheCharacters.get(message.characterReciverId)?.friendships.push(message.id);
+      });
 
       setInterval(() => this.syncPendingUpdates(), 5000); 
 
@@ -99,21 +108,7 @@ class CacheDataService {
     }
   }
 
-  // ✅ ACTIVITY CACHE MANAGEMENT
-  static getActivityById(activityId: number): Activity | null {
-    const activity =  this.cacheActivities.get(activityId) || null;
-    if(activity){
-      return activity
-    }
-    return null;
-  }
-  static getActivitiesByCharacterId(characterId: number): Activity[] {
-    const character = this.cacheCharacters.get(characterId) || null;
-    if(character){
-      return character.activities;
-    }
-    return [];
-  }
+  // ACTIVITY CACHE MANAGEMENT ✅
   static async createActivity(newActivity: Activity): Promise<number> {
     //creamos la actividad, le asignamos el nuevo id y la añadimos a la cache de actividades y de character.
     const newActivityId = await DatabaseService.createActivity(newActivity);
@@ -122,29 +117,23 @@ class CacheDataService {
     this.cacheActivities.set(createdActivity.id, createdActivity);
     const character = this.cacheCharacters.get(createdActivity.characterId);
     if (!character) {throw new Error("Error durante la creacion de Actividad")}
-    character.activities.push(createdActivity);
+    character.activities.push(newActivityId);
     return newActivityId;
   }
   static updateActivity(updatedActivity: Activity): void {
-    const character = this.cacheCharacters.get(updatedActivity.characterId);
-    if (!character) {throw new Error("Error durante la actualizacion de Actividad")}
-    const index = character.activities.findIndex(a => a.id === updatedActivity.id);
-    if (index === -1) {throw new Error("Error durante la actualizacion de Actividad")}
-    character.activities[index] = updatedActivity;
     this.cacheActivities.set(updatedActivity.id, updatedActivity); 
     this.pendingActivities.add(updatedActivity.id);
   }
   static async deleteActivity(activity: Activity): Promise<boolean> {
     const character = this.cacheCharacters.get(activity.characterId);
-    if (!character) {throw new Error("Error durante la eliminacion de Actividad")}
     const result = await DatabaseService.deleteActivity(activity.id)
-    if(!result){throw new Error("Error durante la eliminacion de la Actividad")}
+    if (!character || !result) {throw new Error("Error durante la eliminacion de Actividad")}
     this.cacheActivities.delete(activity.id);
-    character.activities =  character.activities.filter(a=>a.id!=activity.id);
+    character.activities =  character.activities.filter(activityId=>activityId != activity.id);
     return result;
   }
 
-  // ✅ CHARACTER CACHE MANAGEMENT
+  // CHARACTER CACHE MANAGEMENT ✅
   static getCharacterById(characterId: number): Character | null {
     return this.cacheCharacters.get(characterId) || null;
   }
@@ -156,34 +145,22 @@ class CacheDataService {
   static getAllCharacters(): Character[] {
     return Array.from(this.cacheCharacters.values());
   }
-  static async createCharacter(character: Character): Promise<void> {
+  static async createCharacter(character: Character): Promise<boolean> {
     const newCharacterId = await DatabaseService.createCharacter(character);
-    character.id = newCharacterId;
-    const newCharacterItems = character.inventory?.items || [];
-    for(let item of newCharacterItems){
-      await DatabaseService.createItemInstance(item);
-      
-    }
-    const newCharacterActivities = character.activities || [];
-    for(let activity of newCharacterActivities){
-      await DatabaseService.createActivity(activity);
-    }
-    const newCharacterFriendships = character.friendships || [];
-    for(let friendship of newCharacterFriendships){
-      await DatabaseService.createFriendship(friendship);
-    }
-    if(newCharacterId){
-      this.cacheCharacters.set(character.id, character);
-      this.cacheUserCharacter.set(character.userId,character.id)
-    }
+    if(!newCharacterId){throw new Error("createCharacter: Error durante la creacion del personaje")}
+    const newCharacter = new Character({...character,id:newCharacterId})
+    if(!newCharacter){throw new Error("createCharacter: Error durante la creacion del personaje")}
+    this.cacheCharacters.set(character.id, character);
+    this.cacheUserCharacter.set(character.userId,character.id)
+    return true;
+    
   }
   static updateCharacter(updatedCharacter: Character): void {
-    if (this.cacheCharacters.has(updatedCharacter.id)) {
-      const existingCharacter = this.cacheCharacters.get(updatedCharacter.id)!;
-      const updated = new Character({ ...existingCharacter, ...updatedCharacter });
-      this.cacheCharacters.set(updatedCharacter.id, updated);
-      this.pendingCharacters.add(updatedCharacter.id);
-    }
+    const existingCharacter = this.cacheCharacters.get(updatedCharacter.id);
+    if(!existingCharacter){throw new Error("updateCharacter: Error al actualizar el character")}
+    const updated = new Character({ ...existingCharacter, ...updatedCharacter });
+    this.cacheCharacters.set(updatedCharacter.id, updated);
+    this.pendingCharacters.add(updatedCharacter.id);
   }
   static async deleteCharacter(characterId: number): Promise<boolean> {
     const result = await DatabaseService.deleteCharacter(characterId);
@@ -192,22 +169,14 @@ class CacheDataService {
     return result
   }
 
-  // ✅ EFFECTS CACHE MANAGEMENT
-  static getEffectById(effectId: number): Effect | null {
-    return this.cacheEffects.get(effectId) || null;
-  }
-  static getAllEffects(): Effect[] {
-    return Array.from(this.cacheEffects.values());
-  }
-
-  // ✅ FRIENDSHIP CACHE MANAGEMENT
+  // FRIENDSHIP CACHE MANAGEMENT ✅
   static async createFriendship(friendship: Friendship): Promise<boolean> {
     const newFriendshipId = await DatabaseService.createFriendship(friendship);
     const newFriendship = new Friendship({ ...friendship,id: newFriendshipId, });
     if (!newFriendshipId) {throw new Error("Error durante la creacion de la solicitud de amistad")}
     this.cacheFriendships.set(newFriendship.id, newFriendship);
-    this.cacheCharacters.get(newFriendship.idUser1)?.friendships.push(newFriendship);
-    this.cacheCharacters.get(newFriendship.idUser2)?.friendships.push(newFriendship);
+    this.cacheCharacters.get(newFriendship.idUser1)?.friendships.push(newFriendshipId);
+    this.cacheCharacters.get(newFriendship.idUser2)?.friendships.push(newFriendshipId);
     return true;
   }
   static getFriendshipById(friendshipId: number): Friendship | null {
@@ -215,57 +184,48 @@ class CacheDataService {
   }
   static getUserFriendships(userId: number): Friendship[] {
     const characterId = this.cacheUserCharacter.get(userId) || null;
-    if(!characterId){throw new Error("No existe character asociado al user.")}
-    return this.cacheCharacters.get(characterId)?.friendships || [];
+    if(!characterId){throw new Error("getUserFriendships : No existe character asociado al user.")}
+    const character = this.cacheCharacters.get(characterId) || null;
+    if(!character){throw new Error("getUserFriendships :No existe character asociado al user.")}
+    const friendshipList = this.cacheCharacters.get(characterId)?.friendships || [];
+    return friendshipList
+      .map(friendshipId => this.getFriendshipById(friendshipId))
+      .filter((friendship): friendship is Friendship => friendship !== null); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static getUserFriendsRequest(userId: number): Friendship[] {
     const characterId = this.cacheUserCharacter.get(userId) || null;
-    if(!characterId){throw new Error("No existe character asociado al user.")}
-    return this.cacheCharacters.get(characterId)?.friendships.filter(friendship=>friendship.active==false) || [];
+    if(!characterId){throw new Error("getUserFriendships : No existe character asociado al user.")}
+    const character = this.cacheCharacters.get(characterId) || null;
+    if(!character){throw new Error("getUserFriendships :No existe character asociado al user.")}
+    const friendshipList = this.cacheCharacters.get(characterId)?.friendships || [];
+    return friendshipList
+      .map(friendshipId => this.getFriendshipById(friendshipId))
+      .filter((friendship): friendship is Friendship => friendship !== null && friendship.active==false); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static async updateFriendship(updatedFriendship: Friendship): Promise<boolean> {
-    const characterId1 = this.cacheUserCharacter.get(updatedFriendship.idUser1) || null;
-    const characterId2 = this.cacheUserCharacter.get(updatedFriendship.idUser2) || null;
-    if (!characterId1 || !characterId2) {
-        throw new Error("updateFriendship: No existe uno de los user asociado a la solicitud.");
-    }
-    const character1 = this.cacheCharacters.get(characterId1);
-    const character2 = this.cacheCharacters.get(characterId2);
-    if ((character1 && character1.friendships) && (character2 && character2.friendships)) {
-        character1.friendships = character1.friendships.map(friendship => 
-            friendship.id === updatedFriendship.id ? updatedFriendship : friendship
-        );
-        character2.friendships = character2.friendships.map(friendship => 
-          friendship.id === updatedFriendship.id ? updatedFriendship : friendship
-        );
-        this.cacheFriendships.set(updatedFriendship.id, updatedFriendship);
-        this.pendingFriendships.add(updatedFriendship.id);
-    }else{
-      throw new Error("updateFriendship: Uno de los friendship no existe");
-    }
+    this.cacheFriendships.set(updatedFriendship.id,updatedFriendship);
+    this.pendingFriendships.add(updatedFriendship.id);
     return true;
   }  
   static async deleteFriendship(deletedFriendship: Friendship): Promise<boolean> {
-    const result = await DatabaseService.deleteFriendship(deletedFriendship);
-    if(!result){throw new Error("Error durante la eliminacion de la solicitud de amistad")}
     const characterId1 = this.cacheUserCharacter.get(deletedFriendship.idUser1) || null;
     const characterId2 = this.cacheUserCharacter.get(deletedFriendship.idUser2) || null;
-    if (!characterId1 || !characterId2) {
-        throw new Error("updateFriendship: No existe uno de los user asociado a la solicitud.");
-    }
-    const character1 = this.cacheCharacters.get(characterId1);
-    const character2 = this.cacheCharacters.get(characterId2);
-    if ((character1 && character1.friendships) && (character2 && character2.friendships)) {
-        character1.friendships = character1.friendships.filter(friendship => friendship.id != deletedFriendship.id );
-        character2.friendships = character2.friendships.filter(friendship => friendship.id != deletedFriendship.id );
-        this.cacheFriendships.delete(deletedFriendship.id);
-    }else{
-      throw new Error("updateFriendship: Uno de los friendship no existe");
-    }
+    if(!characterId1 || !characterId2 ){throw new Error("deleteFriendship : No existen todos los characterID asociado al user.")}
+    const character1 = this.cacheCharacters.get(characterId1) || null;
+    const character2 = this.cacheCharacters.get(characterId2) || null;
+    if(!character1 || !character2 ){throw new Error("deleteFriendship : No existen todos los character asociado al user.")}
+
+    const result = await DatabaseService.deleteFriendship(deletedFriendship);
+    if(!result){throw new Error("deleteFriendship : Error al eliminar la solicitud de amistad.")}
+    
+    character1.friendships= character1.friendships.filter(friendshipID=> friendshipID != deletedFriendship.id);
+    character2.friendships= character2.friendships.filter(friendshipID=> friendshipID != deletedFriendship.id);
+    this.cacheFriendships.delete(deletedFriendship.id);
+    
     return true;
   }
 
-  // ✅ ITEM DEFINITIONS CACHE MANAGEMENT
+  // ITEM DEFINITIONS CACHE MANAGEMENT ✅
   static getItemDefinitionById(itemId: number): ItemDefinition | null {
     return this.cacheItemDefinitions.get(itemId) || null;
   }
@@ -273,75 +233,74 @@ class CacheDataService {
     return Array.from(this.cacheItemDefinitions.values());
   }
 
-  // ✅ ITEM INSTANCES CACHE MANAGEMENT
-  static getItemInstanceById(instanceId: number): ItemInstance | null {
-    for (const inventory of this.cacheInventories.values()) {
-      const instance = inventory.find(i => i.id === instanceId);
-      if (instance) return instance;
-    }
-    return null;
-  }
-  static getInventoryByCharacterId(characterId: number): ItemInstance[] {
-    return this.cacheInventories.get(characterId) || [];
-  }
-  static async createItemInstance(itemInstance: ItemInstance): Promise<ItemInstance> {
+  // ITEM INSTANCES CACHE MANAGEMENT ✅
+  static async createItemInstance(itemInstance: ItemInstance): Promise<boolean> {
     const newItemInstanceId = await DatabaseService.createItemInstance(itemInstance);
-    const newItemInstance = await DatabaseService.getItemInstanceById(newItemInstanceId);
-    if (!newItemInstance) {throw new Error("Error durante la creacion del ItemInstance")}
-    this.cacheCharacters.get(itemInstance.characterId)?.inventory.items.push(newItemInstance);
-    return newItemInstance;
+    if (!newItemInstanceId) {throw new Error("createItemInstance: Error durante la creacion de ItemInstance")}
+    const newItemInstance = new ItemInstance({...itemInstance,id:newItemInstanceId})
+    if (!newItemInstance) {throw new Error("createItemInstance: Error durante la creacion de ItemInstance")}
+
+    this.cacheItemInstances.set(newItemInstance.id,newItemInstance);
+    this.cacheCharacters.get(itemInstance.characterId)?.inventory.items.push(newItemInstanceId);
+    return true;
+  }
+  static getItemInstancesByCharacter(character:Character){
+    return character.inventory.items
+    .map(itemInstanceId=>this.cacheItemInstances.get(itemInstanceId))
+    .filter((itemInstance): itemInstance is ItemInstance => itemInstance !== null); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static updateItemInstance(updatedInstance: ItemInstance): void {
-    const itemInstances = this.cacheCharacters.get(updatedInstance.characterId)?.inventory.items;
-    if (!itemInstances) return;
-    const index = itemInstances.findIndex(a => a.id === updatedInstance.id);
-    if (index === -1) return;
-    itemInstances[index] = updatedInstance;
-    this.pendingActivities.add(updatedInstance.characterId);
+    this.cacheItemInstances.set(updatedInstance.id,updatedInstance)
+    this.pendingItemInstances.add(updatedInstance.id);
   }  
   static async deleteItemInstance(itemInstance: ItemInstance): Promise<boolean> {
     const character = this.cacheCharacters.get(itemInstance.characterId);
-    if(!character){ throw new Error("Error durante la eliminacion del itemInstance : No existe el personaje")}
+    if(!character){ throw new Error("deleteItemInstance: Error durante la eliminacion del itemInstance : No existe el personaje")}
+
     const result = await DatabaseService.deleteItemInstance(itemInstance.id);
-    if(!result){throw new Error("Error durante la eliminacion del ItemInstance")}
-    character.inventory.items = character.inventory.items.filter(item=>item.id!=itemInstance.id);
-    return result;
-  }
-  static updateInventory(characterId: number, updatedItems: ItemInstance[]): void {
-    this.cacheInventories.set(characterId, updatedItems);
-    this.pendingInventories.add(characterId);
-  }
-  static deleteInventoryByCharacterId(characterId: number): void {
-    this.cacheInventories.delete(characterId);
-    this.pendingInventories.add(characterId);
+    if(!result){throw new Error("deleteItemInstance: Error durante la eliminacion del ItemInstance")}
+
+    this.cacheItemInstances.delete(itemInstance.id);
+    character.inventory.items = character.inventory.items.filter(itemInstanceId=>itemInstanceId!=itemInstance.id);
+    return true;
   }
 
-  // ITEM EFFECTS CACHE MANAGEMENT
-  static getEffectsByItemId(itemId: number): ItemEffect[] {
-    return this.cacheItemEffects.get(itemId) || [];
-  }
-
-  // ✅ MESSAGE CACHE MANAGEMENT
+  // MESSAGE CACHE MANAGEMENT ✅
   static getMessageById(messageId: number): Message | null {
     return this.cacheMessages.get(messageId) || null;
   }
   static getMessagesByCharacterId(characterId: number, page: number = 1, limit: number = 10): Message[] {
-    const messages = [...this.cacheMessages.values()].filter(message=>message.senderId==characterId || message.receiverId == characterId);
+    const character = this.cacheCharacters.get(characterId);
+    if(!character){ throw new Error("getMessagesByCharacterId: Error durante la eliminacion del itemInstance : No existe el personaje")}
+    const messagesIds = character.messages;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    return messages.slice(startIndex, endIndex);
+    const messageList = messagesIds.slice(startIndex, endIndex);
+    return messageList
+      .map(messageId => this.getMessageById(messageId))
+      .filter((message): message is Message => message !== null); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static getCharacterMessagesOutbox(characterId: number, page: number = 1, limit: number = 10): Message[] {
-    const messages = [...this.cacheMessages.values()].filter(message=>message.senderId==characterId);
+    const character = this.cacheCharacters.get(characterId);
+    if(!character){ throw new Error("getMessagesByCharacterId: Error durante la eliminacion del itemInstance : No existe el personaje")}
+    const messagesIds = character.messages;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    return messages.slice(startIndex, endIndex);
+    const messageList = messagesIds.slice(startIndex, endIndex);
+    return messageList
+      .map(messageId => this.getMessageById(messageId))
+      .filter((message): message is Message => message !== null && message.characterSenderId==characterId); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static getCharacterMessagesInbox(characterId: number, page: number = 1, limit: number = 10): Message[] {
-    const messages = [...this.cacheMessages.values()].filter(message=>message.receiverId==characterId);
+    const character = this.cacheCharacters.get(characterId);
+    if(!character){ throw new Error("getMessagesByCharacterId: Error durante la eliminacion del itemInstance : No existe el personaje")}
+    const messagesIds = character.messages;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    return messages.slice(startIndex, endIndex);
+    const messageList = messagesIds.slice(startIndex, endIndex);
+    return messageList
+      .map(messageId => this.getMessageById(messageId))
+      .filter((message): message is Message => message !== null && message.characterReciverId==characterId); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static getCharacterMessagesOutboxCount(characterId: number){
     return this.getCharacterMessagesOutbox(characterId).length || 0;
@@ -352,7 +311,7 @@ class CacheDataService {
   static async createMessage(message: Message): Promise<boolean> {
     const newMessageId = await DatabaseService.createMessage(message);
     if(!newMessageId){throw new Error("createMessage: Error al crear el mensaje ")}
-    const newMessage = await DatabaseService.getMessageById(newMessageId);
+    const newMessage = new Message({...message,id:newMessageId});
     if(!newMessage){throw new Error("createMessage: Error al obtener el nuevo mensaje ")}
     if(newMessage){
       this.cacheMessages.set(newMessage.id, newMessage);
@@ -368,8 +327,18 @@ class CacheDataService {
     }
   }
   static async deleteMessage(message: Message): Promise<boolean> {
+    const characterId1 = this.cacheUserCharacter.get(message.characterSenderId) || null;
+    const characterId2 = this.cacheUserCharacter.get(message.characterReciverId) || null;
+    if(!characterId1 || !characterId2 ){throw new Error("deleteFriendship : No existen todos los characterID asociado al user.")}
+    const character1 = this.cacheCharacters.get(characterId1) || null;
+    const character2 = this.cacheCharacters.get(characterId2) || null;
+    if(!character1 || !character2 ){throw new Error("deleteFriendship : No existen todos los character asociado al user.")}
+
     const result = await DatabaseService.deleteMessage(message.id);
     if(!result){throw new Error("Error al eliminar el mensaje")}
+
+    character1.messages= character1.messages.filter(messageId=> messageId != message.id);
+    character2.messages= character2.messages.filter(messageId=> messageId != message.id);
     this.cacheMessages.delete(message.id);
     return result;
   }
@@ -377,7 +346,7 @@ class CacheDataService {
   // USERS ✅ 
   static async createUser(user: User): Promise<User> {
     const newUserId = await DatabaseService.createUser(user);
-    const newUser = await DatabaseService.getUserById(newUserId);
+    const newUser = new User({...user,id:newUserId})
     if(!newUser){throw new Error("Error al crear el usuario")}
     this.cacheUsers.set(newUser.id, newUser);
     return newUser;
@@ -390,7 +359,6 @@ class CacheDataService {
   }
   static getAllUsers(): User[] {
     return Array.from(this.cacheUsers.values());
-
   }
   static updateUser(updatedUser: User):void {
     if (this.cacheUsers.has(updatedUser.id)) {
@@ -410,9 +378,12 @@ class CacheDataService {
 
   static syncLog():boolean{
     let changes = {
+      pendingActivities:this.pendingActivities.size,
       pendingCharacters: this.pendingCharacters.size,
-      pendingMessages: this.pendingMessages.size,
-      pendingUsers: this.pendingUsers.size
+      pendingFriendships: this.pendingFriendships.size,
+      pendingItemInstances: this.pendingItemInstances.size,
+      pendingMessages:this.pendingMessages.size,
+      pendingUsers: this.pendingUsers.size,
     };
     
     // Filtrar solo los elementos con cambios
@@ -434,23 +405,8 @@ class CacheDataService {
   static async syncPendingUpdates(): Promise<void> {
     try {
       if (!this.syncLog()) return;
-      // Procesar personajes
-      await Promise.all(
-        Array.from(this.pendingCharacters.values()).map(async (pendingCharacterId) => {
-          const pendingCharacter = this.cacheCharacters.get(pendingCharacterId);
-          if (pendingCharacter) {
-            try {
-              await DatabaseService.updateCharacter(pendingCharacter);
-              await Promise.all([
-                ...pendingCharacter.inventory.items.map(item => DatabaseService.updateItemInstance(item)),
-              ]);
-            } catch (error) {
-              console.error(`❌ Error al actualizar personaje ID ${pendingCharacterId}:`, error);
-            }
-          }
-        })
-      );
-      // Procesar actividades
+      
+      // Procesar Activities
       await Promise.all(
         Array.from(this.pendingActivities.values()).map(async (pendingActivityId) => {
           const pendingActivity = this.cacheActivities.get(pendingActivityId);
@@ -463,7 +419,20 @@ class CacheDataService {
           }
         })
       );
-      // Procesar amistades
+      // Procesar Characters
+      await Promise.all(
+        Array.from(this.pendingCharacters.values()).map(async (pendingCharacterId) => {
+          const pendingCharacter = this.cacheCharacters.get(pendingCharacterId);
+          if (pendingCharacter) {
+            try {
+              await DatabaseService.updateCharacter(pendingCharacter);
+            } catch (error) {
+              console.error(`❌ Error al actualizar la personaje ID ${pendingCharacter.id}:`, error);
+            }
+          }
+        })
+      );
+      // Procesar Friendships
       await Promise.all(
         Array.from(this.pendingFriendships.values()).map(async (pendingFriendshipId) => {
           const pendingFriendship = this.cacheFriendships.get(pendingFriendshipId);
@@ -472,6 +441,19 @@ class CacheDataService {
               await DatabaseService.updateFriendship(pendingFriendship);
             } catch (error) {
               console.error(`❌ Error al actualizar la amistad ID ${pendingFriendship.id}:`, error);
+            }
+          }
+        })
+      );
+      // Procesar ItemInstances
+      await Promise.all(
+        Array.from(this.pendingActivities.values()).map(async (pendingActivityId) => {
+          const pendingActivity = this.cacheActivities.get(pendingActivityId);
+          if (pendingActivity) {
+            try {
+              await DatabaseService.updateActivity(pendingActivity);
+            } catch (error) {
+              console.error(`❌ Error al actualizar la actividad ID ${pendingActivity.id}:`, error);
             }
           }
         })
@@ -505,9 +487,9 @@ class CacheDataService {
 
       // Limpiar listas de pendientes
       this.pendingActivities.clear();
-      this.pendingFriendships.clear();
-
       this.pendingCharacters.clear();
+      this.pendingFriendships.clear();
+      this.pendingItemInstances.clear();
       this.pendingMessages.clear();
       this.pendingUsers.clear();
 

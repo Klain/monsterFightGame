@@ -40,6 +40,20 @@ class ItemEffectService {
       });
     });
   }
+  static async getAllEffectsItem(): Promise<dbItemEffect[]> {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT * FROM items_effects ;
+      `;
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as dbItemEffect[]);
+        }
+      });
+    });
+  }
   static async removeEffectFromItem(itemId: number, effectId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `

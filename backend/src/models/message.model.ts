@@ -1,8 +1,8 @@
 export class Message {
 	readonly id: number = 0;
-	readonly senderId: number = 0;
+	readonly characterSenderId: number = 0;
 	readonly senderName: string = "";
-	readonly receiverId: number = 0;
+	readonly characterReciverId: number = 0;
 	readonly receiverName: string = "";
 	readonly subject: string = "";
 	readonly body: string = "";

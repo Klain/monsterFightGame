@@ -57,6 +57,18 @@ class ItemInstanceService {
       });
     });
   }
+  static async getAllItems(): Promise<dbItemInstance[]> {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM item_instances;`;
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as dbItemInstance[]);
+        }
+      });
+    });
+  }
   static async updateItemInstance(updatedInstance: dbItemInstance): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `

@@ -26,7 +26,8 @@ router.post("/equip/:itemId", authMiddleware, validateCharacterMiddleware, async
       res.status(400).json({ error: "El itemId debe ser un número válido." });
       return ;
     }
-    const item = character.inventory.items.find(i => !i.equipped && i.itemId === itemId);
+    const characterItemInstances = CacheDataService.getItemInstancesByCharacter(character);
+    const item = characterItemInstances.find(itemInstance => !itemInstance.equipped && itemInstance.itemId === itemId);
     if (!item) {
       res.status(404).json({ error: "Ítem no encontrado o ya equipado." });
       return ;
@@ -65,17 +66,19 @@ router.post("/unequip/:itemId", authMiddleware, validateCharacterMiddleware, asy
       res.status(400).json({ error: "El itemId debe ser un número válido." });
       return;
     }
-    const item = character.inventory.items.find(i => i.equipped && i.itemId === itemId);
+    const characterItemInstances = CacheDataService.getItemInstancesByCharacter(character);
+
+    const item = characterItemInstances.find(i => i.equipped && i.itemId === itemId);
     if (!item) {
       res.status(404).json({ error: "Ítem no encontrado o ya está desequipado." });
       return;
     }
-    const backpackItems = character.inventory.items.filter(i => !i.equipped);
+    const backpackItems = characterItemInstances.filter(itemInstance => !itemInstance.equipped);
     if (backpackItems.length >= 30){  
       res.status(404).json({ error: "No hay espacio en la mochila para desequipar el ítem."});
       return;
     }
-    CharacterService.unequipItem(character, item);
+    CharacterService.unequipItem(item);
     webSocketService.characterRefresh(character.userId, { ...character.wsr() });
     res.status(200).json({ message: "Ítem desequipado con éxito" });
   } catch (error: any) {

@@ -27,9 +27,9 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
     }
     const newMessage : Message = new Message({
       id: 0,
-      senderId: sender.id,
+      characterSenderId: sender.id,
       senderName: sender.name,
-      receiverId: receiver.id,
+      characterReciverId: receiver.id,
       receiverName: receiver.name,
       subject: subject,
       body: body,
@@ -145,7 +145,7 @@ router.delete("/:message_id", authMiddleware, validateCharacterMiddleware, async
       return;
     }
     //TODO revisar la eliminacion de mensajes para ser usable por ambos usuarios
-    if (message.receiverId !== character.id && message.senderId !== character.id) {
+    if (message.characterReciverId !== character.id && message.characterSenderId !== character.id) {
       res.status(403).json({ error: "No tienes permiso para eliminar este mensaje." });
       return;
     }

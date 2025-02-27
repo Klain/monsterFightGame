@@ -1,9 +1,9 @@
 import CacheDataService from "../services/cache/CacheDataService";
 
 export class ItemInstance {
-  id: number = 0;
-  characterId: number = 0;
-  itemId: number = 0;
+  readonly id: number = 0;
+  readonly characterId: number = 0;
+  readonly itemId: number = 0;
   equipped: boolean = false;
   stock: number = 0;
 

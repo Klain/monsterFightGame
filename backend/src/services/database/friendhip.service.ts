@@ -59,6 +59,20 @@ class FriendshipService {
       });
     });
   }
+  static async getAllFriendships(): Promise<dbFriendship[]> {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT * FROM friendship 
+        ;`;
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as dbFriendship[]);
+        }
+      });
+    });
+  }
   static async updateFriendship(updatedFriendship: dbFriendship): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `

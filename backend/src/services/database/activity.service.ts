@@ -54,6 +54,18 @@ class ActivityService {
       });
     });
   }
+  static async getAllActivities(): Promise<dbActivity[]> {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM activities;`;
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows ? rows as dbActivity[] : []);
+        }
+      });
+    });
+  }
   static async updateActivity(updatedActivity: dbActivity): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const query = `

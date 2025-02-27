@@ -171,9 +171,9 @@ class CombatService {
       // Crear mensajes para atacante y defensor
       if(winner){
         attackerMessage = new Message({
-          senderId: attacker.id,
+          characterSenderId: attacker.id,
           senderName: attacker.name,
-          receiverId: attacker.id, // Se envía a sí mismo
+          characterReciverId: attacker.id, // Se envía a sí mismo
           receiverName: attacker.name,
           subject: isHeist
             ? `¡Intento de robo contra ${ defender.name}: ${winner.id === attacker.id ? "El robo fue un exito" : "Fuiste descubierto durante el robo"}!`
@@ -188,9 +188,9 @@ class CombatService {
           `,
         });
         defenderMessage = new Message({
-          senderId: attacker.id, 
+          characterSenderId: attacker.id, 
           senderName: attacker.name,
-          receiverId: defender.id,
+          characterReciverId: defender.id,
           receiverName: defender.name,
           subject: isHeist
             ? `¡${attacker.name} ${winner.id === defender.id ? "ha tratado de robarte" : "te ha robado"}!`
@@ -204,9 +204,9 @@ class CombatService {
         });
       }else{
         attackerMessage = new Message({
-          senderId: attacker.id,
+          characterSenderId: attacker.id,
           senderName: attacker.name,
-          receiverId: attacker.id,
+          characterReciverId: attacker.id,
           receiverName: attacker.name,
           subject: 
              `¡La batalla acabó en tablas!`,
@@ -218,9 +218,9 @@ class CombatService {
           `,
         });
         defenderMessage = new Message({
-          senderId: attacker.id,
+          characterSenderId: attacker.id,
           senderName: attacker.name,
-          receiverId: attacker.id,
+          characterReciverId: attacker.id,
           receiverName: attacker.name,
           subject: 
              `¡La batalla acabó en tablas!`,

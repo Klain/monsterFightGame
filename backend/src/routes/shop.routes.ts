@@ -7,6 +7,7 @@ import webSocketService from "../services/webSocketService";
 import { ItemDefinition } from "../models/itemDefinition.model";
 import { Character } from "../models/character.model";
 import { CharacterService } from "../services/character.service";
+import CacheDataService from "../services/cache/CacheDataService";
 
 const router = express.Router();
 
@@ -45,7 +46,9 @@ router.post("/sell", authMiddleware, validateCharacterMiddleware, async (req: Re
   try {
     const character : Character = req.locals.character;
     const { itemId } = req.body;
-    const itemToSell = character.inventory.items.find(item=>item.equipped==false && item.itemId==+itemId)
+    const characterItemInstances = CacheDataService.getItemInstancesByCharacter(character);
+
+    const itemToSell = characterItemInstances.find(item=>item.equipped==false && item.itemId==+itemId)
     if(!itemToSell){
       res.status(404).json({ error: "El personaje no dispone del objeto para vender." });
       return;

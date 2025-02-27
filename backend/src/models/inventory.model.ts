@@ -2,9 +2,9 @@ import CacheDataService from "../services/cache/CacheDataService";
 import { ItemInstance } from "./itemInstance.model";
 
 export class Inventory {
-  items: ItemInstance[] = [];
+  items: number[] = [];//Guardamos solo los idItemInstance y los obtenemos de cacheItemInstance
 
-  constructor(inventory?: ItemInstance[]) {
+  constructor(inventory?: number[]) {
     if (inventory) {
       this.items = inventory;
     }
@@ -18,12 +18,12 @@ export class Inventory {
   }
 
   wsrBackpack() {
-    const backpack = this.items.filter(item => !item.equipped);
+    const backpack = this.items.filter(itemId => CacheDataService.cacheItemInstances.get(itemId)?.equipped === false);
     const inventoryMap = new Map<number, ItemInstance[]>();
 
-    backpack.forEach(item => {
-      const itemData = item.wsr();
-      const itemId = itemData.id;
+    backpack.forEach(itemId => {
+      const itemData =  CacheDataService.cacheItemInstances.get(itemId)?.wsr();
+      if(!itemData){return;}
 
       if (!inventoryMap.has(itemId)) {
         inventoryMap.set(itemId, []);
@@ -35,18 +35,21 @@ export class Inventory {
   }
 
   wsrEquip() {
-    const equip = this.items.filter(item => item.equipped);
+    const equip = this.items.filter(itemId => CacheDataService.cacheItemInstances.get(itemId)?.equipped === true);
     const equipMapped = new Array(16).fill(null); 
 
-    equip.forEach(item => {
-      const itemDefinition =  CacheDataService.getItemDefinitionById(item.itemId);
+    equip.forEach(itemId => {
+      const itemDefinition =  CacheDataService.getItemDefinitionById(itemId);
+      const itemInstance = CacheDataService.cacheItemInstances.get(itemId);
+      if(!itemDefinition || !itemInstance){return;}
+
       if(!itemDefinition ||!itemDefinition.equipPositionType){throw new Error ("wsrEquip : Error al construir la respuesta de equipo para el front")}
         let itemPosition = itemDefinition.equipPositionType-1;
         if ([10, 12, 14].includes(itemPosition) && equipMapped[itemPosition] !== null) {
           itemPosition += 1; 
         }
         if (itemPosition >= 0 && itemPosition < 16) {
-            equipMapped[itemPosition] = item.wsr();
+            equipMapped[itemPosition] = itemInstance.wsr();
         }
     });
 

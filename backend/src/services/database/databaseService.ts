@@ -42,6 +42,10 @@ class DatabaseService {
     const dbActivities = await ActivityService.getActivitiesByCharacterId(characterId);
     return dbActivities.map(this.mapDbActivity);
   }
+  static async getAllActivities(): Promise<Activity[]> {
+    const dbActivities = await ActivityService.getAllActivities();
+    return dbActivities.map(this.mapDbActivity);
+  }
   static async updateActivity(updatedActivity: Activity): Promise<boolean> {
     return ActivityService.updateActivity({
       id : updatedActivity.id,
@@ -179,6 +183,10 @@ class DatabaseService {
     const dbFriendships = await FriendshipService.getUserFriendsRequest(userId);
     return dbFriendships.map(this.mapDbFriendship);
   }
+  static async getAllFriendships(): Promise<Friendship[]> {
+    const dbFriendships = await FriendshipService.getAllFriendships();
+    return dbFriendships.map(this.mapDbFriendship);
+  }
   static async updateFriendship(updatedFriendship: Friendship): Promise<boolean> {
     return FriendshipService.updateFriendship({
       id: updatedFriendship.id,
@@ -232,6 +240,7 @@ class DatabaseService {
   }
 
   // ITEM EFFECTS ✅
+
   static async addEffectToItem(itemEffect: ItemEffect): Promise<boolean> {
     return ItemEffectService.addEffectToItem({
       item_id: itemEffect.effectId,
@@ -242,6 +251,10 @@ class DatabaseService {
   static async getEffectsByItemId(itemId: number): Promise<ItemEffect[]> {
     const dbItemEffects = await ItemEffectService.getEffectsByItemId(itemId);
     return dbItemEffects.map(dbitemEffect => this.mapDbItemEffect(dbitemEffect));
+  }
+  static async getAllEffectsItem(): Promise<ItemEffect[]> {
+    const dbItemEffects = await ItemEffectService.getAllEffectsItem();
+    return dbItemEffects.map(this.mapDbItemEffect);
   }
   static async removeEffectFromItem(itemEffect:ItemEffect): Promise<boolean> {
     return ItemEffectService.removeEffectFromItem(itemEffect.itemId, itemEffect.effectId);
@@ -259,6 +272,10 @@ class DatabaseService {
       stock: instance.stock,
       equipped: instance.equipped,
     });
+  }
+  static async getAllItemInstances(): Promise<ItemInstance[]> {
+    const dbItems = await ItemInstanceService.getAllItems()
+    return dbItems.map(this.mapDbItemInstance);
   }
   static async getItemInstanceById(instanceId: number): Promise<ItemInstance | null> {
     const dbInstance = await ItemInstanceService.getItemInstanceById(instanceId);
@@ -298,9 +315,9 @@ class DatabaseService {
   static async createMessage(message: Message): Promise<number|null> {
     const lastId = await MessageService.createMessage({
       id: message.id,
-      sender_id: message.senderId,
+      sender_id: message.characterSenderId,
       sender_name: message.senderName,
-      receiver_id: message.receiverId,
+      receiver_id: message.characterReciverId,
       receiver_name: message.receiverName,
       subject: message.subject,
       body: message.body,
@@ -447,9 +464,9 @@ class DatabaseService {
   private static mapDbMessage(dbMessage: dbMessage): Message {
     return new Message({
       id: dbMessage.id!,
-      senderId: dbMessage.sender_id,
+      characterSenderId: dbMessage.sender_id,
       senderName: dbMessage.sender_name,
-      receiverId: dbMessage.receiver_id,
+      characterReciverId: dbMessage.receiver_id,
       receiverName: dbMessage.receiver_name,
       subject: dbMessage.subject,
       body: dbMessage.body,
