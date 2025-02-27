@@ -18,6 +18,8 @@ import { Message } from "../../models/message.model";
 import { User } from "../../models/user.model";
 import { Friendship } from "../../models/friendship.model";
 import { Inventory } from "../../models/inventory.model";
+import { EquipPositionType, EquipType, ItemType, WeaponType } from "../../constants/enums";
+import { equal } from "assert";
 
 class DatabaseService {
   constructor() {
@@ -384,42 +386,42 @@ class DatabaseService {
   }
   private static mapDbCharacter(dbCharacter: dbCharacter): Character {
     return new Character({
-      _id: dbCharacter.id,
-      _userId: dbCharacter.user_id,
-      _name: dbCharacter.name,
-      _faction: dbCharacter.faction,
-      _class: dbCharacter.class,
-      _level: dbCharacter.level,
+      id: dbCharacter.id,
+      userId: dbCharacter.user_id,
+      name: dbCharacter.name,
+      faction: dbCharacter.faction,
+      class: dbCharacter.class,
+      level: dbCharacter.level,
   
-      _strength: dbCharacter.strength ?? 1,
-      _endurance: dbCharacter.endurance ?? 1,
-      _constitution: dbCharacter.constitution ?? 1,
-      _precision: dbCharacter.precision ?? 1,
-      _agility: dbCharacter.agility ?? 1,
-      _vigor: dbCharacter.vigor ?? 1,
-      _spirit: dbCharacter.spirit ?? 1,
-      _willpower: dbCharacter.willpower ?? 1,
-      _arcane: dbCharacter.arcane ?? 1,
+      strength: dbCharacter.strength ?? 1,
+      endurance: dbCharacter.endurance ?? 1,
+      constitution: dbCharacter.constitution ?? 1,
+      precision: dbCharacter.precision ?? 1,
+      agility: dbCharacter.agility ?? 1,
+      vigor: dbCharacter.vigor ?? 1,
+      spirit: dbCharacter.spirit ?? 1,
+      willpower: dbCharacter.willpower ?? 1,
+      arcane: dbCharacter.arcane ?? 1,
   
-      _currentHealth: dbCharacter.current_health ?? 100,
-      _totalHealth: dbCharacter.total_health ?? 100,
-      _currentStamina: dbCharacter.current_stamina ?? 100,
-      _totalStamina: dbCharacter.total_stamina ?? 100,
-      _currentMana: dbCharacter.current_mana ?? 100,
-      _totalMana: dbCharacter.total_mana ?? 100,
+      currentHealth: dbCharacter.current_health ?? 100,
+      totalHealth: dbCharacter.total_health ?? 100,
+      currentStamina: dbCharacter.current_stamina ?? 100,
+      totalStamina: dbCharacter.total_stamina ?? 100,
+      currentMana: dbCharacter.current_mana ?? 100,
+      totalMana: dbCharacter.total_mana ?? 100,
   
-      _currentXp: dbCharacter.current_xp ?? 0,
-      _totalXp: dbCharacter.total_xp ?? 0,
-      _currentGold: dbCharacter.current_gold ?? 0,
-      _totalGold: dbCharacter.total_gold ?? 0,
-      _upgradePoints: dbCharacter.upgrade_points ?? 0,
+      currentXp: dbCharacter.current_xp ?? 0,
+      totalXp: dbCharacter.total_xp ?? 0,
+      currentGold: dbCharacter.current_gold ?? 0,
+      totalGold: dbCharacter.total_gold ?? 0,
+      upgradePoints: dbCharacter.upgrade_points ?? 0,
   
-      _goldChest: dbCharacter.gold_chest,
-      _warehouse : dbCharacter.warehouse,
-      _enviroment : dbCharacter.enviroment,
-      _traps : dbCharacter.traps,
+      goldChest: dbCharacter.gold_chest,
+      warehouse : dbCharacter.warehouse,
+      enviroment : dbCharacter.enviroment,
+      traps : dbCharacter.traps,
       
-      _lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
+      lastFight: dbCharacter.last_fight ? new Date(dbCharacter.last_fight) : undefined
     });
   }
   private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
@@ -443,6 +445,105 @@ class DatabaseService {
     });
   } 
   private static mapDbItemDefinition(dbItem: dbItemDefinition): ItemDefinition {
+    let iconUrl = "";
+    
+    if(dbItem.itemType===ItemType.EQUIPMENT){
+      if(dbItem.equipType && dbItem.equipType===EquipType.WEAPON){ 
+        iconUrl+="weapon/";
+        switch(dbItem.weaponType){
+
+          case WeaponType.GLOVE:iconUrl+="fist";break;
+          case WeaponType.CLAW:iconUrl+="fist";break;
+          case WeaponType.TOOL:iconUrl+="fist";break;
+
+          case WeaponType.DIRK:iconUrl+="dagger";break;
+          case WeaponType.DAGGER:iconUrl+="dagger";break;
+          case WeaponType.QAMA:iconUrl+="dagger";break;
+
+          case WeaponType.GLADIUS:iconUrl+="sword";break;
+          case WeaponType.SABER:iconUrl+="sword";break;
+          case WeaponType.GREATSWORD:iconUrl+="sword";break;
+
+          case WeaponType.HATCHET:iconUrl+="axe";break;
+          case WeaponType.AXE:iconUrl+="axe";break;
+          case WeaponType.BERDICHE:iconUrl+="axe";break;
+
+          case WeaponType.HAMMER:iconUrl+="mace";break;
+          case WeaponType.MACE:iconUrl+="mace";break;
+          case WeaponType.SLEDGEHAMMER:iconUrl+="mace";break;
+
+          case WeaponType.PILUM:iconUrl+="lance";break;
+          case WeaponType.LANCE:iconUrl+="lance";break;
+          case WeaponType.PIKE:iconUrl+="lance";break;
+
+          case WeaponType.DART:iconUrl+="throwing";break;
+          case WeaponType.VENABLO:iconUrl+="throwing";break;
+          case WeaponType.HARPOON:iconUrl+="throwing";break;
+
+          case WeaponType.SHORT_BOW:iconUrl+="bow";break;
+          case WeaponType.BOW:iconUrl+="bow";break;
+          case WeaponType.LONGBOW:iconUrl+="bow";break;
+
+          case WeaponType.REPEATER:iconUrl+="crossbow";break;
+          case WeaponType.CROSSBOW:iconUrl+="crossbow";break;
+          case WeaponType.ARBALEST:iconUrl+="crossbow";break;
+
+          case WeaponType.PISTOL:iconUrl+="gunpowder";break;
+          case WeaponType.MUSKET:iconUrl+="gunpowder";break;
+          case WeaponType.BOMBARD:iconUrl+="gunpowder";break;
+          
+          case WeaponType.RING:iconUrl+="relic";break;
+          case WeaponType.TALISMAN:iconUrl+="relic";break;
+          case WeaponType.SCEPTER:iconUrl+="relic";break;
+
+          case WeaponType.WAND:iconUrl+="focus";break;
+          case WeaponType.STAFF:iconUrl+="focus";break;
+          case WeaponType.CROSIER:iconUrl+="focus";break;
+
+          case WeaponType.SEAL:iconUrl+="grimoire";break;
+          case WeaponType.SCROLL:iconUrl+="grimoire";break;
+          case WeaponType.GRIMOIRE:iconUrl+="grimoire";break;
+          
+          default :iconUrl+="hand1";
+        }
+      }
+      if(dbItem.equipType && dbItem.equipType===EquipType.ARMOR){ 
+        iconUrl+="armor/"
+        switch(dbItem.equipPositionType){
+          case EquipPositionType.HEAD:iconUrl+="head";break;
+          case EquipPositionType.CHEST:iconUrl+="chest";break;
+          case EquipPositionType.SHOULDER:iconUrl+="shoulders";break;
+          case EquipPositionType.WRIST:iconUrl+="wrist";break;
+          case EquipPositionType.LEGS:iconUrl+="legs";break;
+          default :iconUrl+="hand1";
+        }
+      }
+      if(dbItem.equipType && dbItem.equipType===EquipType.ACCESSORY){ 
+        iconUrl+="accesory/"
+        switch(dbItem.equipPositionType){
+          case EquipPositionType.HANDS:iconUrl+="hands";break;
+          case EquipPositionType.WAIST:iconUrl+="waist";break;
+          case EquipPositionType.FEET:iconUrl+="feets";break;
+          case EquipPositionType.BACK:iconUrl+="back";break
+          case EquipPositionType.TRINKET1:iconUrl+="trinket";break;
+          case EquipPositionType.TRINKET2:iconUrl+="trinket";break;
+          default :iconUrl+="hand1";
+        }
+      }
+      if(dbItem.equipType && dbItem.equipType===EquipType.JEWEL){ 
+        iconUrl+="jewel/"
+        switch(dbItem.equipPositionType){
+          case EquipPositionType.NECKLACE:iconUrl+="necklace";break;
+          case EquipPositionType.RING1:iconUrl+="ring";break;
+          case EquipPositionType.RING2:iconUrl+="ring";break;
+          default :iconUrl+="hand1";
+        }
+      }
+    }
+    if(dbItem.itemType===ItemType.CONSUMABLE){ iconUrl += "consumable/";}
+    if(dbItem.itemType===ItemType.TRADEGOODS){ iconUrl += "tradegoods/";}
+
+    iconUrl+=".png"
     return new ItemDefinition({
       id: dbItem.id!,
       name: dbItem.name,
@@ -452,7 +553,8 @@ class DatabaseService {
       equipWeaponType: dbItem.weaponType ?? undefined,
       levelRequired: dbItem.levelRequired,
       price: dbItem.price,
-      effects: [], // Se inicializa vacío, ya que los efectos provienen de otra tabla
+      effects: [],
+      imageUrl : iconUrl,
     });
   }
   private static mapDbItemInstance(dbInstance: dbItemInstance): ItemInstance {

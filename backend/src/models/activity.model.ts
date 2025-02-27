@@ -11,7 +11,7 @@ export class Activity {
     Object.assign(this, data);
   }
   isComplete():boolean{
-    return this.getRemainingTime()>0;
+    return this.getRemainingTime()>=0;
   }
   getRemainingTime(): number {
     const now = new Date();

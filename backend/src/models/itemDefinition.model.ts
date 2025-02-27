@@ -1,15 +1,16 @@
 import { EquipPositionType, EquipType, ItemType, WeaponType } from "../constants/enums";
 
 export class ItemDefinition {
-  id: number = 0;
-  name: string = "";
-  itemType: ItemType = ItemType.TRADEGOODS;
-  equipType?: EquipType;
-  equipPositionType?: EquipPositionType;
-  equipWeaponType?: WeaponType;
-  levelRequired: number = 1;
-  price: number = 0;
-  effects : {effectId:number , value:number}[] = []
+  readonly id: number = 0;
+  readonly name: string = "";
+  readonly itemType: ItemType = ItemType.TRADEGOODS;
+  readonly equipType?: EquipType;
+  readonly equipPositionType?: EquipPositionType;
+  readonly equipWeaponType?: WeaponType;
+  readonly levelRequired: number = 1;
+  readonly price: number = 0;
+  readonly effects : {effectId:number , value:number}[] = []
+  readonly imageUrl : string = "";
 
   constructor(data: Partial<ItemDefinition>) {
     Object.assign(this, data);

@@ -222,7 +222,7 @@ async function populateWeapons(): Promise<void> {
       for (const { name, effects,weaponType } of items) {
         try {
           const itemId = await runQuery(
-            `INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, weaponFamily, levelRequired, price) 
+            `INSERT INTO item_definitions (name, itemType, equipType, equipPositionType, WeaponType, levelRequired, price) 
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [name, itemType, equipType, equipPositionType, weaponType, levelRequired, price]
           );
@@ -487,7 +487,7 @@ export async function initializeDatabase(): Promise<void> {
   console.log("Exito en runTables");
   //await populateEffects();
   console.log("Exito en populateEffects");
-  // await populateItems();
+  //await populateItems();
   console.log("Exito en populateItems");
 }
 

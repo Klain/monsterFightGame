@@ -120,44 +120,72 @@ export enum EquipPositionType {
     MAINHAND = 15,     // Mano principal
     OFFHAND = 16,      // Mano secundaria
 }
+export enum WeaponFamily {
+    FIST,
+    DAGGER,
+    SWORD,
+    AXE,
+    MACE,
+    LANCE,
+    THROWING,
+    BOW,
+    CROSSBOW,
+    GUNPOWDER,
+    RELIC,
+    FOCUS,
+    GRIMOIRE
+}
 export enum WeaponType {
     NONE = 0,
+
     GLOVE = 1,
     CLAW = 2,
     TOOL = 3,
+    
     DIRK = 4,
     DAGGER = 5,
     QAMA = 6,
+    
     GLADIUS = 7,
     SABER = 8,
     GREATSWORD = 9,
+    
     HATCHET = 10,
     AXE = 11,
     BERDICHE = 12,
+    
     HAMMER = 13,
     MACE = 14,
     SLEDGEHAMMER = 15,
+    
     PILUM = 16,
     LANCE = 17,
     PIKE = 18,
+    
     DART = 19,
     VENABLO = 20,
     HARPOON = 21,
+    
     SHORT_BOW = 22,
     BOW = 23,
     LONGBOW = 24,
+    
     REPEATER = 25,
     CROSSBOW = 26,
     ARBALEST = 27,
+    
     PISTOL = 28,
     MUSKET = 29,
     BOMBARD = 30,
+    
     RING = 31,
     TALISMAN = 32,
     SCEPTER = 33,
+    
     WAND = 34,
     STAFF = 35,
     CROSIER = 36,
+    
     SEAL = 37,
     SCROLL = 38,
     GRIMOIRE = 39,
@@ -240,21 +268,7 @@ export enum StatusEffect {
     PRECISION_REDUCTION = "precisionReduction",
 }
 //old
-export enum WeaponFamily {
-    FIST,
-    DAGGER,
-    SWORD,
-    AXE,
-    MACE,
-    LANCE,
-    THROWING,
-    BOW,
-    CROSSBOW,
-    GUNPOWDER,
-    RELIC,
-    FOCUS,
-    GRIMOIRE
-}
+
 export enum ArmorMaterialType {
     NONE = 0,
     CLOTH = 1,

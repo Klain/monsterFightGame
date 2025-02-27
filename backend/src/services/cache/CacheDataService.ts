@@ -7,6 +7,7 @@ import { ItemInstance } from "../../models/itemInstance.model";
 import { Message } from "../../models/message.model";
 import { User } from "../../models/user.model";
 import { Friendship } from "../../models/friendship.model";
+import { Item } from "../../utils/itemGenerators/item.model";
 
 class CacheDataService {
 
@@ -65,13 +66,12 @@ class CacheDataService {
       console.log(`📦 Se encontraron ${dbItemsInstances.length} instancias de items.`);
       console.log(`📦 Se encontraron ${dbActivities.length} actividades.`);
       console.log(`📦 Se encontraron ${dbFriendships.length} relaciones.`);
-
       console.log(`📨 Se encontraron ${dbMessages.length} mensajes.`);
 
       // Cargar datos en caché
       dbItemsDefinitions.forEach(definition=>{
         const itemEffects : ItemEffect[] = dbEffectsItems.filter(itemEffect=>itemEffect.itemId==definition.id);
-        definition.effects = itemEffects;
+        definition = new ItemDefinition({...definition , effects : itemEffects});
         this.cacheItemDefinitions.set(definition.id,definition);
       });
       dbUsers.forEach(user=>{
@@ -79,6 +79,7 @@ class CacheDataService {
       });
       dbCharacters.forEach(character=>{
         this.cacheCharacters.set(character.id,character);
+        this.cacheUserCharacter.set(character.userId,character.id)
       });
       dbItemsInstances.forEach(instance=>{
         this.cacheItemInstances.set(instance.id,instance);
