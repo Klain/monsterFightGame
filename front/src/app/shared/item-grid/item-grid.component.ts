@@ -16,7 +16,7 @@ import { ItemIconComponent } from '../item-icon/item-icon.component';
 })
 export class ItemGridComponent implements OnChanges {
   @Input() rows: number = 3;
-  @Input() cols: number = 3;
+  @Input() cols: number = 10;
   @Input() height: string = '64px';
   @Input() width: string = '64px';
 

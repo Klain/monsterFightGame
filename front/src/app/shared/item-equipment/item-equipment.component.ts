@@ -49,41 +49,24 @@ export class ItemEquipmentComponent  implements OnChanges{
     if (changes['action2'] && changes['action2'].currentValue) {this.action2=changes['action2'].currentValue}
   }
   getItemType(index:number):string{
-    switch(index){
-      case 0:
-        return 'equipIcon HEAD';break;
-      case 1:
-        return 'equipIcon NECK';break;
-      case 2:
-        return 'equipIcon CHEST';break;
-      case 3:
-        return 'equipIcon SHOULDER';break;
-      case 4:
-        return 'equipIcon WRIST';break;
-      case 5:
-        return 'equipIcon HANDS';break;
-      case 6:
-        return 'equipIcon WAIST';break;
-      case 7:
-        return 'equipIcon RING';break;
-      case 8:
-        return 'equipIcon LEGS';break;
-      case 9:
-        return 'equipIcon RING2';break;
-      case 10:
-        return 'equipIcon TRINKET';break;
-      case 11:
-        return 'equipIcon FEET';break;
-      case 12:
-        return 'equipIcon TRINKET2';break;
-      case 13:
-        return 'equipIcon MAINHAND';break;                     
-      case 14:
-        return 'equipIcon CLOAK';break;
-      case 15:
-        return 'equipIcon MAINHAND2';break;
-      default:
-        return '';break;
+    switch(index+1){
+      case 1: return 'equipIcon HEAD';break;
+      case 3: return 'equipIcon CHEST';break;
+      case 4: return 'equipIcon SHOULDER';break;
+      case 5: return 'equipIcon WRIST';break;
+      case 8: return 'equipIcon LEGS';break;
+      case 2: return 'equipIcon NECKLACE';break;
+      case 11: return 'equipIcon RING1';break;
+      case 12: return 'equipIcon RING2';break;
+      case 6: return 'equipIcon HANDS';break;
+      case 7: return 'equipIcon WAIST';break;
+      case 9: return 'equipIcon FEET';break;
+      case 10: return 'equipIcon BACK';break;
+      case 13: return 'equipIcon TRINKET1';break;
+      case 14: return 'equipIcon TRINKET2';break;                     
+      case 15: return 'equipIcon MAINHAND';break;
+      case 16: return 'equipIcon OFFHAND';break;
+      default: return '';break;
     }
   }
 

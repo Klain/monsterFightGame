@@ -34,7 +34,7 @@ router.post("/buy", authMiddleware, validateCharacterMiddleware, validateItemMid
       res.status(404).json({ error: "El personaje no dispone suficiente dinero." });
       return;
     }
-    CharacterService.buyItem(character, item);
+    await CharacterService.buyItem(character, item);
     webSocketService.characterRefresh(character.userId, {...character.wsr()});
     res.status(200).json({ message: "Ítem comprado con éxito" });
   } catch (error:any) {
@@ -53,7 +53,7 @@ router.post("/sell", authMiddleware, validateCharacterMiddleware, async (req: Re
       res.status(404).json({ error: "El personaje no dispone del objeto para vender." });
       return;
     }
-    CharacterService.sellItem(character, itemToSell);
+    await CharacterService.sellItem(character, itemToSell);
     webSocketService.characterRefresh(character.userId, {
       ...character.wsr(),
     });

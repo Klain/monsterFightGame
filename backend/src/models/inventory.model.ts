@@ -19,18 +19,13 @@ export class Inventory {
 
   wsrBackpack() {
     const backpack = this.items.filter(itemId => CacheDataService.cacheItemInstances.get(itemId)?.equipped === false);
-    const inventoryMap = new Map<number, ItemInstance[]>();
+    const inventoryMap = new Map<number, any>();
 
     backpack.forEach(itemId => {
-      const itemData =  CacheDataService.cacheItemInstances.get(itemId)?.wsr();
+      const itemData : ItemInstance =  CacheDataService.cacheItemInstances.get(itemId)?.wsr();
       if(!itemData){return;}
-
-      if (!inventoryMap.has(itemId)) {
-        inventoryMap.set(itemId, []);
-      }
-      inventoryMap.get(itemId)?.push(itemData);
+      inventoryMap.set(itemData.id , itemData);
     });
-
     return Object.fromEntries(inventoryMap);
   }
 
@@ -39,11 +34,12 @@ export class Inventory {
     const equipMapped = new Array(16).fill(null); 
 
     equip.forEach(itemId => {
-      const itemDefinition =  CacheDataService.getItemDefinitionById(itemId);
       const itemInstance = CacheDataService.cacheItemInstances.get(itemId);
+      if(!itemInstance){throw new Error ("wsrEquip : Error al construir la respuesta de equipo para el front")}
+      const itemDefinition =  CacheDataService.getItemDefinitionById(itemInstance.itemId);
       if(!itemDefinition || !itemInstance){return;}
-
       if(!itemDefinition ||!itemDefinition.equipPositionType){throw new Error ("wsrEquip : Error al construir la respuesta de equipo para el front")}
+    
         let itemPosition = itemDefinition.equipPositionType-1;
         if ([10, 12, 14].includes(itemPosition) && equipMapped[itemPosition] !== null) {
           itemPosition += 1; 
@@ -54,6 +50,6 @@ export class Inventory {
     });
 
     return equipMapped;
-}
+  }
 
 }

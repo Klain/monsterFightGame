@@ -16,7 +16,8 @@ export class ItemInstance {
     if (!databaseItem) return null;
 
     return {
-      id: this.itemId,
+      id: this.id,
+      itemId:this.itemId,
       name: databaseItem.name,
       itemType: databaseItem.itemType,
       levelRequired: databaseItem.levelRequired,
@@ -27,6 +28,7 @@ export class ItemInstance {
       equipPositionType: databaseItem.equipPositionType,
       effects: databaseItem.effects || [],
       equipped: this.equipped,
+      imageUrl:databaseItem.imageUrl,
     };
   }
 }

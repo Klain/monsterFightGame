@@ -95,7 +95,7 @@ function runTables(): Promise<void> {
           itemType INTEGER NOT NULL, 
           equipType INTEGER DEFAULT NULL, 
           equipPositionType INTEGER DEFAULT NULL, 
-          WeaponType INTEGER DEFAULT NULL, 
+          weaponType INTEGER DEFAULT NULL, 
           levelRequired INTEGER DEFAULT 1,
           price INTEGER NOT NULL
         )
@@ -109,7 +109,7 @@ function runTables(): Promise<void> {
           stock INTEGER DEFAULT 1,
           equipped BOOLEAN DEFAULT FALSE,
           FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-          FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+          FOREIGN KEY (item_id) REFERENCES item_definitions(id) ON DELETE CASCADE
         )
       `);
       //db.run("DROP TABLE IF EXISTS effects;");
@@ -125,7 +125,7 @@ function runTables(): Promise<void> {
           item_id INTEGER NOT NULL,
           effect_id INTEGER NOT NULL,
           value INTEGER NOT NULL,
-          FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+          FOREIGN KEY (item_id) REFERENCES item_definitions(id) ON DELETE CASCADE,
           FOREIGN KEY (effect_id) REFERENCES effects(id) ON DELETE CASCADE,
           PRIMARY KEY (item_id, effect_id)
         )
@@ -142,8 +142,8 @@ function runTables(): Promise<void> {
           body TEXT NOT NULL,
           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           read BOOLEAN DEFAULT FALSE,
-          FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-          FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+          FOREIGN KEY (sender_id) REFERENCES characters(id) ON DELETE CASCADE,
+          FOREIGN KEY (receiver_id) REFERENCES characters(id) ON DELETE CASCADE
         )
       `);
       //db.run("DROP TABLE IF EXISTS friendship;");  

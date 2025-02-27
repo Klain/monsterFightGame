@@ -563,9 +563,10 @@ class DatabaseService {
       characterId: dbInstance.character_id,
       itemId: dbInstance.item_id,
       stock: dbInstance.stock,
-      equipped: dbInstance.equipped,
+      equipped: Boolean(dbInstance.equipped),
     });
   }
+  
   private static mapDbMessage(dbMessage: dbMessage): Message {
     return new Message({
       id: dbMessage.id!,

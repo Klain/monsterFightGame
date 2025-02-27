@@ -21,13 +21,13 @@ router.get("/", authMiddleware, validateCharacterMiddleware, async (req: Request
 router.post("/equip/:itemId", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
     const character: Character = req.locals.character;
-    const itemId = Number(req.params.itemId);
-    if (isNaN(itemId)) {
+    const itemInstanceId = Number(req.params.itemId);
+    if (isNaN(itemInstanceId)) {
       res.status(400).json({ error: "El itemId debe ser un número válido." });
       return ;
     }
     const characterItemInstances = CacheDataService.getItemInstancesByCharacter(character);
-    const item = characterItemInstances.find(itemInstance => !itemInstance.equipped && itemInstance.itemId === itemId);
+    const item = characterItemInstances.find(itemInstance => !itemInstance.equipped && itemInstance.id === itemInstanceId);
     if (!item) {
       res.status(404).json({ error: "Ítem no encontrado o ya equipado." });
       return ;
@@ -61,14 +61,14 @@ router.post("/equip/:itemId", authMiddleware, validateCharacterMiddleware, async
 router.post("/unequip/:itemId", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response) => {
   try {
     const character: Character = req.locals.character;
-    const itemId = Number(req.params.itemId);
-    if (isNaN(itemId)) {
+    const itemInstanceId = Number(req.params.itemId);
+    if (isNaN(itemInstanceId)) {
       res.status(400).json({ error: "El itemId debe ser un número válido." });
       return;
     }
     const characterItemInstances = CacheDataService.getItemInstancesByCharacter(character);
 
-    const item = characterItemInstances.find(i => i.equipped && i.itemId === itemId);
+    const item = characterItemInstances.find(i => i.equipped && i.id === itemInstanceId);
     if (!item) {
       res.status(404).json({ error: "Ítem no encontrado o ya está desequipado." });
       return;

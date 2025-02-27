@@ -110,8 +110,11 @@ export class CharacterService {
     // Buscar si hay un ítem ya equipado en la misma posición
     const characterItemInstances =  CacheDataService.getItemInstancesByCharacter(character);
 
-    const equippedItemsOnPosition = characterItemInstances.filter(itemInstance => itemInstance.equipped && itemInstance.itemId !== itemInstanceToEquip.itemId && itemInstance.itemId !== 0 &&
-      CacheDataService.getItemDefinitionById(itemInstance.itemId)?.equipPositionType === itemDefinition.equipPositionType);
+    const equippedItemsOnPosition = characterItemInstances.filter(itemInstance => 
+      itemInstance.equipped
+      && CacheDataService.getItemDefinitionById(itemInstance.itemId)?.equipPositionType === itemDefinition.equipPositionType
+     );
+
     let alternativePosition: EquipPositionType | null = null;
     switch (itemDefinition.equipPositionType) {
       case EquipPositionType.RING1:
@@ -132,11 +135,10 @@ export class CharacterService {
           CacheDataService.updateItemInstance(equippedItemsOnPosition[0]);
         } 
       } else { //Si hay dos posiciones
-        const alternativeEquipped = equippedItemsOnPosition.at(-1) || null;
+        const alternativeEquipped = equippedItemsOnPosition[1] || null;
         if (alternativeEquipped) { // comprobamos si la segunda esta ocupada y la desequipamos
           alternativeEquipped.equipped = false; 
           CacheDataService.updateItemInstance(alternativeEquipped);
-
         }else{ } // Si esta libre no es necesario hacer nada 
       }
     }
