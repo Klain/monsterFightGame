@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { WebSocketService } from './core/services/websocket.service';
 import { AuthService } from './core/services/auth.service';
 import { RouterOutlet } from '@angular/router';
-import { NavbarComponent } from './core/navbar/navbar.component';
+import { NavbarComponent } from './game/navbar/navbar.component';
 
 @Component({
   selector: 'app-root',

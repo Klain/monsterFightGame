@@ -1,11 +1,8 @@
 import { Activity } from "./activity.model";
 import { CharacterStatus } from "./characterStatus.model";
-import { Friendship } from "./friendship.model";
 import { Inventory } from "./inventory.model";
-import { CharacterService } from "../services/character.service";
 import { ActivityType, CharacterClass } from "../constants/enums";
 import CacheDataService from "../services/cache/CacheDataService";
-import { User } from "./user.model";
 
 export class Character {
   readonly id: number = 0;
@@ -224,4 +221,30 @@ export class Character {
       },
     };
   }
+  toLeaderboardCharacter(): LeaderboardCharacter {
+    return {
+      id: this.id,
+      name: this.name,
+      faction: this.faction,
+      class: this.class,
+      level: this.level,
+      totalGold: this.totalGold,
+      isFriend: false,
+      canSendRequest: false,
+      isOwnCharacter:false,
+    };
+  }
 }
+
+export interface LeaderboardCharacter {
+  id: number;
+  name: string;
+  faction: string;
+  class: number;
+  level: number;
+  totalGold: number;
+  isFriend: boolean;
+  canSendRequest: boolean;
+  isOwnCharacter :boolean;
+}
+

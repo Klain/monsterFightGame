@@ -13,7 +13,6 @@ import { of, throwError } from 'rxjs';
 export class CharacterService {
   private characterSubject = new BehaviorSubject<Character | null>(null);
   character$ = this.characterSubject.asObservable();
-
   constructor(
     private api: ApiService, 
     private webSocketService: WebSocketService
@@ -27,7 +26,6 @@ export class CharacterService {
       }
     });
   }
-
   loadCharacter(): Observable<Character | null> {
     console.log("🔄 Cargando personaje...");
     return this.api.get<Character>('characters').pipe(
@@ -45,9 +43,6 @@ export class CharacterService {
       })
     );
   }
-  
-  
-
   private updateCharacterWithPartial(partialCharacter: Partial<Character>): void {
     const currentCharacter = this.characterSubject.value;
     if (currentCharacter) {
@@ -60,13 +55,11 @@ export class CharacterService {
   getLocalCharacter(): Character | null {
     return this.characterSubject.value;
   }
-
   upgradeAttribute(attribute: string):void{
     this.api.post<void>('characters/attributes/upgrade-attribute', { attribute }).subscribe({
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
     });
   }
-
   startActivity(activityType: ActivityType, duration: number):void {
     this.api.post('activities/start', { activityType, duration }).subscribe({
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
@@ -77,7 +70,6 @@ export class CharacterService {
       error: (err:any) => {console.error('Error al realizar la acción:', err)},
     });
   }
-  
   findOpponent(): Observable<any> {
     return this.api.get('characters/find-opponent');
   }

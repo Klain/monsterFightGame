@@ -1,0 +1,21 @@
+<mat-toolbar color="primary">
+  <span>Monster Game Fight</span>
+  <span class="spacer"></span>
+
+  <ng-container *ngIf="isAuthenticated">
+    <button mat-button routerLink="/game">Dashboard</button>
+    <button mat-button routerLink="/game/character">Personaje</button>
+    <button mat-button routerLink="/game/combat">Combate</button>
+    <button mat-button routerLink="/game/leaderboard">Clasificación</button>
+    <button mat-button routerLink="/game/messages">Mensajes</button>
+    <button mat-button routerLink="/game/shop">Tienda</button>
+    <button mat-button color="warn" (click)="logout()">Logout</button>
+  </ng-container>
+
+  <ng-container *ngIf="!isAuthenticated">
+    <button mat-button routerLink="/auth/login">Login</button>
+    <button mat-button routerLink="/auth/register">Registro</button>
+  </ng-container>
+
+
+</mat-toolbar>

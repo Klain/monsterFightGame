@@ -7,6 +7,7 @@ import { Character } from "../models/character.model";
 import CombatService from "../services/combatService";
 import ServerConfig from "../constants/serverConfig";
 import webSocketService from "../services/webSocketService";
+import { Friendship } from "../models/friendship.model";
 
 const router = express.Router();
 
@@ -68,32 +69,55 @@ router.post("/heist", authMiddleware , validateCharacterMiddleware , validateDef
   }
 });
 
-router.get( "/leaderboard", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+router.get("/leaderboard", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.locals.user!.id;
 
-      if (page < 1 || limit < 1) {
-        res.status(400).json({ error: "Los parámetros page y limit deben ser números positivos." });
-        return;
-      }
-      const allCharacters = CacheDataService.getAllCharacters();
-      const totalCharacters = allCharacters.length;
-      const sortedCharacters = allCharacters.sort((a, b) => b.totalGold - a.totalGold);
-      const startIndex = (page - 1) * limit;
-      const paginatedCharacters = sortedCharacters.slice(startIndex, startIndex + limit);
-      res.json({
-        characters: paginatedCharacters,
-        page,
-        limit,
-        total: totalCharacters,
-        totalPages: Math.ceil(totalCharacters / limit)
-      });
-    } catch (error) {
-      console.error("Error al obtener el leaderboard:", error);
-      res.status(500).json({ error: "Error interno al obtener el leaderboard." });
+    const userFriendships: Friendship[] = CacheDataService.getUserFriendships(userId);
+
+    const friendIds = userFriendships
+      .filter(f => f.active)
+      .map(f => (f.idUser1 === userId ? f.idUser2 : f.idUser1));
+    const pendingRequestIds = userFriendships
+      .filter(f => !f.active && f.idUser1 === userId)
+      .map(f => f.idUser2);
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    if (page < 1 || limit < 1) {
+      res.status(400).json({ error: "Los parámetros page y limit deben ser números positivos." });
+      return;
     }
+
+    const allCharacters = CacheDataService.getAllCharacters();
+    const totalCharacters = allCharacters.length;
+    const sortedCharacters = allCharacters.sort((a, b) => b.totalGold - a.totalGold);
+    const startIndex = (page - 1) * limit;
+    const paginatedCharacters = sortedCharacters.slice(startIndex, startIndex + limit);
+    const formattedCharacters = paginatedCharacters.map(char => {
+      const charData = new Character(char).toLeaderboardCharacter();
+      const isOwnCharacter = char.userId === userId;
+      return {
+        ...charData,
+        isFriend: isOwnCharacter ? false : friendIds.includes(char.userId),
+        canSendRequest: isOwnCharacter ? false : (!friendIds.includes(char.userId) && !pendingRequestIds.includes(char.userId)),
+        isOwnCharacter: isOwnCharacter 
+      };
+    });
+    
+    
+
+    res.json({
+      characters: formattedCharacters,
+      page,
+      limit,
+      total: totalCharacters,
+      totalPages: Math.ceil(totalCharacters / limit),
+    });
+  } catch (error) {
+    console.error("Error al obtener el leaderboard:", error);
+    res.status(500).json({ error: "Error interno al obtener el leaderboard." });
   }
-);
+});
 
 export default router;
