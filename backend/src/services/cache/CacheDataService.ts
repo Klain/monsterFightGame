@@ -151,8 +151,8 @@ class CacheDataService {
     if(!newCharacterId){throw new Error("createCharacter: Error durante la creacion del personaje")}
     const newCharacter = new Character({...character,id:newCharacterId})
     if(!newCharacter){throw new Error("createCharacter: Error durante la creacion del personaje")}
-    this.cacheCharacters.set(character.id, character);
-    this.cacheUserCharacter.set(character.userId,character.id)
+    this.cacheCharacters.set(newCharacter.id, newCharacter);
+    this.cacheUserCharacter.set(newCharacter.userId,newCharacter.id)
     return true;
     
   }
@@ -160,8 +160,8 @@ class CacheDataService {
     const existingCharacter = this.cacheCharacters.get(updatedCharacter.id);
     if(!existingCharacter){throw new Error("updateCharacter: Error al actualizar el character")}
     const updated = new Character({ ...existingCharacter, ...updatedCharacter });
-    this.cacheCharacters.set(updatedCharacter.id, updated);
-    this.pendingCharacters.add(updatedCharacter.id);
+    this.cacheCharacters.set(updated.id, updated);
+    this.pendingCharacters.add(updated.id);
   }
   static async deleteCharacter(characterId: number): Promise<boolean> {
     const result = await DatabaseService.deleteCharacter(characterId);

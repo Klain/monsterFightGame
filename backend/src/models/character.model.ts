@@ -234,6 +234,50 @@ export class Character {
       isOwnCharacter:false,
     };
   }
+
+  getFriendshipData(): FriendshipListResponse {
+  
+    const userId = this.userId;
+    const friendships = CacheDataService.getUserFriendships(userId);
+
+    const friends :FriendshipResponse[] = [];
+    const incomingRequests:FriendshipResponse[] = [];
+    const outgoingRequests:FriendshipResponse[] = [];
+
+    friendships.forEach(f => {
+      const isRecipient = f.idUser2 === userId;
+      const friendId = isRecipient ? f.idUser1 : f.idUser2;
+      const friendUser = CacheDataService.getUserById(friendId);
+      
+      const friendshipData = {
+        friendshipId: f.id, 
+        username: friendUser?.username || "Desconocido",
+        active: f.active
+      };
+
+      if (f.active) {
+        friends.push(friendshipData);
+      } else if (isRecipient) {
+        incomingRequests.push(friendshipData);
+      } else {
+        outgoingRequests.push(friendshipData);
+      }
+    });
+
+    return { friends, incomingRequests, outgoingRequests };
+  }  
+}
+
+
+export interface FriendshipListResponse {
+   friends: FriendshipResponse[], 
+   incomingRequests: FriendshipResponse[], 
+   outgoingRequests: FriendshipResponse[] 
+  }
+export interface FriendshipResponse {
+  friendshipId:number,
+  username:string,
+  active:boolean
 }
 
 export interface LeaderboardCharacter {

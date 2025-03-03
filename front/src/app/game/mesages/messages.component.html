@@ -1,116 +1,124 @@
 <div class="messages-container">
-  <h2>Mensajes</h2>
+  <h2>📩 Mensajes y Amistades</h2>
 
   <mat-tab-group>
-    <!-- Bandeja de entrada -->
-    <mat-tab label="Recibidos">
-      <div *ngIf="receivedMessages.length === 0">No tienes mensajes.</div>
-      <mat-list>
-        <mat-list-item *ngFor="let message of receivedMessages">
-          <div>
-            <strong>{{ message.sender_name }}</strong> - 
-            <a href="javascript:void(0)" (click)="toggleMessage(message)">
-              {{ message.subject }}
-            </a>
-          </div>
-          <small>{{ message.timestamp | date: 'short' }}</small>
-          <div *ngIf="message.showBody" class="message-body">
-            <p>{{ message.body }}</p>
-            <button mat-button color="primary" (click)="markAsRead(message.id)" [disabled]="message.read">
-              {{ message.read ? 'Leído' : 'Marcar como leído' }}
-            </button>
-            <button mat-button color="warn" (click)="deleteMessage(message.id, 'received')">Eliminar</button>
-            <button mat-button color="accent" (click)="startReply(message)">Responder</button>
-          </div>
-        </mat-list-item>
-      </mat-list>
-      
-      <div class="pagination">
-        <button mat-stroked-button (click)="goToPreviousPage('received')">Anterior</button>
-        <span>Página {{ pageReceived }} de {{ totalPagesReceived }}</span>
-        <button mat-stroked-button (click)="goToNextPage('received')">Siguiente</button>
-      </div>
+    <!-- 📩 SECCIÓN DE MENSAJES -->
+    <mat-tab label="Mensajes">
+      <mat-tab-group>
+        <mat-tab label="📥 Recibidos">
+          <div *ngIf="receivedMessages.length === 0">No tienes mensajes.</div>
+          <mat-list class="message-list">
+            <mat-list-item *ngFor="let message of receivedMessages" [class.unread-message]="!message.read">
+              <div>
+                <strong>{{ message.sender_name }}</strong> - 
+                <a href="javascript:void(0)" (click)="toggleMessage(message)">
+                  {{ message.subject }}
+                </a>
+              </div>
+              <small>{{ message.timestamp | date: 'short' }}</small>
+              <div *ngIf="message.showBody" class="message-body">
+                <p>{{ message.body }}</p>
+                <button mat-button color="primary" (click)="markAsRead(message.id)" [disabled]="message.read">
+                  {{ message.read ? 'Leído' : 'Marcar como leído' }}
+                </button>
+                <button mat-button color="warn" (click)="deleteMessage(message.id, 'received')">Eliminar</button>
+                <button mat-button color="accent" (click)="startReply(message)">Responder</button>
+              </div>
+            </mat-list-item>
+          </mat-list>
+        </mat-tab>
+
+        <mat-tab label="📤 Enviados">
+          <div *ngIf="sentMessages.length === 0">No tienes mensajes enviados.</div>
+          <mat-list class="message-list">
+            <mat-list-item *ngFor="let message of sentMessages">
+              <div>
+                <strong>{{ message.receiver_name }}</strong> - 
+                <a href="javascript:void(0)" (click)="toggleMessage(message)">
+                  {{ message.subject }}
+                </a>
+              </div>
+              <small>{{ message.timestamp | date: 'short' }}</small>
+              <div *ngIf="message.showBody" class="message-body">
+                <p>{{ message.body }}</p>
+                <button mat-button color="warn" (click)="deleteMessage(message.id, 'sent')">Eliminar</button>
+              </div>
+            </mat-list-item>
+          </mat-list>
+        </mat-tab>
+
+        <mat-tab label="✉️ Nuevo Mensaje">
+          <mat-card>
+            <mat-card-content>
+              <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+                <mat-form-field class="full-width">
+                  <mat-label>Destinatario</mat-label>
+                  <select matNativeControl formControlName="receiver_id">
+                    <option *ngFor="let friend of friends" [value]="friend.friendshipId">
+                      {{ friend.username }}
+                    </option>
+                  </select>
+                </mat-form-field>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Asunto</mat-label>
+                  <input matInput formControlName="subject" />
+                </mat-form-field>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Mensaje</mat-label>
+                  <textarea matInput formControlName="body"></textarea>
+                </mat-form-field>
+
+                <button mat-raised-button color="primary" class="send-message-btn">Enviar</button>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </mat-tab>
+      </mat-tab-group>
     </mat-tab>
 
-    <!-- Enviados -->
-    <mat-tab label="Enviados">
-      <div *ngIf="sentMessages.length === 0">No tienes mensajes enviados.</div>
-      <mat-list>
-        <mat-list-item *ngFor="let message of sentMessages">
-          <div>
-            <strong>{{ message.receiver_name }}</strong> - 
-            <a href="javascript:void(0)" (click)="toggleMessage(message)">
-              {{ message.subject }}
-            </a>
-          </div>
-          <small>{{ message.timestamp | date: 'short' }}</small>
-          <div *ngIf="message.showBody" class="message-body">
-            <p>{{ message.body }}</p>
-            <button mat-button color="warn" (click)="deleteMessage(message.id, 'sent')">Eliminar</button>
-          </div>
-        </mat-list-item>
-      </mat-list>
-      
-      <div class="pagination">
-        <button mat-stroked-button (click)="goToPreviousPage('sent')">Anterior</button>
-        <span>Página {{ pageSent }} de {{ totalPagesSent }}</span>
-        <button mat-stroked-button (click)="goToNextPage('sent')">Siguiente</button>
-      </div>
-    </mat-tab>
-
-    <mat-tab label="Enviar">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Enviar Mensaje</mat-card-title>
-          <mat-card-subtitle>Completa los campos para enviar un mensaje</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>ID del destinatario</mat-label>
-                <input matInput formControlName="receiver_id" type="number" />
-                <mat-error *ngIf="messageForm.controls['receiver_id'].hasError('required')">
-                  Este campo es obligatorio.
-                </mat-error>
-              </mat-form-field>
-            </div>
-    
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Asunto</mat-label>
-                <input matInput formControlName="subject" />
-                <mat-error *ngIf="messageForm.controls['subject'].hasError('required')">
-                  El asunto es obligatorio.
-                </mat-error>
-                <mat-error *ngIf="messageForm.controls['subject'].hasError('maxlength')">
-                  Máximo 100 caracteres.
-                </mat-error>
-              </mat-form-field>
-            </div>
-    
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Mensaje</mat-label>
-                <textarea matInput formControlName="body" rows="5"></textarea>
-                <mat-error *ngIf="messageForm.controls['body'].hasError('required')">
-                  El mensaje es obligatorio.
-                </mat-error>
-                <mat-error *ngIf="messageForm.controls['body'].hasError('maxlength')">
-                  Máximo 1000 caracteres.
-                </mat-error>
-              </mat-form-field>
-            </div>
-    
-            <div class="form-actions">
-              <button mat-raised-button color="primary" [disabled]="sending" class="submit-button">
-                {{ sending ? 'Enviando...' : 'Enviar' }}
+    <!-- 🤝 SECCIÓN DE AMIGOS -->
+    <mat-tab label="Amigos">
+      <mat-tab-group>
+        <mat-tab label="👥 Lista de Amigos">
+          <mat-list class="friend-list">
+            <mat-list-item *ngFor="let friend of friends">
+              {{ friend.username }}
+              <button mat-icon-button color="warn" (click)="deleteFriendship(friend.friendshipId)">❌</button>
+              <button mat-icon-button color="primary" (click)="messageForm.controls['receiver_id'].setValue(friend.friendshipId)">
+                📩
               </button>
-              <button mat-button type="button" color="warn" (click)="messageForm.reset()">Cancelar</button>
-            </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
-    </mat-tab>    
+            </mat-list-item>
+          </mat-list>
+        </mat-tab>
+
+        <mat-tab label="📨 Solicitudes Recibidas">
+          <mat-list class="request-list">
+            <mat-list-item *ngFor="let request of incomingRequests">
+              {{ request.username }}
+              <button mat-icon-button color="primary" (click)="acceptFriendship(request.friendshipId)">
+                ✅
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteFriendship(request.friendshipId)">
+                ❌
+              </button>
+            </mat-list-item>
+          </mat-list>
+        </mat-tab>
+
+        <mat-tab label="📤 Solicitudes Enviadas">
+          <mat-list class="request-list">
+            <mat-list-item *ngFor="let request of outgoingRequests">
+              {{ request.username }}
+              <button mat-icon-button color="warn" (click)="deleteFriendship(request.friendshipId)">
+                ❌
+              </button>
+            </mat-list-item>
+          </mat-list>
+        </mat-tab>
+        
+      </mat-tab-group>
+    </mat-tab>
   </mat-tab-group>
 </div>

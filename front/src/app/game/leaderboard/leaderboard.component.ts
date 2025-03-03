@@ -27,17 +27,20 @@ export class LeaderboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadLeaderboard();
   }
+
+  /** ✅ Carga la tabla de clasificación con los datos de amistad */
   loadLeaderboard(): void {
     this.loading = true;
     this.errorMessage = null;
   
     this.combatService.getLeaderboard(this.page, this.limit).subscribe({
       next: (response) => {
-        console.log("Leaderboard Data:", response.characters); // 🔍 Verifica los datos en consola
+        console.log("Leaderboard Data:", response.characters);
         this.leaderboard = response.characters.map(character => ({
           ...character,
-          isFriend: character.isFriend ?? false, // ✅ Asegura que tenga un valor booleano
-          canSendRequest: character.canSendRequest ?? false // ✅ Asegura que tenga un valor booleano
+          isFriend: character.isFriend ?? false,
+          canSendRequest: character.canSendRequest ?? false,
+          isOwnCharacter: character.isOwnCharacter ?? false
         }));
         this.page = response.page;
         this.totalPages = response.totalPages;
@@ -50,12 +53,13 @@ export class LeaderboardComponent implements OnInit {
       }
     });
   }
-  
-  sendFriendRequest(friendId: number): void {
-    this.friendshipService.sendFriendRequest(friendId).subscribe({
+
+  /** ✅ Envía solicitud de amistad */
+  sendFriendRequest(friendshipId: number): void {
+    this.friendshipService.sendFriendRequest(friendshipId).subscribe({
       next: () => {
         this.leaderboard = this.leaderboard.map(character =>
-          character.id === friendId 
+          character.id === friendshipId
             ? { ...character, isFriend: false, canSendRequest: false }
             : character
         );
@@ -66,8 +70,8 @@ export class LeaderboardComponent implements OnInit {
       }
     });
   }
-  
 
+  /** ✅ Paginación */
   nextPage(): void {
     if (this.page < this.totalPages) {
       this.page++;

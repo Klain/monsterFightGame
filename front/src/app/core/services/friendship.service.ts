@@ -2,22 +2,33 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 
+export interface FriendshipResponse {
+  friendshipId: number;
+  username: string;
+  active: boolean;
+}
+
+export interface FriendshipListResponse {
+  friends: FriendshipResponse[];
+  incomingRequests: FriendshipResponse[];
+  outgoingRequests: FriendshipResponse[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class FriendshipService {
   constructor(private apiService: ApiService) {}
-
-  getFriends(): Observable<any> {
-    return this.apiService.post('friends', {}); // Se usa POST porque el backend así lo maneja
+  getFriendships(): Observable<FriendshipListResponse> {
+    return this.apiService.get<FriendshipListResponse>('friendship/friends');
   }
-  sendFriendRequest(friendId: number): Observable<any> {
-    return this.apiService.post('sendFriendRequest', { friendId });
+  sendFriendRequest(friendshipId: number): Observable<any> {
+    return this.apiService.post('friendship/sendFriendRequest', { friendshipId });
   }
   acceptFriendship(friendshipId: number): Observable<any> {
-    return this.apiService.post('acceptFriendship', { friendshipId });
+    return this.apiService.post('friendship/acceptFriendship', { friendshipId });
   }
   deleteFriendship(friendshipId: number): Observable<any> {
-    return this.apiService.post('deleteFriendship', { friendshipId });
+    return this.apiService.post('friendship/deleteFriendship', { friendshipId });
   }
 }

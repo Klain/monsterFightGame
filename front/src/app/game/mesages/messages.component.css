@@ -1,41 +1,93 @@
 .messages-container {
-    max-width: 800px;
-    margin: auto;
-    padding: 20px;
-  }
-  
-  mat-list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .pagination {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-  }
-  
-  .messages-container {
-    padding: 16px;
-  }
-  
-  .full-width {
-    width: 100%;
-  }
-  
-  .form-row {
-    margin-bottom: 16px;
-  }
-  
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-    margin-top: 16px;
-  }
-  
-  .submit-button {
-    min-width: 120px;
-  }
-  
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+mat-tab-group {
+  width: 100%;
+}
+
+/* --- LISTADO DE MENSAJES Y AMIGOS --- */
+.message-list, .friend-list, .request-list {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+}
+
+mat-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+mat-list-item:last-child {
+  border-bottom: none;
+}
+
+/* --- MENSAJES --- */
+.message-body {
+  margin-top: 10px;
+  background: #eef1f5;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.unread-message {
+  font-weight: bold;
+  color: #d9534f;
+}
+
+/* --- BOTONES --- */
+button {
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+/* Botón de enviar mensaje */
+.send-message-btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
+/* --- SOLICITUDES DE AMISTAD --- */
+.request-list {
+  margin-top: 10px;
+}
+
+.request-list mat-list-item {
+  display: flex;
+  justify-content: space-between;
+  background: #fff3cd;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+/* --- PAGINACIÓN --- */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: none;
+  cursor: pointer;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
+}
+
+.pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
