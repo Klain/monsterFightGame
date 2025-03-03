@@ -1,15 +1,17 @@
 //front\monsterGameFight\src\app\core\services\auth.service.ts
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, catchError, throwError, tap, timer, switchMap } from 'rxjs';
+import { Observable, BehaviorSubject, catchError, throwError, tap, timer, switchMap, first, map, of} from 'rxjs';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TokenService } from './token.service';
 import { WebSocketService } from './websocket.service';
+import { CharacterService } from './character.service';
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  [x: string]: any;
   private authStateSubject = new BehaviorSubject<boolean>(false);
   authState$ = this.authStateSubject.asObservable();
   private refreshTimer$?: Observable<any>;
@@ -18,15 +20,14 @@ export class AuthService {
     private api: ApiService,
     private router: Router,
     private tokenService: TokenService,
-    private websocketService: WebSocketService
+    private websocketService: WebSocketService,
+    private characterService: CharacterService
   ) {
     this.initAuthState();
   }
-
-   isAuthenticated(): boolean {
+  isAuthenticated(): boolean {
     return this.authStateSubject.getValue();
   }
-
   login(username: string, password: string): Observable<any> {
     return this.api.post('auth/login', { username, password }).pipe(
       tap((response: any) => {
@@ -34,23 +35,22 @@ export class AuthService {
         this.updateAuthState(true);
         this.startTokenRefreshTimer();
       }),
+      switchMap(() => this.characterService.loadCharacter()),
+      tap(() => console.log("✅ Personaje cargado después del login")),
       catchError(this.handleAuthError.bind(this))
     );
   }
-
   register(username: string, password: string): Observable<any> {
     return this.api.post('auth/register', { username, password }).pipe(
       catchError(this.handleAuthError.bind(this))
     );
   }
-
   logout(): void {
     this.tokenService.clearTokens();
     this.updateAuthState(false);
     this.refreshTimer$ = undefined; 
     this.router.navigate(['/auth/login']);
   }
-
   refreshToken(): Observable<string> {
     const refreshToken = this.tokenService.getRefreshToken();
     if (!refreshToken) {
@@ -74,6 +74,38 @@ export class AuthService {
           this.logout();
         }
         return throwError(() => error);
+      })
+    );
+  }
+
+  restoreSession(): Observable<boolean> {
+    const accessToken = this.tokenService.getAccessToken();
+    const refreshToken = this.tokenService.getRefreshToken();
+  
+    if (!accessToken || !refreshToken) {
+      console.warn("🚫 No hay tokens almacenados. No se puede restaurar sesión.");
+      this.updateAuthState(false);
+      return of(false); // ✅ Detener intentos de restauración
+    }
+  
+    console.log("🔄 Intentando restaurar sesión con el refresh token...");
+    return this.refreshToken().pipe(
+      switchMap(() => {
+        this.updateAuthState(true);
+        this.startTokenRefreshTimer();
+        return this.characterService.loadCharacter().pipe(
+          tap(() => console.log("✅ Personaje cargado.")),
+          map(() => true),
+          catchError(() => {
+            console.warn("⚠ No se pudo cargar el personaje.");
+            return of(false);
+          })
+        );
+      }),
+      catchError(() => {
+        console.warn("❌ No se pudo restaurar la sesión.");
+        this.updateAuthState(false);
+        return of(false);
       })
     );
   }

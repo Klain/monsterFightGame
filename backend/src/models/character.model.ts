@@ -3,7 +3,7 @@ import { CharacterStatus } from "./characterStatus.model";
 import { Friendship } from "./friendship.model";
 import { Inventory } from "./inventory.model";
 import { CharacterService } from "../services/character.service";
-import { ActivityType } from "../constants/enums";
+import { ActivityType, CharacterClass } from "../constants/enums";
 import CacheDataService from "../services/cache/CacheDataService";
 import { User } from "./user.model";
 
@@ -12,7 +12,7 @@ export class Character {
   readonly userId: number = 0;
   name: string = "";
   faction: string = "";
-  class: number = 1;
+  class: CharacterClass = 1;
   level: number = 1;
   //ATRIBUTES
   strength: number = 1;

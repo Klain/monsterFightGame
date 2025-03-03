@@ -29,13 +29,26 @@
       aguas termales?? : regeneracion de salud
       piedra de mana?? : regeneracion de mana ( no en este juego al menos...)
     
-    AÑADIR EQUIPOS ( ARMADURAS ACCESORIOS)
+    AÑADIR EQUIPOS ( ACCESORIOS)
     AÑADIR CONSUMIBLES
-    AÑADIR CREACION PERSONAJE ( NOMBRE - CLASE)
+
     AÑADIR GREMIOS??
+    
     AÑADIR ESTADOS?? 
 */
 /*
+  REGISTRO:
+        BACK:
+        FRONT:
+          MEJORAR TODO
+  CREACION DE PERSONAJE:
+        BACK:
+          CREACION DE PERSONAJE
+        FRONT:
+          LOGICA : Si un user hace login y no tiene personaje, un guard le redirecciona a creacion de personaje
+          GUARD NOT_CHARACTER : Si user no tiene character redir createCharacterComponent
+          GUARD HAS_CHARACTER : Aplicado solo para createCharacterComponent. Si user tiene character redir dashboard
+          CREACION DE PERSONAJE COMPONENT : Rellenar nombre y clase, crear personaje y el guard lo llevara a dashboard, creo...
   PERFIL:
     LISTO:
         MOSTRAR DATOS PRINCIPALES

@@ -47,7 +47,6 @@ class WebSocketService {
       }
     });
     
-    
     this.io.on("connection", (socket: Socket) => {
       const userId = socket.data.userId;
       if (!userId) {

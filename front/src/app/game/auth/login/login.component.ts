@@ -9,7 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { CharacterService } from 'src/app/core/services/character.service';
 
 @Component({
   selector: 'app-login',
@@ -34,27 +35,33 @@ export class LoginComponent {
   isLoading: boolean = false;
   hidePassword: boolean = true; 
   
-  constructor(private authService: AuthService, private router: Router, private snackBar: MatSnackBar) {}
+  constructor(
+    private authService: AuthService, 
+    private characterService: CharacterService, 
+    private router: Router, 
+    private snackBar: MatSnackBar) {}
 
-  login() {
-    if (this.isLoading) return;
-    this.isLoading = true;
-
-    this.authService.login(this.username, this.password).subscribe({
-      next: () => {
-        this.showToast('Inicio de sesión exitoso!', 'success');
-        this.router.navigate(['/game']);
-      },
-      error: (error:any) => {
-        this.isLoading = false;
-        this.errorMessage = error.error?.message || 'Error al iniciar sesión';
-        this.showToast(this.errorMessage, 'error');
-      },
-      complete: () => {
-        this.isLoading = false;
-      }
-    });
-  }
+    login() {
+      if (this.isLoading) return;
+      this.isLoading = true;
+    
+      this.authService.login(this.username, this.password).subscribe({
+        next: async () => {
+          this.showToast('Inicio de sesión exitoso!', 'success');
+          this.router.navigate(['/game']);
+        },
+        error: (error: any) => {
+          this.isLoading = false;
+          this.errorMessage = error.error?.message || 'Error al iniciar sesión';
+          this.showToast(this.errorMessage, 'error');
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
+      });
+    }
+    
+    
 
   private showToast(message: string, type: 'success' | 'error') {
     this.snackBar.open(message, 'Cerrar', {

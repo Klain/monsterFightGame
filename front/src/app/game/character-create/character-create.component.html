@@ -1,0 +1,17 @@
+<!-- src/app/pages/create-character/create-character.component.html -->
+<div class="character-create-container">
+    <h2>Crear Personaje</h2>
+    <form (submit)="createCharacter()">
+      <label for="name">Nombre:</label>
+      <input type="text" id="name" name="name" [(ngModel)]="name" placeholder="Introduce un nombre" required />
+    
+      <label for="class">Clase:</label>
+      <select id="class" name="class" [(ngModel)]="selectedClass" required>
+        <option *ngFor="let c of availableClasses" [value]="c.value">{{ c.label }}</option>
+      </select>
+    
+      <button type="submit">Crear Personaje</button>
+    </form>
+    
+  </div>
+  

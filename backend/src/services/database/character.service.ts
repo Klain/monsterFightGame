@@ -35,6 +35,19 @@ export interface dbCharacter{
   last_fight: string
 }
 class CharacterService {
+  static async isCharacterNameAvailable(characterName: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT COUNT(*) as count FROM characters WHERE name = ?;`;
+      db.get(query, [characterName], (err, row:{count:number}) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row.count === 0);
+        }
+      });
+    });
+  }
+  
   static async createCharacter(character: Partial<Character>): Promise<number> {
     return new Promise(async (resolve, reject) => {
       const query = `

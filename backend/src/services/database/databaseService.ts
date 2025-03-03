@@ -61,6 +61,9 @@ class DatabaseService {
     return ActivityService.deleteActivity(activityId);
   }
   // ✅ CHARACTERS
+  static async isCharacterNameAvailable(characterName:string):Promise<boolean>{
+    return await CharacterService.isCharacterNameAvailable(characterName);
+  }
   static async createCharacter(character: Character): Promise<number> {
     return CharacterService.createCharacter({
       id : character.id,

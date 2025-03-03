@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import CacheDataService from "../services/cache/CacheDataService";
-import { registerSession, logoutUser, isSessionValid } from "../sessionManager";
+import { registerSession, logoutUser, isSessionValid, isRefreshTokenValid } from "../sessionManager";
 import authMiddleware from "../middleware/authMiddleware";
 import "dotenv/config";
 import { Character } from "../models/character.model";
@@ -29,11 +29,7 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
       username:username,
       password:hashedPassword,
     }));
-    const newCharacter = await CacheDataService.createCharacter(new Character({
-      userId:newUser.id,
-      name:username
-    }));
-    res.status(201).json({ message: "Usuario y personaje creados exitosamente." });
+    res.status(201).json({ message: "Usuario creado exitosamente." });
   } catch (error) {
     console.error("Error en el registro de usuario:", error);
     res.status(500).json({ error: "Error interno en el registro." });
@@ -94,14 +90,24 @@ router.post("/refresh-token", async (req: Request, res: Response): Promise<void>
   }
   try {
     const payload = jwt.verify(refreshToken, process.env.REFRESH_SECRET!) as jwt.JwtPayload;
-    const isActive = await isSessionValid(payload.id, refreshToken);
+    const isActive = await isRefreshTokenValid(payload.id, refreshToken);
     if (!isActive) {
       res.status(401).json({ error: "Refresh token inválido o no activo." });
       return;
     }
-    const accessToken = jwt.sign({ id: payload.id }, process.env.ACCESS_SECRET!, { expiresIn: "15m" });
+    const user = CacheDataService.getUserById(payload.id); 
+    if (!user) {
+      res.status(404).json({ error: "Usuario no encontrado." });
+      return;
+    }
+    const accessToken = jwt.sign(
+      { id: payload.id, username: user.username },
+      process.env.ACCESS_SECRET!,
+      { expiresIn: "15m" }
+    );
+
     res.json({ accessToken });
-  } catch (error:any) {
+  } catch (error: any) {
     console.error("Error al renovar token:", error);
     if (error.name === "TokenExpiredError") {
       res.status(401).json({ error: "Refresh token expirado. Por favor, inicia sesión nuevamente." });
@@ -110,5 +116,8 @@ router.post("/refresh-token", async (req: Request, res: Response): Promise<void>
     }
   }
 });
+
+
+
 
 export default router;

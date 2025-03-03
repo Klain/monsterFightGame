@@ -29,6 +29,17 @@ export const logoutUser = (userId: number): void => {
     throw new Error("No se pudo cerrar la sesión.");
   }
 };
+
+export const isRefreshTokenValid = async (userId: number, refreshToken: string): Promise<boolean> => {
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET!) as jwt.JwtPayload;
+    return decoded.id === userId; 
+  } catch (error) {
+    console.error("❌ [SessionManager] Error al validar el refresh token:", error);
+    return false;
+  }
+};
+
 export const isSessionValid = async (userId: number, accessToken: string): Promise<boolean> => {
   try {
     const decoded = jwt.verify(accessToken, process.env.ACCESS_SECRET!) as jwt.JwtPayload;

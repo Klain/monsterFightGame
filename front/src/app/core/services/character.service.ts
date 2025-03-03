@@ -1,10 +1,11 @@
 //front\monsterGameFight\src\app\core\services\character.service.ts
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError } from 'rxjs';
 import { ApiService } from './api.service';
 import { Character } from '../models/character.models';
 import { WebSocketService } from './websocket.service';
 import { ActivityType } from '../enums/activity.enum';
+import { of, throwError } from 'rxjs'; 
 
 @Injectable({
   providedIn: 'root',
@@ -13,8 +14,10 @@ export class CharacterService {
   private characterSubject = new BehaviorSubject<Character | null>(null);
   character$ = this.characterSubject.asObservable();
 
-  constructor(private api: ApiService, private webSocketService: WebSocketService) {
-    this.refreshCharacter().subscribe();
+  constructor(
+    private api: ApiService, 
+    private webSocketService: WebSocketService
+  ) {
         this.webSocketService.on('characterRefresh').subscribe((partialCharacter: Partial<Character>) => {
       this.updateCharacterWithPartial(partialCharacter);
     });
@@ -24,16 +27,27 @@ export class CharacterService {
       }
     });
   }
-  
 
-  private refreshCharacter(): Observable<Character> {
+  loadCharacter(): Observable<Character | null> {
+    console.log("🔄 Cargando personaje...");
     return this.api.get<Character>('characters').pipe(
-      tap({
-        next: (character: Character) => this.characterSubject.next(character),
-        error: (err:any) => console.error('Error al obtener el personaje:', err),
+      tap((character: Character) => {
+        console.log("✅ Personaje cargado.");
+        this.characterSubject.next(character);
+      }),
+      catchError((error: any) => {
+        if (error.status === 404) {
+          console.warn("⚠ No hay personaje registrado. Devolviendo null.");
+          this.characterSubject.next(null);
+          return of(null); 
+        }
+        return throwError(() => error); 
       })
     );
   }
+  
+  
+
   private updateCharacterWithPartial(partialCharacter: Partial<Character>): void {
     const currentCharacter = this.characterSubject.value;
     if (currentCharacter) {
@@ -67,5 +81,6 @@ export class CharacterService {
   findOpponent(): Observable<any> {
     return this.api.get('characters/find-opponent');
   }
-  
 }
+
+

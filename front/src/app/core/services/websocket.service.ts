@@ -17,10 +17,12 @@ export class WebSocketService {
   private isConnectedSubject = new BehaviorSubject<boolean>(false);
   isConnected$ = this.isConnectedSubject.asObservable();
 
-  constructor(private tokenService: TokenService, private injector: Injector) {
+  constructor(
+    private tokenService: TokenService, 
+    private injector: Injector) {
     setTimeout(() => {
       this.authService = this.injector.get(AuthService);
-      this.authService.authState$.subscribe((isAuthenticated) => {
+      this.authService.authState$.subscribe((isAuthenticated:boolean) => {
         if (isAuthenticated) {
           this.connect();
         } else {
@@ -56,58 +58,7 @@ export class WebSocketService {
     this.setupListeners();
   }
 
-  private setupListeners(): void {
-    if (!this.socket) {
-      console.error('❌ Socket no inicializado. Listeners no configurados.');
-      return;
-    }
 
-    this.registerEvent('connect', () => {
-      console.log('✅ Conectado al servidor WebSocket con ID:', this.socket?.id);
-      this.isConnectedSubject.next(true);
-      this.emit("register", this.tokenService.getAccessToken()); // Emitir evento de registro
-    });
-
-    this.registerEvent('disconnect', (reason: string) => {
-      console.warn('⚠️ Desconectado del servidor WebSocket:', reason);
-      this.isConnectedSubject.next(false);
-
-      if (this.manuallyDisconnected) {
-        console.log('⏹️ Desconexión manual, no se intentará reconectar.');
-        return;
-      }
-
-      if (reason === 'io server disconnect') {
-        console.warn('🚨 El servidor ha cerrado la conexión. Intentando reconectar...');
-        setTimeout(() => this.connect(), 5000);
-      }
-    });
-
-    this.registerEvent('connect_error', (error: any) => {
-      console.error('❌ Error de conexión al WebSocket:', error);
-    });
-
-    this.registerEvent('reconnect_attempt', (attempt: number) => {
-      console.info('🔄 Intentando reconectar... Intento número:', attempt);
-    });
-
-    this.registerEvent('reconnect', () => {
-      console.log('✅ Reconexión exitosa al servidor WebSocket.');
-      this.isConnectedSubject.next(true);
-    });
-
-    this.registerEvent('error', (error: any) => {
-      console.error('❌ Error recibido del servidor WebSocket:', error);
-    });
-
-    this.registerEvent('registered', (data: any) => {
-      console.log(`🎉 Usuario registrado en WebSocket:`, data);
-    });
-
-    this.registerEvent('characterRefresh', (data: any) => {
-      console.log('🆕 Refrescando personaje:', data);
-    });
-  }
 
   emit(event: string, data: any): void {
     if (!this.socket || !this.socket.connected) {
@@ -169,5 +120,59 @@ export class WebSocketService {
     console.log('🔄 Intentando reconectar con un nuevo access token...');
     this.disconnect();
     setTimeout(() => this.connect(), 1000);
+  }
+
+
+  private setupListeners(): void {
+    if (!this.socket) {
+      console.error('❌ Socket no inicializado. Listeners no configurados.');
+      return;
+    }
+
+    this.registerEvent('connect', () => {
+      console.log('✅ Conectado al servidor WebSocket con ID:', this.socket?.id);
+      this.isConnectedSubject.next(true);
+      this.emit("register", this.tokenService.getAccessToken()); // Emitir evento de registro
+    });
+
+    this.registerEvent('disconnect', (reason: string) => {
+      console.warn('⚠️ Desconectado del servidor WebSocket:', reason);
+      this.isConnectedSubject.next(false);
+
+      if (this.manuallyDisconnected) {
+        console.log('⏹️ Desconexión manual, no se intentará reconectar.');
+        return;
+      }
+
+      if (reason === 'io server disconnect') {
+        console.warn('🚨 El servidor ha cerrado la conexión. Intentando reconectar...');
+        setTimeout(() => this.connect(), 5000);
+      }
+    });
+
+    this.registerEvent('connect_error', (error: any) => {
+      console.error('❌ Error de conexión al WebSocket:', error);
+    });
+
+    this.registerEvent('reconnect_attempt', (attempt: number) => {
+      console.info('🔄 Intentando reconectar... Intento número:', attempt);
+    });
+
+    this.registerEvent('reconnect', () => {
+      console.log('✅ Reconexión exitosa al servidor WebSocket.');
+      this.isConnectedSubject.next(true);
+    });
+
+    this.registerEvent('error', (error: any) => {
+      console.error('❌ Error recibido del servidor WebSocket:', error);
+    });
+
+    this.registerEvent('registered', (data: any) => {
+      console.log(`🎉 Usuario registrado en WebSocket:`, data);
+    });
+
+    this.registerEvent('characterRefresh', (data: any) => {
+      console.log('🆕 Refrescando personaje:', data);
+    });
   }
 }

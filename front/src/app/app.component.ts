@@ -16,7 +16,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     console.log("🟢 Aplicación iniciada. WebSocket Manager activado.");
-
     // Solo conectar WebSocket si el usuario ya está autenticado al iniciar la aplicación
     if (this.authService.isAuthenticated()) {
       this.webSocketService.connect();
