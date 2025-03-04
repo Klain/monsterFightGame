@@ -25,7 +25,7 @@ export const validateMessageMiddleware = async (
       subject : sanitizedSubject,
       body: sanitizedBody
     }
-
+    next(); 
   } catch (error) {
     console.error("❌ Error al validar el personaje:", error);
     res.status(500).json({ error: "Error interno al validar el personaje." });

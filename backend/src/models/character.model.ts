@@ -37,7 +37,7 @@ export class Character {
 
   goldChest: number = 0;
   warehouse: number = 0;
-  enviroment: number = 0;
+  environment: number = 0;
   traps: number = 0;
 
   lastFight?: Date;
@@ -165,7 +165,7 @@ export class Character {
       lair: {
         goldChest: this.goldChest,
         warehouse: this.warehouse,
-        enviroment: this.enviroment,
+        environment: this.environment,
         traps: this.traps,
       },
     };
@@ -175,7 +175,7 @@ export class Character {
       lairCost: {
         goldChest: this.calculateUpgradeCost(this.goldChest),
         warehouse: this.calculateUpgradeCost(this.warehouse),
-        enviroment: this.calculateUpgradeCost(this.enviroment),
+        environment: this.calculateUpgradeCost(this.environment),
         traps: this.calculateUpgradeCost(this.traps),
       },
     };

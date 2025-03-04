@@ -9,27 +9,27 @@ import webSocketService from "../services/webSocketService";
 
 const router = express.Router();
 
-// Ruta: Enviar mensaje
 router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessageMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { receiver_id } = req.body;
+    const { friendshipId } = req.body;
     const sender : Character = req.locals.character;
     const { subject , body } = req.locals.message!;
 
-    if (!receiver_id || !subject || !body) {
-      res.status(400).json({ error: "receiver_id, subject y body son obligatorios." });
-      return;
+    if (!friendshipId || !subject || !body) {
+      res.status(400).json({ error: "receiver_id, subject y body son obligatorios." });return;
     }
-    const receiver = CacheDataService.getCharacterById(receiver_id);
-    if (!receiver){
-      res.status(404).json({ error: "Destinatario no encontrado." });
-      return;
-    }
+
+    const friendship =  CacheDataService.getFriendshipById(parseInt(friendshipId));
+    if(!friendship){ res.status(404).json({ error: "Amistad no encontrada." }); return; }
+
+    const receiverId = friendship.idUser1 == sender.userId ? friendship.idUser2 : friendship.idUser1;
+    const receiver = CacheDataService.getCharacterByUserId(receiverId);
+    if (!receiver){ res.status(404).json({ error: "Destinatario no encontrado." }); return; }
     const newMessage : Message = new Message({
       id: 0,
-      characterSenderId: sender.id,
+      senderId: sender.id,
       senderName: sender.name,
-      characterReciverId: receiver.id,
+      receiverId: receiver.id,
       receiverName: receiver.name,
       subject: subject,
       body: body,
@@ -37,7 +37,6 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
       read: false
     });
     CacheDataService.createMessage(newMessage);
-
     if( receiver.id != sender.id){
       webSocketService.characterNewMessageSend(sender.userId,{
       ...newMessage.wsr()
@@ -51,8 +50,6 @@ router.post("/send", authMiddleware, validateCharacterMiddleware, validateMessag
     res.status(500).json({ error: "Error interno al enviar mensaje." });
   }
 });
-
-// Ruta: Obtener mensajes
 router.get("/inbox", authMiddleware,validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -103,8 +100,6 @@ router.get("/outbox", authMiddleware,validateCharacterMiddleware, async (req: Re
     res.status(500).json({ error: "Error interno al obtener mensajes." });
   }
 });
-
-// Ruta: Marcar mensaje como leído
 router.post("/read/:message_id", authMiddleware,validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const character : Character = req.locals.character;
@@ -129,8 +124,6 @@ router.post("/read/:message_id", authMiddleware,validateCharacterMiddleware, asy
     res.status(500).json({ error: "Error interno al marcar mensaje como leído." });
   }
 });
-
-// Ruta: Eliminar un mensaje
 router.delete("/:message_id", authMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const { message_id } = req.params;
@@ -145,7 +138,7 @@ router.delete("/:message_id", authMiddleware, validateCharacterMiddleware, async
       return;
     }
     //TODO revisar la eliminacion de mensajes para ser usable por ambos usuarios
-    if (message.characterReciverId !== character.id && message.characterSenderId !== character.id) {
+    if (message.receiverId !== character.id && message.senderId !== character.id) {
       res.status(403).json({ error: "No tienes permiso para eliminar este mensaje." });
       return;
     }

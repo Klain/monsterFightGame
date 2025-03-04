@@ -13,14 +13,12 @@ export class MessageService {
   getMessagesInbox(page: number = 1, limit: number = 20): Observable<any> {
     return this.api.get(`${this.baseEndpoint}/inbox?page=${page}&limit=${limit}&inbox={true}`);
   }
-
   getMessagesOutbox(page: number = 1, limit: number = 20): Observable<any> {
     return this.api.get(`${this.baseEndpoint}/outbox?page=${page}&limit=${limit}&inbox={false}`);
   }
-
-  sendMessage(receiverId: number, subject: string, body: string): Observable<any> {
+  sendMessage(friendshipId: number, subject: string, body: string): Observable<any> {
     return this.api.post(`${this.baseEndpoint}/send`, {
-      receiver_id: receiverId,
+      friendshipId: friendshipId,
       subject,
       body,
     });

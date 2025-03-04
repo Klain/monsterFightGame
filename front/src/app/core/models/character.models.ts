@@ -102,3 +102,11 @@ export interface Message {
   body: string;
   timestamp: Date;
 }
+
+export interface Lair {
+  goldChest: number;
+  warehouse: number;
+  environment: number;
+  traps: number;
+  [key: string]: number; 
+}

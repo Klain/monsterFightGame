@@ -12,8 +12,8 @@ import CacheDataService from "./services/cache/CacheDataService";
 
 import activitiesRoutes from "./routes/activity.routes";
 import authRouter from "./routes/auth.routes";
-import characterRoutes from "./routes/characterRoutes";
-import combatRoutes from "./routes/combatRoutes";
+import characterRoutes from "./routes/character.routes";
+import combatRoutes from "./routes/combat.routes";
 import friendshipRoutes from "./routes/friendship.routes";
 import inventoryRoutes from "./routes/inventory.routes";
 import lairRoutes from "./routes/lair.routes";

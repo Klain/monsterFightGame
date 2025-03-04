@@ -1,0 +1,22 @@
+<mat-card *ngIf="character$ | async as character" class="lair-card">
+    <mat-card-title>{{ character.name }}</mat-card-title>
+    <mat-card-content>
+      <p><strong>Oro:</strong> {{ character.currencies.currentGold }}</p>
+  
+      <mat-grid-list cols="2" rowHeight="100px" class="lair-grid">
+        <mat-grid-tile *ngFor="let attribute of lairAttributes" class="lair-tile">
+          <div class="lair-attribute">
+            <p><strong>{{ attribute.label }}:</strong> {{ character.lair[attribute.key] }}</p>
+            <button 
+              mat-button 
+              color="primary"
+              *ngIf="character.lairCost[attribute.key] !== undefined && character.currencies.currentGold >= character.lairCost[attribute.key]"
+              (click)="attribute.upgradeMethod()">
+              {{ 'Mejorar (Oro: ' + character.lairCost[attribute.key] + ')' }}
+            </button>
+          </div>
+        </mat-grid-tile>
+      </mat-grid-list>
+    </mat-card-content>
+  </mat-card>
+  

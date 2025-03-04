@@ -1,0 +1,17 @@
+.lair-card {
+    margin: 2rem;
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .lair-attribute {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  
+  button {
+    margin-left: 10px;
+  }
+  

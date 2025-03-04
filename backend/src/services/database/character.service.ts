@@ -69,7 +69,7 @@ class CharacterService {
         character.willpower, character.arcane, character.currentHealth, character.totalHealth,
         character.currentStamina, character.totalStamina, character.currentMana, character.totalMana,
         character.currentXp, character.totalXp, character.currentGold, character.totalGold,
-        character.goldChest, character.warehouse, character.enviroment, character.traps, 
+        character.goldChest, character.warehouse, character.environment, character.traps, 
         character.upgradePoints, character.lastFight || null
       ];
 
@@ -127,7 +127,7 @@ class CharacterService {
         updatedCharacter.willpower, updatedCharacter.arcane, updatedCharacter.currentHealth, updatedCharacter.totalHealth,
         updatedCharacter.currentStamina, updatedCharacter.totalStamina, updatedCharacter.currentMana, updatedCharacter.totalMana,
         updatedCharacter.currentXp, updatedCharacter.totalXp, updatedCharacter.currentGold, updatedCharacter.totalGold,
-        updatedCharacter.goldChest, updatedCharacter.warehouse, updatedCharacter.enviroment, updatedCharacter.traps, 
+        updatedCharacter.goldChest, updatedCharacter.warehouse, updatedCharacter.environment, updatedCharacter.traps, 
         updatedCharacter.upgradePoints, updatedCharacter.lastFight || null,
         updatedCharacter.id
       ];

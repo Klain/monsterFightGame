@@ -96,8 +96,8 @@ class CacheDataService {
       });
       dbMessages.forEach(message => {
         this.cacheMessages.set(message.id,message);
-        this.cacheCharacters.get(message.characterSenderId)?.messages.push(message.id);
-        this.cacheCharacters.get(message.characterReciverId)?.friendships.push(message.id);
+        this.cacheCharacters.get(message.senderId)?.messages.push(message.id);
+        this.cacheCharacters.get(message.receiverId)?.messages.push(message.id);
       });
 
       setInterval(() => this.syncPendingUpdates(), 5000); 
@@ -290,7 +290,7 @@ class CacheDataService {
     const messageList = messagesIds.slice(startIndex, endIndex);
     return messageList
       .map(messageId => this.getMessageById(messageId))
-      .filter((message): message is Message => message !== null && message.characterSenderId==characterId); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
+      .filter((message): message is Message => message !== null && message.senderId==characterId); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static getCharacterMessagesInbox(characterId: number, page: number = 1, limit: number = 10): Message[] {
     const character = this.cacheCharacters.get(characterId);
@@ -301,7 +301,7 @@ class CacheDataService {
     const messageList = messagesIds.slice(startIndex, endIndex);
     return messageList
       .map(messageId => this.getMessageById(messageId))
-      .filter((message): message is Message => message !== null && message.characterReciverId==characterId); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
+      .filter((message): message is Message => message !== null && message.receiverId==characterId); //filtramos el resultado del mapeo eliminando los valores null (no encontrados)
   }
   static getCharacterMessagesOutboxCount(characterId: number){
     return this.getCharacterMessagesOutbox(characterId).length || 0;
@@ -316,6 +316,8 @@ class CacheDataService {
     if(!newMessage){throw new Error("createMessage: Error al obtener el nuevo mensaje ")}
     if(newMessage){
       this.cacheMessages.set(newMessage.id, newMessage);
+      this.cacheCharacters.get(newMessage.senderId)?.messages.push(newMessageId);
+      this.cacheCharacters.get(newMessage.receiverId)?.messages.push(newMessageId);
       return true;
     }
     return false;
@@ -328,8 +330,8 @@ class CacheDataService {
     }
   }
   static async deleteMessage(message: Message): Promise<boolean> {
-    const characterId1 = this.cacheUserCharacter.get(message.characterSenderId) || null;
-    const characterId2 = this.cacheUserCharacter.get(message.characterReciverId) || null;
+    const characterId1 = this.cacheUserCharacter.get(message.senderId) || null;
+    const characterId2 = this.cacheUserCharacter.get(message.receiverId) || null;
     if(!characterId1 || !characterId2 ){throw new Error("deleteFriendship : No existen todos los characterID asociado al user.")}
     const character1 = this.cacheCharacters.get(characterId1) || null;
     const character2 = this.cacheCharacters.get(characterId2) || null;

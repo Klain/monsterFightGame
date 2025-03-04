@@ -69,19 +69,26 @@ export class WebSocketService {
   }
 
   on(event: string): Observable<any> {
-    return new Observable((observer: any) => {
+    return new Observable((observer:any) => {
       if (!this.socket) {
         console.error(`⚠️ Socket no inicializado. No se puede escuchar evento: ${event}`);
         return;
       }
-
-      const callback = (data: any) => observer.next(data);
+  
+      console.log(`🟢 Escuchando evento WebSocket: ${event}`);
+  
+      const callback = (data: any) => {
+        console.log(`📩 Evento WebSocket recibido (${event}):`, data);
+        observer.next(data);
+      };
+  
       this.socket.on(event, callback);
       this.registeredEvents.set(event, callback);
-
+  
       return () => this.off(event);
     });
   }
+  
 
   off(event: string): void {
     if (this.socket && this.registeredEvents.has(event)) {

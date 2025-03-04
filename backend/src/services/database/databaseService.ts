@@ -93,7 +93,7 @@ class DatabaseService {
       totalGold: character.totalGold!,
       goldChest: character.goldChest,
       warehouse : character.warehouse,
-      enviroment : character.enviroment,
+      environment : character.environment,
       traps : character.traps,
       upgradePoints: character.upgradePoints!,
       lastFight: character.lastFight || undefined
@@ -136,7 +136,7 @@ class DatabaseService {
       totalGold: updatedCharacter.totalGold!,
       goldChest: updatedCharacter.goldChest,
       warehouse : updatedCharacter.warehouse,
-      enviroment : updatedCharacter.enviroment,
+      environment : updatedCharacter.environment,
       traps : updatedCharacter.traps,
       upgradePoints: updatedCharacter.upgradePoints!,
       lastFight: updatedCharacter.lastFight || undefined
@@ -322,9 +322,9 @@ class DatabaseService {
   static async createMessage(message: Message): Promise<number|null> {
     const lastId = await MessageService.createMessage({
       id: message.id,
-      sender_id: message.characterSenderId,
+      sender_id: message.senderId,
       sender_name: message.senderName,
-      receiver_id: message.characterReciverId,
+      receiver_id: message.receiverId,
       receiver_name: message.receiverName,
       subject: message.subject,
       body: message.body,
@@ -429,6 +429,7 @@ class DatabaseService {
   }
   private static mapDbFriendship(dbFriendship: dbFriendship): Friendship {
     return new Friendship({
+      id : dbFriendship.id,
       idUser1: dbFriendship.user_id_1,
       idUser2: dbFriendship.user_id_2,
       active: dbFriendship.active,
@@ -573,9 +574,9 @@ class DatabaseService {
   private static mapDbMessage(dbMessage: dbMessage): Message {
     return new Message({
       id: dbMessage.id!,
-      characterSenderId: dbMessage.sender_id,
+      senderId: dbMessage.sender_id,
       senderName: dbMessage.sender_name,
-      characterReciverId: dbMessage.receiver_id,
+      receiverId: dbMessage.receiver_id,
       receiverName: dbMessage.receiver_name,
       subject: dbMessage.subject,
       body: dbMessage.body,

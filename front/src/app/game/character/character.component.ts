@@ -7,8 +7,9 @@ import { Observable } from "rxjs";
 import { Character, Item } from "../../core/models/character.models";
 import { ItemGridComponent } from "../../shared/item-grid/item-grid.component";
 import { ItemEquipmentComponent } from "../../shared/item-equipment/item-equipment.component";
-import { InventoryService } from "src/app/core/services/inventory.service";
-import { unidades } from "src/app/shared/utils";
+import { InventoryService } from "../../core/services/inventory.service";
+import { unidades } from "../../shared/utils";
+import { CharacterLairComponent } from "../../shared/character-lair/character-lair.component";
 
 @Component({
   selector: "app-character",
@@ -17,6 +18,7 @@ import { unidades } from "src/app/shared/utils";
     CommonModule,
     RouterModule,
     CharacterAttributesComponent,
+    CharacterLairComponent,
     ItemEquipmentComponent,
     ItemGridComponent
   ],

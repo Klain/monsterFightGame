@@ -67,24 +67,18 @@ export class MessagesComponent implements OnInit {
     this.loadSentMessages();
     this.loadFriends();
   }
-
-  /** ✅ Cargar la lista de mensajes recibidos */
   loadReceivedMessages(): void {
     this.messageService.getMessagesInbox(this.pageReceived, this.limit).subscribe((response) => {
       this.receivedMessages = response.messages;
       this.totalPagesReceived = response.totalPages;
     });
   }
-
-  /** ✅ Cargar la lista de mensajes enviados */
   loadSentMessages(): void {
     this.messageService.getMessagesOutbox(this.pageSent, this.limit).subscribe((response) => {
       this.sentMessages = response.messages;
       this.totalPagesSent = response.totalPages;
     });
   }
-
-  /** ✅ Cargar la lista de amigos y solicitudes separadas */
   loadFriends(): void {
     this.friendshipService.getFriendships().subscribe(response => {
       console.log(response);
@@ -93,11 +87,8 @@ export class MessagesComponent implements OnInit {
       this.outgoingRequests = response.outgoingRequests;
     });
   }
-
-  /** ✅ Enviar un mensaje a un amigo usando `friendshipId` en lugar de `userId` */
   sendMessage(): void {
     if (this.messageForm.invalid) return;
-
     this.sending = true;
     const { receiver_id, subject, body } = this.messageForm.value;
 
@@ -108,14 +99,12 @@ export class MessagesComponent implements OnInit {
     });
   }
 
-  /** ✅ Marcar un mensaje como leído */
   markAsRead(messageId: number): void {
     this.messageService.markMessageAsRead(messageId).subscribe(() => {
       this.loadReceivedMessages();
     });
   }
 
-  /** ✅ Eliminar un mensaje */
   deleteMessage(messageId: number, type: 'received' | 'sent'): void {
     this.messageService.deleteMessage(messageId).subscribe(() => {
       if (type === 'received') {
@@ -125,8 +114,6 @@ export class MessagesComponent implements OnInit {
       }
     });
   }
-
-  /** ✅ Aceptar una solicitud solo si está en `incomingRequests` */
   acceptFriendship(friendshipId: number): void {
     if (this.incomingRequests.some(req => req.friendshipId === friendshipId)) {
       this.friendshipService.acceptFriendship(friendshipId).subscribe(() => this.loadFriends());
@@ -134,18 +121,12 @@ export class MessagesComponent implements OnInit {
       console.warn('❌ No puedes aceptar esta solicitud.');
     }
   }
-
-  /** ✅ Eliminar una amistad o solicitud pendiente */
   deleteFriendship(friendshipId: number): void {
     this.friendshipService.deleteFriendship(friendshipId).subscribe(() => this.loadFriends());
   }
-
-  /** ✅ Mostrar u ocultar un mensaje */
   toggleMessage(message: any): void {
     message.showBody = !message.showBody;
   }
-
-  /** ✅ Iniciar una respuesta */
   startReply(message: any): void {
     message.replying = true;
     this.replyForm.patchValue({
@@ -153,13 +134,9 @@ export class MessagesComponent implements OnInit {
       body: '',
     });
   }
-
-  /** ✅ Cancelar una respuesta */
   cancelReply(message: any): void {
     message.replying = false;
   }
-
-  /** ✅ Enviar respuesta */
   sendReply(message: any): void {
     const reply = this.replyForm.value;
     this.sending = true;
@@ -170,8 +147,6 @@ export class MessagesComponent implements OnInit {
       this.loadSentMessages();
     });
   }
-
-  /** ✅ Paginación */
   goToPreviousPage(type: 'received' | 'sent'): void {
     if (type === 'received' && this.pageReceived > 1) {
       this.pageReceived--;
@@ -181,7 +156,6 @@ export class MessagesComponent implements OnInit {
       this.loadSentMessages();
     }
   }
-
   goToNextPage(type: 'received' | 'sent'): void {
     if (type === 'received' && this.pageReceived < this.totalPagesReceived) {
       this.pageReceived++;

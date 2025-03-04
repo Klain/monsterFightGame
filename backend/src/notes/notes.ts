@@ -1,18 +1,6 @@
 
 /*
   TODO
-    AMISTADES
-      MOSTAR AMISTADES
-        ELIMINAR AMISTAD
-      MOSTRAR SOLICITUDES
-        ACEPTAR SOLICITUD
-        RECHAZAR SOLICITUD
-    MENSAJES
-      DESTINATARIO
-        MOSTRAR AMIGOS
-
-
-
     AÑADIR GUARIDA
       cofre : minimo de oro que no te podran robar nunca
       almacen: aumenta los espacios del inventario

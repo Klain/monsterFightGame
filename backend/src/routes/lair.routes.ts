@@ -7,7 +7,7 @@ import { Character } from "../models/character.model";
 
 const router = express.Router();
 
-router.post("/lair/goldChest", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.post("/goldChest", authMiddleware , validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
       const userId = req.locals.user!.id;
       const character : Character = req.locals.character;
@@ -17,6 +17,7 @@ router.post("/lair/goldChest", authMiddleware , validateAttributeMiddleware, val
         return;
       }
       character.goldChest+=1;
+      character.currentGold-=cost;
       webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);
   } catch (error) {
@@ -24,7 +25,7 @@ router.post("/lair/goldChest", authMiddleware , validateAttributeMiddleware, val
     res.status(500).json({ error: "Error interno al mejorar el atributo." });
   }
 });
-router.post("/lair/warehouse", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.post("/warehouse", authMiddleware , validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
       const userId = req.locals.user!.id;
       const character : Character = req.locals.character;
@@ -34,6 +35,7 @@ router.post("/lair/warehouse", authMiddleware , validateAttributeMiddleware, val
         return;
       }
       character.warehouse+=1;
+      character.currentGold-=cost;
       webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);
   } catch (error) {
@@ -41,16 +43,17 @@ router.post("/lair/warehouse", authMiddleware , validateAttributeMiddleware, val
     res.status(500).json({ error: "Error interno al mejorar el atributo." });
   }
 });
-router.post("/lair/enviroment", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.post("/enviroment", authMiddleware , validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
       const userId = req.locals.user!.id;
       const character : Character = req.locals.character;
-      const cost = character.calculateUpgradeCost(character.enviroment);
+      const cost = character.calculateUpgradeCost(character.environment);
       if (character.currentGold < cost) {
         res.status(400).json({ error: "No tienes suficiente oro para mejorar tu enviroment." });
         return;
       }
-      character.enviroment+=1;
+      character.environment+=1;
+      character.currentGold-=cost;
       webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);
   } catch (error) {
@@ -58,7 +61,7 @@ router.post("/lair/enviroment", authMiddleware , validateAttributeMiddleware, va
     res.status(500).json({ error: "Error interno al mejorar el atributo." });
   }
 });
-router.post("/lair/traps", authMiddleware , validateAttributeMiddleware, validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.post("/traps", authMiddleware , validateCharacterMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
       const userId = req.locals.user!.id;
       const character : Character = req.locals.character;
@@ -68,6 +71,7 @@ router.post("/lair/traps", authMiddleware , validateAttributeMiddleware, validat
         return;
       }
       character.traps+=1;
+      character.currentGold-=cost;
       webSocketService.characterRefresh(userId,{...character?.wsr()});
       res.status(200);
   } catch (error) {

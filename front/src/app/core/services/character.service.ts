@@ -17,14 +17,16 @@ export class CharacterService {
     private api: ApiService, 
     private webSocketService: WebSocketService
   ) {
-        this.webSocketService.on('characterRefresh').subscribe((partialCharacter: Partial<Character>) => {
-      this.updateCharacterWithPartial(partialCharacter);
-    });
-    this.webSocketService.isConnected$.subscribe((connected: any) => {
-      if (connected) {
-        console.log("🔄 WebSocket conectado, asegurando suscripción a characterRefresh...");
-      }
-    });
+
+      this.webSocketService.isConnected$.subscribe((connected: any) => {
+        if (connected) {
+          console.log("🔄 WebSocket conectado, asegurando suscripción a characterRefresh...");
+          this.webSocketService.on('characterRefresh').subscribe((partialCharacter: Partial<Character>) => {
+            console.log("ServicioCharacter: CharacterRefresh");
+            this.updateCharacterWithPartial(partialCharacter);
+          });
+        }
+      });
   }
   loadCharacter(): Observable<Character | null> {
     console.log("🔄 Cargando personaje...");
@@ -72,6 +74,26 @@ export class CharacterService {
   }
   findOpponent(): Observable<any> {
     return this.api.get('characters/find-opponent');
+  }
+  upgradeGoldChest(): void {
+    this.api.post<void>('lair/goldChest', {}).subscribe({
+      error: (err: any) => console.error('Error al mejorar Gold Chest:', err),
+    });
+  }
+  upgradeWarehouse(): void {
+    this.api.post<void>('lair/warehouse', {}).subscribe({
+      error: (err: any) => console.error('Error al mejorar Warehouse:', err),
+    });
+  }
+  upgradeEnviroment(): void {
+    this.api.post<void>('lair/enviroment', {}).subscribe({
+      error: (err: any) => console.error('Error al mejorar Environment:', err),
+    });
+  }
+  upgradeTraps(): void {
+    this.api.post<void>('lair/traps', {}).subscribe({
+      error: (err: any) => console.error('Error al mejorar Traps:', err),
+    });
   }
 }
 
